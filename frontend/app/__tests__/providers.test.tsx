@@ -1,23 +1,14 @@
-import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
+import { describe, it, expect, beforeEach } from '@jest/globals';
 import { render, screen } from '@testing-library/react';
 
 import Providers from '../providers';
 
 jest.mock('@/lib/stores/authStore', () => ({
-  useAuthStore: jest.fn((selector?: (state: any) => unknown) => {
-    const state = { restoreUser: jest.fn() };
-    return selector ? selector(state) : state;
-  }),
+  useAuthStore: jest.fn(),
 }));
 
 jest.mock('@/lib/services/tokens', () => ({
   getAccessToken: jest.fn(() => null),
-}));
-
-jest.mock('@react-oauth/google', () => ({
-  GoogleOAuthProvider: ({ children }: { children: React.ReactNode }) => (
-    <div data-testid="google-oauth-provider">{children}</div>
-  ),
 }));
 
 const { useAuthStore } = jest.requireMock('@/lib/stores/authStore') as {
@@ -27,20 +18,21 @@ const { getAccessToken } = jest.requireMock('@/lib/services/tokens') as {
   getAccessToken: jest.Mock;
 };
 
-describe('Providers', () => {
-  const originalEnv = process.env;
+const mockRestoreUser = (restoreUser: jest.Mock) => {
+  useAuthStore.mockImplementation((selector?: (state: { restoreUser: jest.Mock }) => unknown) => {
+    const state = { restoreUser };
+    return selector ? selector(state) : state;
+  });
+};
 
+describe('Providers', () => {
   beforeEach(() => {
-    process.env = { ...originalEnv };
+    jest.clearAllMocks();
     getAccessToken.mockReturnValue(null);
   });
 
-  afterEach(() => {
-    process.env = originalEnv;
-  });
-
-  it('renders children without GoogleOAuthProvider when client ID is not set', () => {
-    delete process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+  it('renders its children', () => {
+    mockRestoreUser(jest.fn());
 
     render(
       <Providers>
@@ -48,37 +40,35 @@ describe('Providers', () => {
       </Providers>
     );
 
-    expect(screen.getByTestId('child')).toBeInTheDocument();
-    expect(screen.queryByTestId('google-oauth-provider')).not.toBeInTheDocument();
-  });
-
-  it('wraps children with GoogleOAuthProvider when client ID is present', () => {
-    process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID = 'test-client-id';
-
-    render(
-      <Providers>
-        <span data-testid="child">content</span>
-      </Providers>
-    );
-
-    expect(screen.getByTestId('google-oauth-provider')).toBeInTheDocument();
     expect(screen.getByTestId('child')).toBeInTheDocument();
   });
 
   it('restores the user when a token is already present', () => {
     const restoreUser = jest.fn();
-    useAuthStore.mockImplementation((selector?: (state: any) => unknown) => {
-      const state = { restoreUser };
-      return selector ? selector(state) : state;
-    });
+    mockRestoreUser(restoreUser);
     getAccessToken.mockReturnValue('access');
 
     render(
       <Providers>
-        <span data-testid="child">content</span>
+        <span>content</span>
       </Providers>
     );
 
     expect(restoreUser).toHaveBeenCalledTimes(1);
+  });
+
+  it('skips restoring the user when there is no token', () => {
+    // quality: allow-mock-only (the auth store is mocked here; skipping the validate_token round trip is the contract)
+    const restoreUser = jest.fn();
+    mockRestoreUser(restoreUser);
+
+    render(
+      <Providers>
+        <span>content</span>
+      </Providers>
+    );
+
+    expect(screen.getByText('content')).toBeInTheDocument();
+    expect(restoreUser).not.toHaveBeenCalled();
   });
 });

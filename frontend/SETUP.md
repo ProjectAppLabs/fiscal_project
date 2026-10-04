@@ -1,4 +1,4 @@
-# 🔧 Frontend Setup Guide
+# 🔧 Frontend Setup Guide — Fiscal.
 
 ## Quick Start
 
@@ -17,9 +17,6 @@ cp .env.example .env.local
 
 Edit `.env.local`:
 ```env
-# Required for Google OAuth
-NEXT_PUBLIC_GOOGLE_CLIENT_ID=your_client_id_here.apps.googleusercontent.com
-
 # Optional - API base URL (defaults to /api which uses Next.js rewrites)
 NEXT_PUBLIC_API_BASE_URL=/api
 
@@ -27,15 +24,7 @@ NEXT_PUBLIC_API_BASE_URL=/api
 NEXT_PUBLIC_BACKEND_ORIGIN=http://localhost:8000
 ```
 
-### 3. Get Google OAuth Credentials
-
-Quick steps:
-1. Go to [Google Cloud Console](https://console.cloud.google.com/)
-2. Create project → Create OAuth credentials (Web application)
-3. Add `http://localhost:3000` and `http://127.0.0.1:3000` to authorized JavaScript origins
-4. Copy Client ID to `.env.local` and restart `npm run dev`
-
-### 4. Start Development Server
+### 3. Start Development Server
 
 ```bash
 npm run dev
@@ -50,38 +39,27 @@ Frontend will be available at `http://localhost:3000`
 ```
 frontend/
 ├── app/                      # Next.js App Router pages
-│   ├── __tests__/           # Page tests
-│   ├── backoffice/          # Protected backoffice
-│   ├── sign-in/             # Sign in page (email + Google)
-│   ├── sign-up/             # Sign up page (email + Google)
-│   ├── forgot-password/     # Password reset flow
-│   ├── dashboard/           # Protected user dashboard
-│   ├── catalog/             # Product catalog
-│   ├── products/[productId]/ # Product detail pages
-│   ├── blogs/               # Blog list
-│   ├── blogs/[blogId]/      # Blog detail pages
-│   ├── checkout/            # Checkout page
-│   ├── providers.tsx        # App providers
-│   └── page.tsx             # Home page
-├── components/              # React components
-│   ├── layout/              # Header, Footer
-│   ├── product/             # ProductCard, ProductCarousel
-│   └── blog/                # BlogCard, BlogCarousel
-├── lib/                     # Utilities and stores
-│   ├── __tests__/           # Fixtures/helpers
-│   ├── constants.ts         # Shared constants
-│   ├── hooks/               # Reusable hooks
-│   ├── i18n/                # Localization
-│   ├── stores/              # Zustand state management
-│   │   ├── authStore.ts     # Authentication state
-│   │   ├── cartStore.ts     # Shopping cart
-│   │   ├── productStore.ts
-│   │   ├── blogStore.ts
-│   │   └── localeStore.ts
-│   ├── services/            # API services
-│   │   ├── http.ts          # Axios instance
-│   │   └── tokens.ts        # Token management
-│   └── types.ts             # TypeScript types
+│   ├── __tests__/           # Home redirect + providers tests
+│   ├── sign-in/             # Sign in (email + password, reCAPTCHA when configured)
+│   ├── forgot-password/     # Password reset with an emailed passcode
+│   ├── dashboard/           # Protected operations console
+│   ├── layout.tsx           # Root layout (next-intl provider, metadata «Fiscal.»)
+│   ├── providers.tsx        # Theme + auth restore
+│   └── page.tsx             # Redirects to /dashboard or /sign-in
+├── components/
+│   ├── brand/               # FiscalLogo (Ubuntu Bold wordmark)
+│   ├── layout/              # Header, Footer, LocaleSwitcher
+│   ├── staging/             # Staging phase banner and expired overlay
+│   └── theme-toggle.tsx
+├── messages/                # next-intl messages (es = default, en)
+├── lib/
+│   ├── __tests__/           # Shared test helpers (renderWithIntl)
+│   ├── constants.ts         # Routes, API endpoints, cookie keys
+│   ├── hooks/               # useRequireAuth, useHydrated
+│   ├── i18n/                # Locale config + next-intl request config
+│   ├── stores/              # authStore, localeStore, stagingBannerStore
+│   └── services/            # Axios instance with refresh, tokens, staging banner
+├── proxy.ts                 # Route guard and `/` redirect
 └── e2e/                     # Playwright E2E tests
 ```
 
@@ -149,20 +127,25 @@ npm run test:all          # Unit coverage + E2E
 
 ### Sign In (`/sign-in`)
 - Email/password form
-- Google OAuth button
+- reCAPTCHA when the backend returns a site key
 - Link to forgot password
-- Link to sign up
-
-### Sign Up (`/sign-up`)
-- Email/password registration form
-- Optional first name and last name
-- Password confirmation
-- Google OAuth button
-- Link to sign in
 
 ### Forgot Password (`/forgot-password`)
 - Step 1: Enter email → Receive 6-digit code
 - Step 2: Enter code + new password → Reset complete
+
+### Console (`/dashboard`)
+- Protected with `useRequireAuth` (and by `proxy.ts` on the server)
+- «Fiscal.» wordmark, «Consola de operación» and the empty documents state
+
+### Home (`/`)
+- Redirects to `/dashboard` with a session, otherwise to `/sign-in`
+
+## 🌐 i18n
+
+- `next-intl` without locale routing: the locale comes from the `NEXT_LOCALE` cookie (`lib/i18n/request.ts`).
+- Spanish (`es`) is the default; English (`en`) is available from the header switcher.
+- Messages live in `messages/es.json` and `messages/en.json`; keys are typed through `global.d.ts`.
 
 ---
 
@@ -176,37 +159,19 @@ const {
   isAuthenticated,
   user,
   signIn,
-  signUp,
-  googleLogin,
   signOut,
   sendPasswordResetCode,
   resetPassword,
 } = useAuthStore();
 ```
 
-### Cart Store
-```typescript
-import { useCartStore } from '@/lib/stores/cartStore';
-
-const {
-  items,
-  addToCart,
-  removeFromCart,
-  updateQuantity,
-  clearCart,
-  subtotal,
-} = useCartStore();
-```
-
 ---
 
 ## 🐛 Troubleshooting
 
-### Images not loading
+### API calls failing
 
-**Problem:** Products and blogs show empty cards without images
-
-**Solution:** Make sure both servers are running:
+Make sure both servers are running:
 ```bash
 # Terminal 1: Backend
 cd backend && source venv/bin/activate && python manage.py runserver
@@ -215,14 +180,7 @@ cd backend && source venv/bin/activate && python manage.py runserver
 cd frontend && npm run dev
 ```
 
-The backend needs to be running on `http://localhost:8000` for images to load via the Next.js proxy.
-
-### Google OAuth not working
-
-Common issues:
-- Missing `NEXT_PUBLIC_GOOGLE_CLIENT_ID` in `.env.local`
-- Authorized JavaScript origins not configured in Google Cloud Console
-- Need to restart server after changing `.env.local`
+The backend must be running on `http://localhost:8000`; Next.js proxies `/api/*` to it.
 
 ### Port already in use
 
@@ -245,4 +203,4 @@ lsof -ti:8000 | xargs -r kill -9
 
 ---
 
-**Last Updated:** February 2026
+**Last Updated:** October 2026

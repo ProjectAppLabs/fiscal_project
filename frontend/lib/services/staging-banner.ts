@@ -1,3 +1,4 @@
+import { API_ENDPOINTS } from '@/lib/constants';
 import { api } from '@/lib/services/http';
 
 export type StagingPhase = 'design' | 'development';
@@ -15,6 +16,6 @@ export type StagingBannerState = {
 };
 
 export async function fetchStagingBannerState(): Promise<StagingBannerState> {
-  const response = await api.get<StagingBannerState>('staging-banner/');
+  const response = await api.get<StagingBannerState>(API_ENDPOINTS.STAGING_BANNER);
   return response.data;
 }

@@ -9,18 +9,20 @@
  * ArrowUp/Down navigate, Home/End jump to ends, Escape closes.
  */
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
+import { useTranslations } from 'next-intl';
 import { useTheme } from 'next-themes';
 import { Sun, Moon, Monitor } from 'lucide-react';
 
 import { useHydrated } from '@/lib/hooks/useHydrated';
 
 const OPTIONS = [
-  { value: 'light', label: 'Light', Icon: Sun },
-  { value: 'dark', label: 'Dark', Icon: Moon },
-  { value: 'system', label: 'System', Icon: Monitor },
+  { value: 'light', Icon: Sun },
+  { value: 'dark', Icon: Moon },
+  { value: 'system', Icon: Monitor },
 ] as const;
 
 export function ThemeToggle() {
+  const t = useTranslations('theme');
   const { theme, setTheme } = useTheme();
   const mounted = useHydrated();
   const [open, setOpen] = useState(false);
@@ -83,7 +85,7 @@ export function ThemeToggle() {
         type="button"
         onClick={() => setOpen((v) => !v)}
         onKeyDown={handleButtonKeyDown}
-        aria-label="Toggle theme"
+        aria-label={t('toggle')}
         aria-haspopup="menu"
         aria-expanded={open}
         className="inline-flex h-9 w-9 items-center justify-center rounded-full text-foreground hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors"
@@ -95,11 +97,11 @@ export function ThemeToggle() {
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} aria-hidden />
           <div
             role="menu"
-            aria-label="Theme"
+            aria-label={t('menu')}
             onKeyDown={handleMenuKeyDown}
             className="absolute right-0 z-50 mt-2 w-36 overflow-hidden rounded-md border border-border bg-popover text-popover-foreground shadow-lg"
           >
-            {OPTIONS.map(({ value, label, Icon }, i) => (
+            {OPTIONS.map(({ value, Icon }, i) => (
               <button
                 key={value}
                 ref={(el) => {
@@ -117,7 +119,7 @@ export function ThemeToggle() {
                 }`}
               >
                 <Icon className="h-4 w-4" />
-                {label}
+                {t(value)}
               </button>
             ))}
           </div>

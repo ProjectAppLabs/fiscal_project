@@ -1,6 +1,6 @@
 import { describe, it, expect } from '@jest/globals';
 
-import { DEFAULT_LOCALE, LOCALE_LABELS, SUPPORTED_LOCALES, isValidLocale } from '../config';
+import { DEFAULT_LOCALE, LOCALE_LABELS, SUPPORTED_LOCALES, isValidLocale, resolveLocale } from '../config';
 
 describe('i18n config', () => {
   describe('isValidLocale', () => {
@@ -21,9 +21,21 @@ describe('i18n config', () => {
     });
   });
 
+  describe('resolveLocale', () => {
+    it.each([
+      ['es', 'es'],
+      ['en', 'en'],
+      ['fr', 'es'],
+      [undefined, 'es'],
+      [null, 'es'],
+    ] as const)('resolves %p to %p', (input, expected) => {
+      expect(resolveLocale(input)).toBe(expected);
+    });
+  });
+
   describe('constants', () => {
-    it('exposes DEFAULT_LOCALE as "en"', () => {
-      expect(DEFAULT_LOCALE).toBe('en');
+    it('exposes DEFAULT_LOCALE as "es"', () => {
+      expect(DEFAULT_LOCALE).toBe('es');
     });
 
     it('exposes SUPPORTED_LOCALES containing "en" and "es"', () => {

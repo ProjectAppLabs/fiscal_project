@@ -1,16 +1,15 @@
 # Django application
-Django==6.1
-django-cleanup==9.0.0
+Django==6.1.1
 django-cors-headers==4.9.0
 django-dbbackup==5.3.0
 django-silk==5.5.2
 djangorestframework==3.18.0
 djangorestframework-simplejwt==5.5.1
-easy-thumbnails==2.10.1
+# Fiscal.: Fernet encryption of secrets at rest, .p12 certificates and XAdES signing (F2).
+cryptography==50.0.2
 gunicorn==26.2.0
 huey==3.3.4
 mysqlclient==2.2.8
-pillow==12.3.0
 python-dotenv==1.2.3
 redis==8.1.0
 requests==2.34.2
@@ -27,6 +26,6 @@ ruff==0.16.4
 
 # Explicit transitive security boundaries
 Pygments==2.21.0
-PyJWT==2.13.0
+PyJWT==2.15.0
 sqlparse==0.6.0
-urllib3==2.7.0
+urllib3==2.8.0

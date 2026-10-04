@@ -38,23 +38,15 @@ Unit tests live alongside source files inside `__tests__/` subdirectories:
 ```
 frontend/
 ├── app/
-│   ├── __tests__/                 # App-level tests
+│   ├── __tests__/                 # Home redirect + providers
 │   ├── sign-in/__tests__/
-│   ├── sign-up/__tests__/
 │   ├── forgot-password/__tests__/
-│   ├── dashboard/__tests__/
-│   ├── backoffice/__tests__/
-│   ├── catalog/__tests__/
-│   ├── checkout/__tests__/
-│   ├── blogs/__tests__/
-│   ├── blogs/[blogId]/__tests__/
-│   └── products/[productId]/__tests__/
+│   └── dashboard/__tests__/
 ├── components/
-│   ├── blog/__tests__/
-│   ├── product/__tests__/
+│   ├── brand/__tests__/
 │   └── layout/__tests__/
 ├── lib/
-│   ├── __tests__/                 # Fixtures/constants
+│   ├── __tests__/                 # Constants + renderWithIntl helper
 │   ├── hooks/__tests__/
 │   ├── i18n/__tests__/
 │   ├── services/__tests__/
@@ -70,66 +62,53 @@ frontend/
 
 Store tests verify application state logic:
 
-**Example: Cart Store**
+**Example: Locale Store**
 ```typescript
-// lib/stores/__tests__/cartStore.test.ts
-import { renderHook, act } from '@testing-library/react';
-import { useCartStore } from '../cartStore';
+// lib/stores/__tests__/localeStore.test.ts
+import { act, renderHook } from '@testing-library/react';
+import Cookies from 'js-cookie';
+import { useLocaleStore } from '../localeStore';
 
-test('should add product to cart', () => {
-  const { result } = renderHook(() => useCartStore());
-  act(() => {
-    result.current.addToCart(mockProduct, 1);
-  });
-  expect(result.current.items).toHaveLength(1);
+it('writes the chosen locale to the next-intl cookie', () => {
+  const { result } = renderHook(() => useLocaleStore());
+  act(() => result.current.setLocale('en'));
+  expect(Cookies.get('NEXT_LOCALE')).toBe('en');
 });
 ```
 
 **Store Coverage:**
-- ✅ `authStore.test.ts` - Authentication state (sign-in, sign-out, token handling)
-- ✅ `blogStore.test.ts` - Blog management (fetch, loading/error states)
-- ✅ `cartStore.test.ts` - Shopping cart (add, remove, update quantity, subtotal)
-- ✅ `localeStore.test.ts` - Locale selection and persistence
-- ✅ `productStore.test.ts` - Product management (fetch, loading/error states)
+- ✅ `authStore.test.ts` - Authentication state (sign-in, sign-out, token handling, passcode reset)
+- ✅ `localeStore.test.ts` - Locale selection and the `NEXT_LOCALE` cookie
 
-### Components
+### Components and pages
 
-Component tests verify rendering and interaction:
+Components that use `useTranslations` must be rendered inside `NextIntlClientProvider`.
+Use the shared helper (Spanish by default, `{ locale: 'en' }` for English):
 
-**Example: Product Card**
 ```typescript
-// components/product/__tests__/ProductCard.test.tsx
-import { render, screen } from '@testing-library/react';
-import ProductCard from '../ProductCard';
+import { renderWithIntl } from '@/lib/__tests__/intl';
 
-test('should render product title', () => {
-  render(<ProductCard product={mockProduct} />);
-  expect(screen.getByText(mockProduct.title)).toBeInTheDocument();
+it('shows the empty state while there are no documents', () => {
+  renderWithIntl(<DashboardPage />);
+  expect(screen.getByTestId('dashboard-empty-state')).toHaveTextContent('Todavía no hay documentos');
 });
 ```
 
-**Component Coverage:**
-- ✅ `ProductCard.test.tsx` - Product card
-- ✅ `ProductCarousel.test.tsx` - Product carousel
-- ✅ `BlogCard.test.tsx` - Blog card
-- ✅ `BlogCarousel.test.tsx` - Blog carousel
-- ✅ `layout.test.tsx` - Header/footer layout
+**Coverage:**
+- ✅ `app/__tests__/page.test.tsx` - Home redirect (dashboard or sign-in)
+- ✅ `app/__tests__/providers.test.tsx` - Providers and auth restore
+- ✅ `app/sign-in/__tests__/page.test.tsx` - Sign-in form, errors, reCAPTCHA
+- ✅ `app/forgot-password/__tests__/page.test.tsx` - Passcode flow
+- ✅ `app/dashboard/__tests__/page.test.tsx` - Console skeleton and empty state
+- ✅ `FiscalLogo.test.tsx` - Wordmark
+- ✅ `layout.test.tsx` / `LocaleSwitcher.test.tsx` - Header, footer, locale switch
 
 ### Hooks, Services, and i18n
 
 - ✅ `useRequireAuth.test.ts` - Auth guard hook
-- ✅ `http.test.ts` / `tokens.test.ts` - API client and token helpers
+- ✅ `http.test.ts` / `tokens.test.ts` / `errors.test.ts` - API client, token helpers, error messages
 - ✅ `config.test.ts` - i18n config
-- ✅ `constants.test.ts` - Shared constants
-
-### Fixtures
-
-```typescript
-// lib/__tests__/fixtures.ts
-export const mockProducts: Product[] = [/* ... */];
-export const mockBlogs: Blog[] = [/* ... */];
-export const mockCartItems: CartItem[] = [/* ... */];
-```
+- ✅ `constants.test.ts` - Routes and API endpoints
 
 ---
 
@@ -219,9 +198,9 @@ python3 scripts/run-tests-all-suites.py --parallel
 
 ## Best Practices
 
-1. **Use reusable fixtures**
+1. **Render translated components with `renderWithIntl`**
    ```typescript
-   import { mockProducts } from '@/lib/__tests__/fixtures';
+   import { renderWithIntl } from '@/lib/__tests__/intl';
    ```
 
 2. **Mock external dependencies**
@@ -232,8 +211,7 @@ python3 scripts/run-tests-all-suites.py --parallel
 3. **Clean state between tests**
    ```typescript
    beforeEach(() => {
-     const { result } = renderHook(() => useCartStore());
-     act(() => result.current.clearCart());
+     useLocaleStore.setState({ locale: 'es' });
    });
    ```
 
@@ -277,7 +255,7 @@ npm run test:ci           # CI mode verification
 node --inspect-brk node_modules/.bin/jest --runInBand
 
 # Specific test file
-npm run test -- ProductCard.test.tsx
+npm run test -- FiscalLogo.test.tsx
 
 # Verbose output
 npm run test -- --verbose
@@ -298,21 +276,15 @@ npm run test -- --verbose
 
 ## Maintenance
 
-### Update Fixtures
+### Update Messages
 
-When types or data structure change:
-
-```typescript
-// lib/__tests__/fixtures.ts
-export const mockProducts: Product[] = [
-  // Update according to new fields
-];
-```
+When a visible string changes, edit both `messages/es.json` and `messages/en.json`; the
+typecheck fails on keys missing from `es.json` (see `global.d.ts`).
 
 ### Add New Tests
 
 1. Create file in corresponding `__tests__/` folder
-2. Import necessary fixtures
+2. Import `renderWithIntl` when the component is translated
 3. Write test cases covering happy path, edge cases, and error conditions
 4. Run and verify
 

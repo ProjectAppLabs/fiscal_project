@@ -1,0 +1,78 @@
+{
+  "metadata": {
+    "description": "Consola interna de operación de la facturación electrónica de ProjectApp."
+  },
+  "header": {
+    "mainNav": "Navegación principal",
+    "console": "Consola",
+    "signIn": "Iniciar sesión",
+    "signOut": "Cerrar sesión"
+  },
+  "footer": {
+    "tagline": "Consola interna de facturación electrónica de ProjectApp."
+  },
+  "theme": {
+    "toggle": "Cambiar tema",
+    "menu": "Tema",
+    "light": "Claro",
+    "dark": "Oscuro",
+    "system": "Sistema"
+  },
+  "locale": {
+    "switchTo": "Cambiar el idioma a {language}"
+  },
+  "home": {
+    "redirecting": "Redirigiendo…"
+  },
+  "signIn": {
+    "title": "Iniciar sesión",
+    "subtitle": "Entra con tu cuenta para operar la consola.",
+    "email": "Correo electrónico",
+    "password": "Contraseña",
+    "submit": "Iniciar sesión",
+    "submitting": "Iniciando sesión…",
+    "captchaRequired": "Completa la verificación de reCAPTCHA.",
+    "invalidCredentials": "Credenciales inválidas.",
+    "forgotPassword": "¿Olvidaste tu contraseña?"
+  },
+  "forgotPassword": {
+    "title": "Restablecer contraseña",
+    "emailIntro": "Escribe tu correo y te enviaremos un código para restablecer la contraseña.",
+    "email": "Correo electrónico",
+    "sendCode": "Enviar código",
+    "sendingCode": "Enviando…",
+    "codeSent": "Te enviamos el código a tu correo.",
+    "sendCodeFailed": "No se pudo enviar el código.",
+    "codeIntro": "Escribe el código de 6 dígitos que enviamos a <strong>{email}</strong> y tu nueva contraseña.",
+    "code": "Código de verificación",
+    "codeHint": "Código de 6 dígitos del correo",
+    "newPassword": "Nueva contraseña",
+    "newPasswordHint": "Mínimo 8 caracteres",
+    "confirmPassword": "Confirma la nueva contraseña",
+    "passwordsMismatch": "Las contraseñas no coinciden.",
+    "passwordTooShort": "La contraseña debe tener al menos 8 caracteres.",
+    "reset": "Restablecer contraseña",
+    "resetting": "Restableciendo…",
+    "resetSuccess": "Contraseña restablecida. Redirigiendo…",
+    "resetFailed": "No se pudo restablecer la contraseña.",
+    "backToEmail": "Volver al correo",
+    "backToSignIn": "Volver a iniciar sesión"
+  },
+  "dashboard": {
+    "subtitle": "Consola de operación",
+    "emptyTitle": "Todavía no hay documentos",
+    "emptyBody": "Cuando se emitan facturas y otros documentos electrónicos, aparecerán aquí."
+  },
+  "staging": {
+    "remainsOne": "queda",
+    "remainsMany": "quedan",
+    "dayOne": "día",
+    "dayMany": "días",
+    "forReview": "para tu revisión",
+    "expiredTitle": "La etapa de {phase} ha finalizado",
+    "expiredBody": "Gracias por revisar el avance del proyecto. El plazo de revisión ha terminado.",
+    "expiredCta": "Para continuar con la siguiente fase o coordinar ajustes, contacta al equipo de ProjectApp:",
+    "whatsapp": "WhatsApp",
+    "email": "Correo"
+  }
+}

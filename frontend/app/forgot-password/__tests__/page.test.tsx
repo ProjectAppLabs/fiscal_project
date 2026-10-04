@@ -1,7 +1,8 @@
 import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, screen, waitFor } from '@testing-library/react';
 
 import ForgotPasswordPage from '../page';
+import { renderWithIntl } from '../../../lib/__tests__/intl';
 import { useAuthStore } from '../../../lib/stores/authStore';
 import { useRouter } from 'next/navigation';
 
@@ -23,8 +24,8 @@ const setAuthStoreState = (state: any) => {
 };
 
 const submitEmail = () => {
-  fireEvent.change(screen.getByPlaceholderText('Email'), { target: { value: 'user@example.com' } });
-  fireEvent.click(screen.getByRole('button', { name: 'Send verification code' }));
+  fireEvent.change(screen.getByPlaceholderText('Correo electrónico'), { target: { value: 'user@example.com' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Enviar código' }));
 };
 
 const advanceToCodeStep = async () => {
@@ -46,7 +47,7 @@ describe('ForgotPasswordPage', () => {
     setAuthStoreState({ sendPasswordResetCode, resetPassword: jest.fn() });
     mockUseRouter.mockReturnValue({ replace: jest.fn() });
 
-    render(<ForgotPasswordPage />);
+    renderWithIntl(<ForgotPasswordPage />);
 
     await advanceToCodeStep();
 
@@ -55,21 +56,21 @@ describe('ForgotPasswordPage', () => {
     });
 
     expect(screen.getByPlaceholderText('000000')).toBeInTheDocument();
-    expect(screen.getByText('Verification code sent to your email')).toBeInTheDocument();
+    expect(screen.getByText('Te enviamos el código a tu correo.')).toBeInTheDocument();
   });
 
   it('shows error when sending code fails', async () => {
     const sendPasswordResetCode = jest
       .fn()
-      .mockRejectedValue({ response: { data: { error: 'Failed to send code' } } });
+      .mockRejectedValue({ response: { data: { error: 'El servidor de correo no responde' } } });
     setAuthStoreState({ sendPasswordResetCode, resetPassword: jest.fn() });
     mockUseRouter.mockReturnValue({ replace: jest.fn() });
 
-    render(<ForgotPasswordPage />);
+    renderWithIntl(<ForgotPasswordPage />);
 
     submitEmail();
 
-    expect(await screen.findByText('Failed to send code')).toBeInTheDocument();
+    expect(await screen.findByText('El servidor de correo no responde')).toBeInTheDocument();
   });
 
   it('shows default error when sending code fails without response', async () => {
@@ -77,11 +78,11 @@ describe('ForgotPasswordPage', () => {
     setAuthStoreState({ sendPasswordResetCode, resetPassword: jest.fn() });
     mockUseRouter.mockReturnValue({ replace: jest.fn() });
 
-    render(<ForgotPasswordPage />);
+    renderWithIntl(<ForgotPasswordPage />);
 
     submitEmail();
 
-    expect(await screen.findByText('Failed to send code')).toBeInTheDocument();
+    expect(await screen.findByText('No se pudo enviar el código.')).toBeInTheDocument();
   });
 
   it('validates password mismatch', async () => {
@@ -90,16 +91,16 @@ describe('ForgotPasswordPage', () => {
     setAuthStoreState({ sendPasswordResetCode, resetPassword });
     mockUseRouter.mockReturnValue({ replace: jest.fn() });
 
-    render(<ForgotPasswordPage />);
+    renderWithIntl(<ForgotPasswordPage />);
 
     await advanceToCodeStep();
 
     fireEvent.change(screen.getByPlaceholderText('000000'), { target: { value: '123456' } });
-    fireEvent.change(screen.getByPlaceholderText('New Password'), { target: { value: 'password123' } });
-    fireEvent.change(screen.getByPlaceholderText('Confirm New Password'), { target: { value: 'password456' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Reset password' }));
+    fireEvent.change(screen.getByPlaceholderText('Nueva contraseña'), { target: { value: 'password123' } });
+    fireEvent.change(screen.getByPlaceholderText('Confirma la nueva contraseña'), { target: { value: 'password456' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Restablecer contraseña' }));
 
-    expect(await screen.findByText('Passwords do not match')).toBeInTheDocument();
+    expect(await screen.findByText('Las contraseñas no coinciden.')).toBeInTheDocument();
     // Bug this catches: a mismatch-validation regression that clears/loses the
     // already-verified 6-digit code, forcing the user to re-request one.
     expect(screen.getByPlaceholderText('000000')).toHaveValue('123456');
@@ -111,16 +112,16 @@ describe('ForgotPasswordPage', () => {
     setAuthStoreState({ sendPasswordResetCode, resetPassword });
     mockUseRouter.mockReturnValue({ replace: jest.fn() });
 
-    render(<ForgotPasswordPage />);
+    renderWithIntl(<ForgotPasswordPage />);
 
     await advanceToCodeStep();
 
     fireEvent.change(screen.getByPlaceholderText('000000'), { target: { value: '123456' } });
-    fireEvent.change(screen.getByPlaceholderText('New Password'), { target: { value: 'short' } });
-    fireEvent.change(screen.getByPlaceholderText('Confirm New Password'), { target: { value: 'short' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Reset password' }));
+    fireEvent.change(screen.getByPlaceholderText('Nueva contraseña'), { target: { value: 'short' } });
+    fireEvent.change(screen.getByPlaceholderText('Confirma la nueva contraseña'), { target: { value: 'short' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Restablecer contraseña' }));
 
-    expect(await screen.findByText('Password must be at least 8 characters')).toBeInTheDocument();
+    expect(await screen.findByText('La contraseña debe tener al menos 8 caracteres.')).toBeInTheDocument();
     // Bug this catches: a length-validation regression that clears/loses the
     // already-verified 6-digit code, forcing the user to re-request one.
     expect(screen.getByPlaceholderText('000000')).toHaveValue('123456');
@@ -134,14 +135,14 @@ describe('ForgotPasswordPage', () => {
     setAuthStoreState({ sendPasswordResetCode, resetPassword });
     mockUseRouter.mockReturnValue({ replace });
 
-    render(<ForgotPasswordPage />);
+    renderWithIntl(<ForgotPasswordPage />);
 
     await advanceToCodeStep();
 
     fireEvent.change(screen.getByPlaceholderText('000000'), { target: { value: '123456' } });
-    fireEvent.change(screen.getByPlaceholderText('New Password'), { target: { value: 'password123' } });
-    fireEvent.change(screen.getByPlaceholderText('Confirm New Password'), { target: { value: 'password123' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Reset password' }));
+    fireEvent.change(screen.getByPlaceholderText('Nueva contraseña'), { target: { value: 'password123' } });
+    fireEvent.change(screen.getByPlaceholderText('Confirma la nueva contraseña'), { target: { value: 'password123' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Restablecer contraseña' }));
 
     await waitFor(() => {
       expect(resetPassword).toHaveBeenCalledWith({
@@ -151,7 +152,7 @@ describe('ForgotPasswordPage', () => {
       });
     });
 
-    expect(screen.getByText('Password reset successfully! Redirecting...')).toBeInTheDocument();
+    expect(screen.getByText('Contraseña restablecida. Redirigiendo…')).toBeInTheDocument();
 
     await waitFor(() => {
       expect(replace).toHaveBeenCalledWith('/sign-in');
@@ -162,20 +163,20 @@ describe('ForgotPasswordPage', () => {
     const sendPasswordResetCode = jest.fn().mockResolvedValue(undefined);
     const resetPassword = jest
       .fn()
-      .mockRejectedValue({ response: { data: { error: 'Failed to reset password' } } });
+      .mockRejectedValue({ response: { data: { error: 'El código expiró' } } });
     setAuthStoreState({ sendPasswordResetCode, resetPassword });
     mockUseRouter.mockReturnValue({ replace: jest.fn() });
 
-    render(<ForgotPasswordPage />);
+    renderWithIntl(<ForgotPasswordPage />);
 
     await advanceToCodeStep();
 
     fireEvent.change(screen.getByPlaceholderText('000000'), { target: { value: '123456' } });
-    fireEvent.change(screen.getByPlaceholderText('New Password'), { target: { value: 'password123' } });
-    fireEvent.change(screen.getByPlaceholderText('Confirm New Password'), { target: { value: 'password123' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Reset password' }));
+    fireEvent.change(screen.getByPlaceholderText('Nueva contraseña'), { target: { value: 'password123' } });
+    fireEvent.change(screen.getByPlaceholderText('Confirma la nueva contraseña'), { target: { value: 'password123' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Restablecer contraseña' }));
 
-    expect(await screen.findByText('Failed to reset password')).toBeInTheDocument();
+    expect(await screen.findByText('El código expiró')).toBeInTheDocument();
   });
 
   it('shows default error when reset fails without response', async () => {
@@ -184,16 +185,16 @@ describe('ForgotPasswordPage', () => {
     setAuthStoreState({ sendPasswordResetCode, resetPassword });
     mockUseRouter.mockReturnValue({ replace: jest.fn() });
 
-    render(<ForgotPasswordPage />);
+    renderWithIntl(<ForgotPasswordPage />);
 
     await advanceToCodeStep();
 
     fireEvent.change(screen.getByPlaceholderText('000000'), { target: { value: '123456' } });
-    fireEvent.change(screen.getByPlaceholderText('New Password'), { target: { value: 'password123' } });
-    fireEvent.change(screen.getByPlaceholderText('Confirm New Password'), { target: { value: 'password123' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Reset password' }));
+    fireEvent.change(screen.getByPlaceholderText('Nueva contraseña'), { target: { value: 'password123' } });
+    fireEvent.change(screen.getByPlaceholderText('Confirma la nueva contraseña'), { target: { value: 'password123' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Restablecer contraseña' }));
 
-    expect(await screen.findByText('Failed to reset password')).toBeInTheDocument();
+    expect(await screen.findByText('No se pudo restablecer la contraseña.')).toBeInTheDocument();
   });
 
   it('allows returning to email step', async () => {
@@ -201,12 +202,12 @@ describe('ForgotPasswordPage', () => {
     setAuthStoreState({ sendPasswordResetCode, resetPassword: jest.fn() });
     mockUseRouter.mockReturnValue({ replace: jest.fn() });
 
-    render(<ForgotPasswordPage />);
+    renderWithIntl(<ForgotPasswordPage />);
 
     await advanceToCodeStep();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Back to email' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Volver al correo' }));
 
-    expect(screen.getByPlaceholderText('Email')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Correo electrónico')).toBeInTheDocument();
   });
 });

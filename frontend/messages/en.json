@@ -1,0 +1,78 @@
+{
+  "metadata": {
+    "description": "ProjectApp's internal operations console for electronic invoicing."
+  },
+  "header": {
+    "mainNav": "Main navigation",
+    "console": "Console",
+    "signIn": "Sign in",
+    "signOut": "Sign out"
+  },
+  "footer": {
+    "tagline": "ProjectApp's internal electronic invoicing console."
+  },
+  "theme": {
+    "toggle": "Toggle theme",
+    "menu": "Theme",
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System"
+  },
+  "locale": {
+    "switchTo": "Switch language to {language}"
+  },
+  "home": {
+    "redirecting": "Redirecting…"
+  },
+  "signIn": {
+    "title": "Sign in",
+    "subtitle": "Sign in with your account to operate the console.",
+    "email": "Email",
+    "password": "Password",
+    "submit": "Sign in",
+    "submitting": "Signing in…",
+    "captchaRequired": "Please complete the reCAPTCHA check.",
+    "invalidCredentials": "Invalid credentials.",
+    "forgotPassword": "Forgot your password?"
+  },
+  "forgotPassword": {
+    "title": "Reset password",
+    "emailIntro": "Enter your email and we will send you a code to reset your password.",
+    "email": "Email",
+    "sendCode": "Send code",
+    "sendingCode": "Sending…",
+    "codeSent": "We sent the code to your email.",
+    "sendCodeFailed": "The code could not be sent.",
+    "codeIntro": "Enter the 6-digit code we sent to <strong>{email}</strong> and your new password.",
+    "code": "Verification code",
+    "codeHint": "6-digit code from the email",
+    "newPassword": "New password",
+    "newPasswordHint": "At least 8 characters",
+    "confirmPassword": "Confirm the new password",
+    "passwordsMismatch": "Passwords do not match.",
+    "passwordTooShort": "The password must be at least 8 characters long.",
+    "reset": "Reset password",
+    "resetting": "Resetting…",
+    "resetSuccess": "Password reset. Redirecting…",
+    "resetFailed": "The password could not be reset.",
+    "backToEmail": "Back to email",
+    "backToSignIn": "Back to sign in"
+  },
+  "dashboard": {
+    "subtitle": "Operations console",
+    "emptyTitle": "There are no documents yet",
+    "emptyBody": "Invoices and other electronic documents will show up here once they are issued."
+  },
+  "staging": {
+    "remainsOne": "remains",
+    "remainsMany": "remain",
+    "dayOne": "day",
+    "dayMany": "days",
+    "forReview": "for your review",
+    "expiredTitle": "The {phase} stage has ended",
+    "expiredBody": "Thank you for reviewing the project. The review window has closed.",
+    "expiredCta": "To continue with the next phase or coordinate adjustments, please contact the ProjectApp team:",
+    "whatsapp": "WhatsApp",
+    "email": "Email"
+  }
+}
