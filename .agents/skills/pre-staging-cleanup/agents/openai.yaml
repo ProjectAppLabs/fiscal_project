@@ -1,0 +1,7 @@
+interface:
+  display_name: "Pre Staging Cleanup"
+  short_description: "Pre-staging template residue cleanup — checklist por fases..."
+  default_prompt: "Use $pre-staging-cleanup to handle this task with its documented workflow."
+
+policy:
+  allow_implicit_invocation: true

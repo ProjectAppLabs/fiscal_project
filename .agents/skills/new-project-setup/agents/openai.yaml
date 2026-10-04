@@ -1,0 +1,7 @@
+interface:
+  display_name: "New Project Setup"
+  short_description: "New project setup — persiste el checklist de requerimientos..."
+  default_prompt: "Use $new-project-setup to handle this task with its documented workflow."
+
+policy:
+  allow_implicit_invocation: true

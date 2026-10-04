@@ -1,0 +1,139 @@
+import { test, expect } from '../test-with-coverage';
+import { waitForPageLoad } from '../fixtures';
+import { AUTH_SIGN_IN_FORM, AUTH_SIGN_UP_FORM, AUTH_LOGIN_INVALID, AUTH_PROTECTED_REDIRECT, AUTH_FORGOT_PASSWORD_FORM } from '../helpers/flow-tags';
+
+test.describe('Authentication', () => {
+
+  test('should show validation on empty form submission', { tag: [...AUTH_SIGN_IN_FORM, '@outcome:error'] }, async ({ page }) => {
+    await page.goto('/sign-in');
+    await waitForPageLoad(page);
+    
+    // Try to submit empty form
+    const submitBtn = page.locator('button[type="submit"]');
+    await submitBtn.click();
+    
+    // Should still be on sign-in page
+    await expect(page).toHaveURL(/.*sign-in/);
+  });
+
+  test('should accept input in form fields', { tag: [...AUTH_SIGN_IN_FORM, '@outcome:display'] }, async ({ page }) => {
+    await page.goto('/sign-in');
+    await waitForPageLoad(page);
+    
+    // Fill email (using placeholder)
+    const emailInput = page.getByPlaceholder('Email');
+    await emailInput.fill('test@example.com');
+    await expect(emailInput).toHaveValue('test@example.com');
+    
+    // Fill password
+    const passwordInput = page.locator('input[type="password"]');
+    await passwordInput.fill('password123');
+    await expect(passwordInput).toHaveValue('password123');
+  });
+
+  test('should handle invalid credentials gracefully', { tag: [...AUTH_LOGIN_INVALID, '@outcome:error'] }, async ({ page }) => {
+    // Catches a regression where the sign-in form stops surfacing the
+    // backend's rejection message (frontend/app/sign-in/page.tsx:55) and
+    // instead fails silently or shows nothing.
+    await page.route('**/sign_in/', (route) =>
+      route.fulfill({ status: 401, contentType: 'application/json', body: '{}' })
+    );
+
+    await page.goto('/sign-in');
+    await waitForPageLoad(page);
+
+    // Fill with invalid credentials (using placeholder)
+    const emailInput = page.getByPlaceholder('Email');
+    await emailInput.fill('invalid@example.com');
+
+    const passwordInput = page.getByPlaceholder('Password');
+    await passwordInput.fill('wrongpassword');
+
+    // Submit
+    const submitBtn = page.locator('button[type="submit"]');
+    await submitBtn.click();
+
+    // Shows the backend's rejection message and stays on sign-in page
+    await expect(page.getByText('Invalid credentials')).toBeVisible();
+    await expect(page).toHaveURL(/.*sign-in/);
+  });
+
+  test('redirects to sign-in when opening the dashboard without a session', { tag: [...AUTH_PROTECTED_REDIRECT, '@outcome:success'] }, async ({ page }) => {
+    // quality: allow-no-interaction (no UI link to /dashboard when logged out; the guard redirect on direct navigation is the behavior)
+    await page.context().clearCookies();
+    await page.addInitScript(() => localStorage.clear());
+    await page.goto('/dashboard');
+    await waitForPageLoad(page);
+
+    await expect(page).toHaveURL(/.*sign-in/);
+  });
+
+  test('redirects to sign-in when opening the backoffice without a session', { tag: [...AUTH_PROTECTED_REDIRECT, '@outcome:success'] }, async ({ page }) => {
+    // quality: allow-no-interaction (no UI link to /backoffice when logged out; the guard redirect on direct navigation is the behavior)
+    await page.context().clearCookies();
+    await page.addInitScript(() => localStorage.clear());
+    await page.goto('/backoffice');
+    await waitForPageLoad(page);
+
+    await expect(page).toHaveURL(/.*sign-in/);
+  });
+
+  test('should validate password mismatch on sign-up', { tag: [...AUTH_SIGN_UP_FORM, '@outcome:error'] }, async ({ page }) => {
+    await page.goto('/sign-up');
+    await waitForPageLoad(page);
+
+    // Fill form with mismatched passwords
+    await page.getByPlaceholder('First Name').fill('Test');
+    await page.getByPlaceholder('Last Name').fill('User');
+    await page.getByPlaceholder('Email').fill('test@example.com');
+    await page.getByPlaceholder('Password', { exact: true }).fill('password123');
+    await page.getByPlaceholder('Confirm Password').fill('different456');
+
+    await page.getByRole('button', { name: 'Create account' }).click();
+
+    // Should show password mismatch error and stay on sign-up page
+    await expect(page.getByText('Passwords do not match')).toBeVisible();
+    await expect(page).toHaveURL(/.*sign-up/);
+  });
+
+  test('should accept input in sign-up form fields', { tag: [...AUTH_SIGN_UP_FORM, '@outcome:display'] }, async ({ page }) => {
+    // Catches a broken/removed onChange handler on any sign-up field
+    // (controlled-input wiring regression).
+    await page.goto('/sign-up');
+    await waitForPageLoad(page);
+
+    const firstNameInput = page.getByPlaceholder('First Name');
+    await firstNameInput.fill('Ana');
+    await expect(firstNameInput).toHaveValue('Ana');
+
+    const lastNameInput = page.getByPlaceholder('Last Name');
+    await lastNameInput.fill('Garcia');
+    await expect(lastNameInput).toHaveValue('Garcia');
+
+    const emailInput = page.getByPlaceholder('Email');
+    await emailInput.fill('ana@example.com');
+    await expect(emailInput).toHaveValue('ana@example.com');
+
+    const passwordInput = page.getByPlaceholder('Password', { exact: true });
+    await passwordInput.fill('password123');
+    await expect(passwordInput).toHaveValue('password123');
+
+    const confirmPasswordInput = page.getByPlaceholder('Confirm Password');
+    await confirmPasswordInput.fill('password123');
+    await expect(confirmPasswordInput).toHaveValue('password123');
+  });
+
+  test('should navigate from sign-in to forgot password', { tag: [...AUTH_FORGOT_PASSWORD_FORM, '@outcome:display'] }, async ({ page }) => {
+    await page.goto('/sign-in');
+    await waitForPageLoad(page);
+
+    // Click forgot password link
+    const forgotLink = page.getByRole('link', { name: 'Forgot password?' });
+    await expect(forgotLink).toBeVisible();
+    await forgotLink.click();
+    await page.waitForURL(/.*forgot-password/, { timeout: 10_000 });
+
+    await expect(page).toHaveURL(/.*forgot-password/);
+    await expect(page.getByRole('heading', { name: 'Reset Password' })).toBeVisible();
+  });
+});
