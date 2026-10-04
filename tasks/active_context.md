@@ -31,7 +31,7 @@ plan de implementación detallado de F1.
 
 ## Próximos pasos
 
-1. El dueño revisa este Memory Bank.
-2. F0: certificado y registro del software de ProjectApp en habilitación; Python 3.14 y rueda de `mysqlclient`; caja
-   de herramientas de la DIAN.
-3. Plan de implementación de F1 (renombre de la plantilla, retiro de demos, núcleo y contrato v1).
+1. F0 técnico: Python 3.14 y rueda de `mysqlclient`, `fiscal-redis` y la caja de herramientas de la DIAN.
+2. F1, PR 1: adaptar la plantilla (renombre, retiro de demos, MySQL y marca). Plan en `docs/fiscal/planes/F1-nucleo.md`.
+3. Del dueño, sin bloquear F1: registrar Fiscal. en el portal de habilitación de ProjectApp y, hacia el final de F2,
+   el certificado.

@@ -23,21 +23,33 @@
 
 Cada fase se ejecuta con su propio plan de implementación, en su rama y su PR (protocolo de la plantilla).
 
-### F0 · Prerrequisitos (dueño y entorno)
+### F0 · Prerrequisitos
 
-- [ ] **ProjectApp (D3):**
-  - certificado digital de persona natural vigente (lo paga ProjectApp como facturador de pruebas);
-  - acceso a su portal de facturación de la DIAN;
-  - registrar Fiscal. como software «propio o adquirido» en habilitación y anotar el identificador del software, el
-    PIN y el `TestSetId`.
-- [ ] Confirmar con el contador que agregar un software en habilitación no afecta la facturación que ProjectApp hace
-  hoy.
+**Del entorno** (bloquean F1):
+
 - [ ] Python 3.14.7 en el equipo (uv o pyenv) y rueda de `mysqlclient` 2.2.8 para 3.14, compilada en Docker.
-- [ ] Contenedores locales: `fiscal-mysql` (3308, ya existe) y Redis.
+- [ ] Contenedores locales: `fiscal-mysql` (3308, ya existe) y `fiscal-redis`.
 - [ ] Descargar la caja de herramientas de la DIAN (`FE_V19_(v2026)`): XSD, ejemplos firmados, tablas y política de
-  firma. Guardarla en `backend/.../dian/resources/` con su versión.
+  firma. Guardarla en `backend/dian/resources/` con su versión.
+
+**Del dueño** (no bloquean F1; se necesitan al final de F2):
+
+- [ ] Registrar Fiscal. en el portal de facturación de la DIAN de ProjectApp, en el modo «software propio»:
+  - nombre Fiscal., NIT de ProjectApp como fabricante y un PIN;
+  - anotar el identificador del software y el `TestSetId`.
+
+  No hace falta tener el software hecho: el registro solo lo declara.
+- [ ] Confirmar con el contador si ProjectApp ya factura con otro software (entonces Fiscal. se agrega como otro
+  software, sin tocar la fecha de inicio).
+- [ ] Certificado digital de persona natural de ProjectApp, una o dos semanas antes de terminar F2. Solo sirve para el
+  set de pruebas; cada cliente tendrá el suyo (D7).
+- [ ] Antes del piloto (F7): que el abogado redacte la licencia de uso del software (ProjectApp como fabricante, el
+  comercio como facturador) y el contrato de transmisión de datos (Ley 1581).
 
 ### F1 · Plantilla adaptada y núcleo (sin DIAN real)
+
+Plan de implementación: `docs/fiscal/planes/F1-nucleo.md` (seis PRs).
+
 
 - [ ] **Renombre** del proyecto y de la app de la plantilla (`base_feature_project` y `base_feature_app` a nombres de
   Fiscal.), `api/health/` con `project=fiscal`, identidad en `CLAUDE.md` y README.
