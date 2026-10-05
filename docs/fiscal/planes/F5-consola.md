@@ -1,4 +1,4 @@
-# Plan de implementación F5 · Consola de operación
+# Plan de implementación F5 · Consola de operación — ✅ terminada (PRs #17 a #19)
 
 > 2026-10-05. Fase F5 de `tasks/tasks_plan.md` y la sección «Frontend: consola de operación» de
 > `docs/methodology/architecture.md`. La consola es para el equipo de ProjectApp. El comercio no la usa: su vista vive
@@ -41,9 +41,11 @@
   - la sesión vive en cookies que el render del servidor no lee, así que las páginas y la navegación no coincidían
     al hidratar y React regeneraba el árbol. `useHydrated` hace esperar a la hidratación.
 
-### F5 PR 3 · Contingencias, alertas y sistemas cliente (`feat/…-console-operations`)
+### F5 PR 3 · Contingencias, alertas y sistemas cliente (`feat/…-console-operations`) — ✅ hecho
 
 - Las tres páginas, con sus pruebas unitarias y E2E.
+- La navegación tiene seis enlaces. En pantallas pequeñas pasan a su propia fila y se desplazan de lado, en vez de
+  formar un encabezado de cuatro renglones; es una sola `nav`, reordenada con CSS.
 
 ## Fuera de F5
 

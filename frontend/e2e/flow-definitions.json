@@ -293,6 +293,46 @@
         "success",
         "error"
       ]
+    },
+    "console-contingencies": {
+      "name": "Contingency board",
+      "module": "console",
+      "roles": [
+        "operator"
+      ],
+      "priority": "P1",
+      "description": "Operator opens the invoices waiting for the DIAN with their 48-hour clock and goes to the document",
+      "expectedSpecs": 1,
+      "outcomes": [
+        "display"
+      ]
+    },
+    "console-alerts-resolve": {
+      "name": "Alerts and resolution",
+      "module": "console",
+      "roles": [
+        "operator"
+      ],
+      "priority": "P1",
+      "description": "Operator lists the open alerts, resolves one and can include the resolved ones",
+      "expectedSpecs": 1,
+      "outcomes": [
+        "display",
+        "success"
+      ]
+    },
+    "console-client-systems": {
+      "name": "Client systems",
+      "module": "console",
+      "roles": [
+        "operator"
+      ],
+      "priority": "P2",
+      "description": "Operator sees each client system with its notice URL, valid secrets and pending or failed notices",
+      "expectedSpecs": 1,
+      "outcomes": [
+        "display"
+      ]
     }
   }
 }

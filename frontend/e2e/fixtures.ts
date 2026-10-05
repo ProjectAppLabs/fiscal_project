@@ -376,3 +376,81 @@ export async function stubContingencyLetter(page: Page) {
     return route.fulfill({ status: 200, contentType: 'application/pdf', body: '%PDF-1.4' });
   });
 }
+
+// ── Console (contingencies, alerts, client systems) ──
+
+export const dianContingency = {
+  id: 21,
+  full_number: 'SETP990000021',
+  state: 'contingency_dian',
+  contingency: 'dian',
+  invoice_type: '04',
+  issuer: testIssuer,
+  client: 'Waiter',
+  started_at: '2026-10-04T12:00:00Z',
+  deadline_at: '2026-10-06T12:00:00Z',
+  hours_left: 5.5,
+  attempts: 6,
+};
+
+/** Stub `console/contingencies/` with one type-04 invoice close to its deadline. */
+export async function stubContingencies(page: Page) {
+  await page.route('**/api/console/contingencies/', (route) => fulfillJson(route, 200, { count: 1, results: [dianContingency] }));
+}
+
+export const rejectionAlert = {
+  id: 12,
+  kind: 'rejection',
+  severity: 'critical',
+  message: 'La DIAN rechazó SETP990000007 de Restaurante de Prueba SAS (reglas FAD06).',
+  issuer: { id: 3, nit: testIssuer.nit, legal_name: testIssuer.legal_name },
+  document: { id: 7, full_number: 'SETP990000007' },
+  created_at: '2026-10-05T12:00:00Z',
+  resolved_at: null,
+};
+
+export const queueAlert = {
+  ...rejectionAlert,
+  id: 13,
+  kind: 'queue_stuck',
+  message: 'Hay documentos en cola sin salir desde 2026-10-05 07:00.',
+  issuer: null,
+  document: null,
+};
+
+/** Stub the alerts like the backend: resolving one removes it from the open list. */
+export async function stubAlerts(page: Page) {
+  const resolved = new Set<number>();
+  await page.route(/\/api\/console\/alerts\/(\d+)\/resolve\/$/, (route) => {
+    const id = Number(route.request().url().match(/alerts\/(\d+)/)?.[1]);
+    resolved.add(id);
+    const alert = [rejectionAlert, queueAlert].find((item) => item.id === id);
+    return fulfillJson(route, 200, { ...alert, resolved_at: '2026-10-05T13:00:00Z' });
+  });
+  await page.route(/\/api\/console\/alerts\/?(\?.*)?$/, (route) => {
+    const all = new URL(route.request().url()).searchParams.get('state') === 'all';
+    const results = [rejectionAlert, queueAlert]
+      .map((alert) => (resolved.has(alert.id) ? { ...alert, resolved_at: '2026-10-05T13:00:00Z' } : alert))
+      .filter((alert) => all || !alert.resolved_at);
+    return fulfillJson(route, 200, { count: results.length, next: null, previous: null, results });
+  });
+}
+
+export const waiterClient = {
+  id: 1,
+  name: 'Waiter',
+  key_id: 'fk_waiter',
+  webhook_url: 'https://waiter.local/fiscal/avisos/',
+  active: true,
+  valid_secrets: 1,
+  issuers: 2,
+  pending_notices: 0,
+  failed_notices: 1,
+  last_delivered_at: '2026-10-05T11:00:00Z',
+  created_at: '2026-10-01T00:00:00Z',
+};
+
+/** Stub `console/client-systems/` with Waiter and one failed notice. */
+export async function stubClientSystems(page: Page) {
+  await page.route('**/api/console/client-systems/', (route) => fulfillJson(route, 200, { count: 1, results: [waiterClient] }));
+}

@@ -4,10 +4,15 @@
 
 ## Foco actual
 
-F1 y F2 terminadas (2026-10-04). Fiscal. arma la factura y las notas en UBL 2.1, calcula CUFE y CUDE, firma con
-XAdES-EPES y las envía por SOAP con WS-Security; `DIAN_GATEWAY=soap` activa el gateway real. Todo se probó sin red:
-con los vectores del anexo, los XSD oficiales y los ejemplos firmados de la caja. La prueba real es el set de pruebas
-de F3, que necesita el certificado y el registro del software de ProjectApp.
+F1, F2, F4 y F5 terminadas (2026-10-05):
+- Fiscal. arma, firma y transmite facturas y notas;
+- maneja las contingencias 04 (DIAN) y 03 (papel), con la evidencia y la carta;
+- genera el `AttachedDocument` y el PDF con el QR;
+- alerta sobre certificados, numeración, plazos, rechazos y cola, e informa su salud;
+- tiene la consola completa (tablero, documentos con descargas, emisores, contingencias, alertas y sistemas cliente).
+
+Todo se probó sin la DIAN real. Faltan F3, que espera el certificado y el registro del software de ProjectApp, y F6
+(Waiter conectado), que el dueño pidió dejar para el final.
 
 ## Decisiones activas
 
@@ -32,8 +37,9 @@ de F3, que necesita el certificado y el registro del software de ProjectApp.
 
 ## Próximos pasos
 
-1. **F3 (bloqueada por el dueño):** certificado digital de ProjectApp y registro de Fiscal. en el portal de
-   habilitación (identificador del software, PIN y `TestSetId`). Con eso se corre el set de pruebas y se confirman:
-   direcciones de los servicios, autenticación mutua TLS y formato de `X509IssuerName` (lista en el plan F2).
-2. **F4 (puede avanzar sin la DIAN):** contingencias 03 y 04, `AttachedDocument` y representación gráfica (PDF).
+1. **F6 · Waiter se conecta** (plan en el repositorio de Waiter), al final por decisión del dueño.
+2. **F3 (bloqueada por el dueño):** certificado digital de ProjectApp y registro de Fiscal. en el portal de
+   habilitación. Con eso se corre el set de pruebas y se confirman los puntos de los planes F2 y F4:
+   - direcciones de los servicios, autenticación mutua TLS y formato de `X509IssuerName`;
+   - `UUID` del `AdditionalDocumentReference` en el tipo 03.
 3. Caja de herramientas y anexos en `~/.cache/fiscal-dian/` (fuera del repositorio).

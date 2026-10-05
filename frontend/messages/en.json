@@ -329,5 +329,69 @@
     "letterTo": "To",
     "letterSubmit": "Download draft",
     "letterError": "The letter could not be generated. Check the dates."
+  },
+  "contingencies": {
+    "title": "Contingencies",
+    "subtitle": "Invoices waiting for the DIAN. They must be transmitted within 48 hours.",
+    "tableCaption": "Invoices in contingency",
+    "empty": "There are no invoices in contingency.",
+    "error": "We could not load the contingencies.",
+    "columns": {
+      "invoice": "Invoice",
+      "issuer": "Issuer",
+      "kind": "Contingency",
+      "started": "Since",
+      "deadline": "Deadline",
+      "left": "Time left",
+      "attempts": "Attempts"
+    },
+    "kinds": {
+      "dian": "DIAN (type 04)",
+      "issuer": "Issuer (type 03)"
+    },
+    "hoursLeft": "{hours} h",
+    "overdue": "Overdue by {hours} h"
+  },
+  "alerts": {
+    "title": "Alerts",
+    "showResolved": "Also show resolved ones",
+    "tableCaption": "Alerts",
+    "empty": "There are no open alerts.",
+    "emptyAll": "There are no alerts.",
+    "error": "We could not load the alerts.",
+    "columns": {
+      "severity": "Severity",
+      "kind": "Kind",
+      "message": "Message",
+      "issuer": "Issuer",
+      "created": "Created",
+      "actions": "Action"
+    },
+    "resolve": "Resolve",
+    "resolved": "Resolved on {date}",
+    "resolveError": "The alert could not be resolved.",
+    "service": "Whole service",
+    "pageInfo": "Page {page} · {count} alerts",
+    "previous": "Previous",
+    "next": "Next",
+    "pagination": "Alert pagination"
+  },
+  "clientSystems": {
+    "title": "Client systems",
+    "tableCaption": "Client systems",
+    "empty": "There are no client systems.",
+    "error": "We could not load the client systems.",
+    "columns": {
+      "name": "System",
+      "key": "Key identifier",
+      "webhook": "Notice URL",
+      "secrets": "Valid secrets",
+      "issuers": "Issuers",
+      "notices": "Notices",
+      "lastDelivered": "Last notice delivered"
+    },
+    "noWebhook": "No notice URL",
+    "inactive": "Inactive",
+    "noticesState": "{pending} pending · {failed} failed"
   }
 }
