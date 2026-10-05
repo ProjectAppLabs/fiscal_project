@@ -4,7 +4,7 @@
 # adopted, so behaviour is preserved exactly. Edit freely; the sync script
 # never overwrites this file.
 
-backend_app_name: base_feature_app
+backend_app_name: fiscal_app
 py_test_file_glob: test_*.py
 frontend_unit_dir: "."
 frontend_e2e_dir: e2e

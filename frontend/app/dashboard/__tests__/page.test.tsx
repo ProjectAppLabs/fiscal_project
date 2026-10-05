@@ -1,54 +1,58 @@
 import { describe, it, expect, beforeEach } from '@jest/globals';
-import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { screen } from '@testing-library/react';
 
 import DashboardPage from '../page';
+import { renderWithIntl } from '../../../lib/__tests__/intl';
 import { useRequireAuth } from '../../../lib/hooks/useRequireAuth';
-import { useAuthStore } from '../../../lib/stores/authStore';
 
 jest.mock('../../../lib/hooks/useRequireAuth', () => ({
   useRequireAuth: jest.fn(),
 }));
 
-jest.mock('../../../lib/stores/authStore', () => ({
-  useAuthStore: jest.fn(),
-}));
-
 const mockUseRequireAuth = useRequireAuth as unknown as jest.Mock;
-const mockUseAuthStore = useAuthStore as unknown as jest.Mock;
-
-const setAuthStoreState = (state: any) => {
-  mockUseAuthStore.mockImplementation((selector?: (store: any) => unknown) =>
-    selector ? selector(state) : state
-  );
-};
 
 describe('DashboardPage', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  it('renders nothing when unauthenticated', () => {
+  it('renders nothing when the user has no session', () => {
     mockUseRequireAuth.mockReturnValue({ isAuthenticated: false });
-    setAuthStoreState({ signOut: jest.fn() });
 
-    const { container } = render(<DashboardPage />);
+    const { container } = renderWithIntl(<DashboardPage />);
 
     expect(container).toBeEmptyDOMElement();
   });
 
-  it('renders dashboard and triggers sign out', async () => {
-    const signOut = jest.fn();
+  it('shows the Fiscal. wordmark as the page heading', () => {
     mockUseRequireAuth.mockReturnValue({ isAuthenticated: true });
-    setAuthStoreState({ signOut });
 
-    render(<DashboardPage />);
+    renderWithIntl(<DashboardPage />);
 
-    expect(screen.getByRole('heading', { name: 'Dashboard' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Backoffice' })).toHaveAttribute('href', '/backoffice');
+    expect(screen.getByRole('heading', { level: 1, name: 'Fiscal.' })).toBeInTheDocument();
+  });
 
-    await userEvent.click(screen.getByRole('button', { name: 'Sign out' }));
+  it('describes the page as the operations console', () => {
+    mockUseRequireAuth.mockReturnValue({ isAuthenticated: true });
 
-    expect(signOut).toHaveBeenCalledTimes(1);
+    renderWithIntl(<DashboardPage />);
+
+    expect(screen.getByText('Consola de operación')).toBeInTheDocument();
+  });
+
+  it('shows the empty state while there are no documents', () => {
+    mockUseRequireAuth.mockReturnValue({ isAuthenticated: true });
+
+    renderWithIntl(<DashboardPage />);
+
+    expect(screen.getByTestId('dashboard-empty-state')).toHaveTextContent('Todavía no hay documentos');
+  });
+
+  it('renders the English copy when the locale is en', () => {
+    mockUseRequireAuth.mockReturnValue({ isAuthenticated: true });
+
+    renderWithIntl(<DashboardPage />, { locale: 'en' });
+
+    expect(screen.getByRole('heading', { level: 2, name: 'There are no documents yet' })).toBeInTheDocument();
   });
 });

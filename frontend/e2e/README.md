@@ -13,18 +13,12 @@ e2e/
 │   └── flow-tags.ts               # Tag constants per flow
 ├── fixtures.ts                    # Shared fixtures + helpers
 ├── test-with-coverage.ts          # Shared test base
-├── auth/                          # Auth module specs
+├── auth/                          # Sign-in, sign-out, protected route, password recovery
 │   └── auth.spec.ts
-├── app/                           # App flows (cart/checkout/purchase)
-│   ├── cart.spec.ts
-│   ├── checkout.spec.ts
-│   ├── complete-purchase.spec.ts
-│   └── user-flows.spec.ts
-├── public/                        # Public pages (blogs/catalog/navigation)
-│   ├── blogs.spec.ts
-│   ├── navigation.spec.ts
-│   ├── products.spec.ts
-│   └── smoke.spec.ts
+├── dashboard/                     # Console empty state and home redirect
+│   └── dashboard.spec.ts
+├── navigation/                    # Locale switch and unknown routes
+│   └── navigation.spec.ts
 └── README.md
 ```
 
@@ -75,12 +69,12 @@ npm run e2e:coverage:module -- auth
 npx playwright test e2e/auth/
 
 # Filter by flow tag or metadata tags
-npx playwright test --grep @flow:catalog-browse
+npx playwright test --grep @flow:auth-login-success
 npx playwright test --grep @module:auth
 npx playwright test --grep @priority:P1
 
 # Single file
-npx playwright test e2e/app/cart.spec.ts
+npx playwright test e2e/auth/auth.spec.ts
 
 # View report
 npx playwright show-report
@@ -92,10 +86,12 @@ npx playwright show-report
 
 Playwright starts (or reuses) the following servers from `playwright.config.ts`:
 
-- Backend: `127.0.0.1:8000` (health check: `/api/blogs-data/`)
+- Backend: `127.0.0.1:8000` (health check: `/api/health/`)
 - Frontend: `http://localhost:3000` (Next.js dev server)
 
 If the servers are already running, `reuseExistingServer: true` is used when not in CI.
+Auth responses (`sign_in/`, `validate_token/`, `send_passcode/`, the reCAPTCHA site key) are stubbed per
+test with `page.route` (see `fixtures.ts`), so the specs do not need seeded users.
 `baseURL` defaults to `http://localhost:3000` and can be overridden with `PLAYWRIGHT_BASE_URL`.
 
 ## Flow Coverage System
@@ -114,7 +110,7 @@ test('sign-in form is visible', {
   tag: [...AUTH_SIGN_IN_FORM, '@role:shared'],
 }, async ({ page }) => {
   await page.goto('/sign-in');
-  await expect(page.getByPlaceholder('Email')).toBeVisible();
+  await expect(page.getByLabel('Correo electrónico')).toBeVisible();
 });
 ```
 
@@ -127,12 +123,10 @@ Example output (values vary per run):
 ║                    FLOW COVERAGE REPORT                         ║
 ╚══════════════════════════════════════════════════════════════════╝
 📊 SUMMARY
-   Total Flows Defined:  33
-   ✅ Covered:           30 (90.9%)
-   ⚠️  Partial:           2 (6.1%)
+   Total Flows Defined:  11
+   ✅ Covered:           11 (100%)
 📦 COVERAGE BY MODULE
-   auth     [████████████████████] 100% (5/5)
-   cart     [███████████████░░░░░] 71% (5/7)
+   auth     [████████████████████] 100% (7/7)
    ...
 ```
 
@@ -153,25 +147,23 @@ JSON artifacts:
 | Helper | File | Purpose |
 |--------|------|---------|
 | `waitForPageLoad(page)` | `fixtures.ts` | Wait for `load` + `domcontentloaded` |
-| `waitForApiResponse(page, url)` | `fixtures.ts` | Wait for a 200 response that matches a URL |
-| `testUser`, `testAdminUser`, `testCheckoutData` | `fixtures.ts` | Shared fixture data |
+| `signInWithCookies(context, page, baseURL)` / `clearSession(context, page)` | `fixtures.ts` | Start a test with or without a session |
+| `stubSignInSuccess`, `stubSignInRejected`, `stubValidToken`, `stubSendPasscode`, `stubNoCaptcha` | `fixtures.ts` | Backend stubs for the auth endpoints |
+| `testOperator`, `testPasscode` | `fixtures.ts` | Shared fixture data |
 | `test` / `expect` | `test-with-coverage.ts` | Shared Playwright test base |
 | Flow tag constants | `helpers/flow-tags.ts` | Tag arrays per flow/module/priority |
 
-## Flow Definitions (33 flows)
+## Flow Definitions (11 flows)
 
 Source of truth: `e2e/flow-definitions.json` (update `lastUpdated` when adding flows).
 
 | Module | Flows | Priority |
 |--------|-------|----------|
-| **home** | home-loads, home-to-blog, home-to-catalog, home-product-carousel | P1-P3 |
-| **auth** | auth-sign-in-form, auth-login-invalid, auth-protected-redirect, auth-sign-up-form, auth-forgot-password-form | P1-P2 |
-| **blog** | blog-list-view, blog-detail-view, blog-detail-back | P2-P3 |
-| **navigation** | navigation-between-pages, navigation-header, navigation-footer | P2-P4 |
-| **catalog** | catalog-browse, catalog-product-detail, catalog-product-gallery, catalog-back-navigation | P1-P3 |
-| **cart** | cart-add, cart-empty, cart-update-qty, cart-remove, cart-subtotal, cart-persist, cart-multiple-products | P1-P2 |
-| **checkout** | checkout-form-display, checkout-form-validation, checkout-form-fill | P1-P2 |
-| **purchase** | purchase-complete-flow, purchase-multiple-items, purchase-disabled-empty-cart, purchase-loading-state | P1-P3 |
+| **home** | home-redirect | P1 |
+| **auth** | auth-sign-in-form, auth-login-invalid, auth-login-success, auth-protected-redirect, auth-sign-out, auth-forgot-password-form, auth-forgot-password-send-code | P1-P2 |
+| **dashboard** | dashboard-empty-state | P1 |
+| **i18n** | i18n-locale-switch | P2 |
+| **navigation** | navigation-unknown-route | P3 |
 
 ## References
 

@@ -1,15 +1,25 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { FormEvent, useState } from 'react';
 
-import { useAuthStore } from '@/lib/stores/authStore';
+import { ROUTES } from '@/lib/constants';
 import { getApiErrorMessage } from '@/lib/services/errors';
+import { useAuthStore } from '@/lib/stores/authStore';
+
+const MIN_PASSWORD_LENGTH = 8;
+const CODE_LENGTH = 6;
+const INPUT_CLASS = 'w-full rounded border border-border bg-card px-3 py-2';
+const SUBMIT_CLASS =
+  'w-full rounded bg-primary px-4 py-2 text-primary-foreground hover:bg-primary/90 disabled:opacity-50';
 
 export default function ForgotPasswordPage() {
+  const t = useTranslations('forgotPassword');
   const router = useRouter();
-  const { sendPasswordResetCode, resetPassword } = useAuthStore();
+  const sendPasswordResetCode = useAuthStore((s) => s.sendPasswordResetCode);
+  const resetPassword = useAuthStore((s) => s.resetPassword);
 
   const [step, setStep] = useState<'email' | 'code'>('email');
   const [email, setEmail] = useState('');
@@ -28,10 +38,10 @@ export default function ForgotPasswordPage() {
 
     try {
       await sendPasswordResetCode(email);
-      setMessage('Verification code sent to your email');
+      setMessage(t('codeSent'));
       setStep('code');
     } catch (err: unknown) {
-      setError(getApiErrorMessage(err, 'Failed to send code'));
+      setError(getApiErrorMessage(err, t('sendCodeFailed')));
     } finally {
       setLoading(false);
     }
@@ -39,49 +49,63 @@ export default function ForgotPasswordPage() {
 
   const onResetPassword = async (e: FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     setError('');
     setMessage('');
 
-    // Validate passwords match
     if (newPassword !== confirmPassword) {
-      setError('Passwords do not match');
-      setLoading(false);
+      setError(t('passwordsMismatch'));
       return;
     }
 
-    // Validate password strength
-    if (newPassword.length < 8) {
-      setError('Password must be at least 8 characters');
-      setLoading(false);
+    if (newPassword.length < MIN_PASSWORD_LENGTH) {
+      setError(t('passwordTooShort'));
       return;
     }
+
+    setLoading(true);
 
     try {
       await resetPassword({ email, code, new_password: newPassword });
-      setMessage('Password reset successfully! Redirecting...');
-      router.replace('/sign-in');
+      setMessage(t('resetSuccess'));
+      router.replace(ROUTES.SIGN_IN);
     } catch (err: unknown) {
-      setError(getApiErrorMessage(err, 'Failed to reset password'));
+      setError(getApiErrorMessage(err, t('resetFailed')));
     } finally {
       setLoading(false);
     }
   };
 
+  const feedback = (
+    <>
+      {error ? (
+        <p className="text-sm text-destructive" role="alert">
+          {error}
+        </p>
+      ) : null}
+      {message ? (
+        <p className="text-sm text-success" role="status">
+          {message}
+        </p>
+      ) : null}
+    </>
+  );
+
   return (
-    <main className="max-w-md mx-auto px-6 py-10">
-      <h1 className="text-2xl font-semibold">Reset Password</h1>
+    <main className="mx-auto max-w-md px-6 py-10">
+      <h1 className="text-2xl font-semibold">{t('title')}</h1>
 
       {step === 'email' ? (
         <form className="mt-6 space-y-4" onSubmit={onSendCode}>
-          <p className="text-sm text-muted-foreground">
-            Enter your email address and we&apos;ll send you a verification code to reset your password.
-          </p>
+          <p className="text-sm text-muted-foreground">{t('emailIntro')}</p>
 
           <div>
+            <label className="sr-only" htmlFor="forgot-email">
+              {t('email')}
+            </label>
             <input
-              className="border border-border rounded px-3 py-2 w-full bg-card"
-              placeholder="Email"
+              id="forgot-email"
+              className={INPUT_CLASS}
+              placeholder={t('email')}
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -90,53 +114,61 @@ export default function ForgotPasswordPage() {
             />
           </div>
 
-          <button
-            className="bg-primary text-primary-foreground rounded px-4 py-2 w-full disabled:opacity-50 hover:bg-primary/90"
-            type="submit"
-            disabled={loading}
-          >
-            {loading ? 'Sending...' : 'Send verification code'}
+          <button className={SUBMIT_CLASS} type="submit" disabled={loading}>
+            {loading ? t('sendingCode') : t('sendCode')}
           </button>
 
-          {error ? <p className="text-destructive text-sm">{error}</p> : null}
-          {message ? <p className="text-success text-sm">{message}</p> : null}
+          {feedback}
         </form>
       ) : (
         <form className="mt-6 space-y-4" onSubmit={onResetPassword}>
           <p className="text-sm text-muted-foreground">
-            Enter the 6-digit code sent to <strong>{email}</strong> and your new password.
+            {t.rich('codeIntro', { email, strong: (chunks) => <strong>{chunks}</strong> })}
           </p>
 
           <div>
+            <label className="sr-only" htmlFor="forgot-code">
+              {t('code')}
+            </label>
             <input
-              className="border border-border rounded px-3 py-2 w-full text-center text-2xl tracking-widest bg-card"
+              id="forgot-code"
+              className={`${INPUT_CLASS} text-center text-2xl tracking-widest`}
               placeholder="000000"
               type="text"
+              inputMode="numeric"
               value={code}
-              onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-              maxLength={6}
+              onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, CODE_LENGTH))}
+              maxLength={CODE_LENGTH}
               required
             />
-            <p className="text-xs text-muted-foreground mt-1">6-digit code from email</p>
+            <p className="mt-1 text-xs text-muted-foreground">{t('codeHint')}</p>
           </div>
 
           <div>
+            <label className="sr-only" htmlFor="forgot-new-password">
+              {t('newPassword')}
+            </label>
             <input
-              className="border border-border rounded px-3 py-2 w-full bg-card"
-              placeholder="New Password"
+              id="forgot-new-password"
+              className={INPUT_CLASS}
+              placeholder={t('newPassword')}
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
               type="password"
               autoComplete="new-password"
               required
             />
-            <p className="text-xs text-muted-foreground mt-1">Must be at least 8 characters</p>
+            <p className="mt-1 text-xs text-muted-foreground">{t('newPasswordHint')}</p>
           </div>
 
           <div>
+            <label className="sr-only" htmlFor="forgot-confirm-password">
+              {t('confirmPassword')}
+            </label>
             <input
-              className="border border-border rounded px-3 py-2 w-full bg-card"
-              placeholder="Confirm New Password"
+              id="forgot-confirm-password"
+              className={INPUT_CLASS}
+              placeholder={t('confirmPassword')}
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               type="password"
@@ -145,30 +177,25 @@ export default function ForgotPasswordPage() {
             />
           </div>
 
-          <button
-            className="bg-primary text-primary-foreground rounded px-4 py-2 w-full disabled:opacity-50 hover:bg-primary/90"
-            type="submit"
-            disabled={loading}
-          >
-            {loading ? 'Resetting...' : 'Reset password'}
+          <button className={SUBMIT_CLASS} type="submit" disabled={loading}>
+            {loading ? t('resetting') : t('reset')}
           </button>
 
-          {error ? <p className="text-destructive text-sm">{error}</p> : null}
-          {message ? <p className="text-success text-sm">{message}</p> : null}
+          {feedback}
 
           <button
             type="button"
             onClick={() => setStep('email')}
-            className="text-sm text-info hover:underline w-full text-center"
+            className="w-full text-center text-sm text-info hover:underline"
           >
-            Back to email
+            {t('backToEmail')}
           </button>
         </form>
       )}
 
       <div className="mt-6 text-center text-sm">
-        <Link href="/sign-in" className="text-info hover:underline">
-          Back to sign in
+        <Link href={ROUTES.SIGN_IN} className="text-info hover:underline">
+          {t('backToSignIn')}
         </Link>
       </div>
     </main>

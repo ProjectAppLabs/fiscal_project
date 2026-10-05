@@ -247,16 +247,17 @@ por ecosistema. La fuente de verdad es `vps-ops-toolkit/workflows/`.
 <!-- fleet-base:end -->
 
 <!-- project-shared:begin source=CLAUDE.md -->
-# Base Django React Next Feature — Claude Code Configuration
+# Fiscal. — Claude Code Configuration
 
 ## Project Identity
 
-- **Name**: Base Django React Next Feature (Template project)
-- **Domain**: N/A (template — not deployed to production)
-- **Stack**: Django + DRF (backend) / Next.js + React + TypeScript (frontend) / MySQL 8 / Redis / Huey
-- **Server path**: `/home/ryzepeck/webapps/base_django_react_next_feature_staging` (staging only)
-- **Services**: `base_django_react_next_feature_staging` (Gunicorn), `base_django_react_next_feature-staging-huey`
-- **Note**: This is a **template project** used as the starting point for new Django+Next.js projects
+- **Name**: Fiscal. — microservicio de facturación electrónica DIAN de ProjectApp (marca «Fiscal.», con punto final; logotipo en Ubuntu Bold)
+- **Repo**: `ProjectAppLabs/fiscal_project` · Django project `fiscal_project`, app `fiscal_app`
+- **Domain**: sin dominio todavía (desarrollo local, decisión D6)
+- **Stack**: Django + DRF (backend) / Next.js + React + TypeScript (consola de operación) / MySQL 8.4 / Redis / Huey
+- **Local**: MySQL `fiscal-mysql` 127.0.0.1:3308 · Redis `fiscal-redis` 127.0.0.1:6380 · Django :8000 · Next :3000 (o :3002 si Waiter corre)
+- **Memory Bank**: `docs/methodology/` y `tasks/`; inventario en `docs/fiscal/inventario/`; planes en `docs/fiscal/planes/`
+- **Note**: derivado de la plantilla Base Django React Next. `FISCAL_ENCRYPTION_KEY` es obligatoria; `DIAN_GATEWAY=simulated` hasta F2. Los operadores no se registran solos: los crea un administrador
 
 ---
 
@@ -558,7 +559,7 @@ Focus particularly on `tasks/active_context.md` and `tasks/tasks_plan.md` as the
 
 ## Directory Structure
 
-- Backend: `content/` Django app, `base_feature_project/` Django project
+- Backend: `fiscal_app/` Django app (models/, serializers/, views/, urls/, services/, tests/), `fiscal_project/` Django project (`fiscal_settings.py` validates the Fiscal. start-up settings); `dian/` (pure DIAN library) arrives in F1 PR 5 / F2
 - Frontend: `app/` (Next.js App Router), `components/`, `lib/stores/`, `e2e/`
 
 ---

@@ -1,24 +1,9 @@
 'use client';
 
-import { useLocaleStore } from '@/lib/stores/localeStore';
-import type { StagingBannerState } from '@/lib/services/staging-banner';
+import { useLocale, useTranslations } from 'next-intl';
 
-const COPY = {
-  es: {
-    daysRemainingOne: 'queda',
-    daysRemainingMany: 'quedan',
-    dayOne: 'día',
-    dayMany: 'días',
-    forReview: 'para tu revisión',
-  },
-  en: {
-    daysRemainingOne: 'remains',
-    daysRemainingMany: 'remain',
-    dayOne: 'day',
-    dayMany: 'days',
-    forReview: 'for your review',
-  },
-} as const;
+import { resolveLocale } from '@/lib/i18n/config';
+import type { StagingBannerState } from '@/lib/services/staging-banner';
 
 const PHASE_ICONS: Record<StagingBannerState['current_phase'], string> = {
   design: '🎨',
@@ -30,13 +15,13 @@ type Props = {
 };
 
 export default function StagingPhaseBanner({ state }: Props) {
-  const locale = useLocaleStore((s) => s.locale);
-  const copy = COPY[locale];
+  const t = useTranslations('staging');
+  const locale = resolveLocale(useLocale());
   const days = state.days_remaining ?? 0;
   const isUrgent = days <= 2;
   const phaseLabel = state.phase_labels[locale];
-  const verb = days === 1 ? copy.daysRemainingOne : copy.daysRemainingMany;
-  const noun = days === 1 ? copy.dayOne : copy.dayMany;
+  const verb = days === 1 ? t('remainsOne') : t('remainsMany');
+  const noun = days === 1 ? t('dayOne') : t('dayMany');
 
   return (
     <div
@@ -52,7 +37,7 @@ export default function StagingPhaseBanner({ state }: Props) {
       <div className="max-w-6xl mx-auto px-4 py-2 flex items-center justify-center gap-2 text-center">
         <span aria-hidden>{PHASE_ICONS[state.current_phase]}</span>
         <span>
-          <strong>{phaseLabel}</strong> — {verb} <strong>{days} {noun}</strong> {copy.forReview}
+          <strong>{phaseLabel}</strong> — {verb} <strong>{days} {noun}</strong> {t('forReview')}
         </span>
       </div>
     </div>

@@ -1,0 +1,11 @@
+{
+  "$comment": "Advisories accepted temporarily by scripts/ci/npm-audit-gate.cjs. Each entry needs a reason and an expiry; an expired entry fails CI again. Keep this list empty whenever a fix exists.",
+  "advisories": [
+    {
+      "id": "GHSA-vfj7-8cjw-p6xm",
+      "package": "braces",
+      "reason": "No patched braces release exists (affects <=3.0.3, published 2026-09-18). It only reaches the dev-time ESLint plugin (eslint-config-next -> @next/eslint-plugin-next -> fast-glob -> micromatch -> braces) and never the built app. npm's only offer is downgrading eslint-config-next to 14.",
+      "expires": "2026-11-04"
+    }
+  ]
+}

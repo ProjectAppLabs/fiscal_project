@@ -1,68 +1,54 @@
 'use client';
 
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 
+import { FiscalLogo } from '@/components/brand/FiscalLogo';
+import { ThemeToggle } from '@/components/theme-toggle';
 import { ROUTES } from '@/lib/constants';
 import { useAuthStore } from '@/lib/stores/authStore';
-import { useCartStore } from '@/lib/stores/cartStore';
-import { ThemeToggle } from '@/components/theme-toggle';
+import { LocaleSwitcher } from './LocaleSwitcher';
+
+const NAV_LINK_CLASS =
+  'rounded px-2 py-1 hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring';
 
 export default function Header() {
+  const t = useTranslations('header');
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const signOut = useAuthStore((s) => s.signOut);
-  const cartCount = useCartStore((s) => s.items.reduce((acc, item) => acc + item.quantity, 0));
 
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-card/80 backdrop-blur">
-      <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between gap-4">
-        <Link className="font-semibold tracking-tight" href="/">
-          Shop
+      <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-4">
+        <Link className="text-xl" href={ROUTES.HOME}>
+          <FiscalLogo />
         </Link>
 
-        <nav className="flex items-center gap-2 sm:gap-4 text-sm">
-          <Link className="px-2 py-1 rounded hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" href="/catalog">
-            Catalog
-          </Link>
-          <Link className="px-2 py-1 rounded hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" href="/blogs">
-            Blogs
-          </Link>
-          <Link className="px-2 py-1 rounded hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" href={ROUTES.MANUAL}>
-            Manual
-          </Link>
+        <nav className="flex items-center gap-2 text-sm sm:gap-4" aria-label={t('mainNav')}>
+          {isAuthenticated ? (
+            <Link className={NAV_LINK_CLASS} href={ROUTES.DASHBOARD}>
+              {t('console')}
+            </Link>
+          ) : null}
 
-          <Link className="px-2 py-1 rounded hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" href="/checkout">
-            <span className="inline-flex items-center gap-2">
-              Cart
-              <span className="min-w-6 h-6 px-2 rounded-full bg-primary text-primary-foreground text-xs inline-flex items-center justify-center">
-                {cartCount}
-              </span>
-            </span>
-          </Link>
-
+          <LocaleSwitcher />
           <ThemeToggle />
 
           {isAuthenticated ? (
-            <>
-              <Link className="px-2 py-1 rounded hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" href="/dashboard">
-                Account
-              </Link>
-              <button
-                className="border border-border rounded-full px-4 py-2 hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                onClick={signOut}
-                type="button"
-              >
-                Sign out
-              </button>
-            </>
+            <button
+              className="rounded-full border border-border px-4 py-2 hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              onClick={signOut}
+              type="button"
+            >
+              {t('signOut')}
+            </button>
           ) : (
-            <>
-              <Link className="border border-border rounded-full px-4 py-2 hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" href="/sign-in">
-                Sign in
-              </Link>
-              <Link className="bg-primary text-primary-foreground rounded-full px-4 py-2 hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" href="/sign-up">
-                Sign up
-              </Link>
-            </>
+            <Link
+              className="rounded-full bg-primary px-4 py-2 text-primary-foreground hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              href={ROUTES.SIGN_IN}
+            >
+              {t('signIn')}
+            </Link>
           )}
         </nav>
       </div>

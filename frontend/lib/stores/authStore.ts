@@ -2,6 +2,7 @@
 
 import { create } from 'zustand';
 
+import { API_ENDPOINTS } from '@/lib/constants';
 import { api } from '@/lib/services/http';
 import { clearTokens, getAccessToken, getRefreshToken, setTokens } from '@/lib/services/tokens';
 
@@ -20,8 +21,6 @@ type AuthState = {
   user: User | null;
   isAuthenticated: boolean;
   signIn: (args: { email: string; password: string; captcha_token?: string }) => Promise<void>;
-  signUp: (args: { email: string; password: string; first_name?: string; last_name?: string; captcha_token?: string }) => Promise<void>;
-  googleLogin: (args: { credential?: string; email?: string; given_name?: string; family_name?: string; picture?: string }) => Promise<void>;
   signOut: () => void;
   syncFromCookies: () => void;
   restoreUser: () => Promise<void>;
@@ -29,12 +28,21 @@ type AuthState = {
   resetPassword: (args: { email: string; code: string; new_password: string }) => Promise<void>;
 };
 
+function readStoredUser(): User | null {
+  try {
+    const data = typeof window !== 'undefined' ? localStorage.getItem('user_data') : null;
+    return data ? JSON.parse(data) : null;
+  } catch {
+    return null;
+  }
+}
+
 export const useAuthStore = create<AuthState>((set, get) => ({
   accessToken: getAccessToken(),
   refreshToken: getRefreshToken(),
-  user: (() => { try { const d = typeof window !== 'undefined' ? localStorage.getItem('user_data') : null; return d ? JSON.parse(d) : null; } catch { return null; } })(),
+  user: readStoredUser(),
   isAuthenticated: Boolean(getAccessToken()),
-  
+
   syncFromCookies: () => {
     const accessToken = getAccessToken();
     const refreshToken = getRefreshToken();
@@ -43,63 +51,17 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       void get().restoreUser();
     }
   },
-  
+
   signIn: async ({ email, password, captcha_token }) => {
-    const response = await api.post('sign_in/', { email, password, captcha_token });
+    const response = await api.post(API_ENDPOINTS.SIGN_IN, { email, password, captcha_token });
     const access = response.data?.access;
     const refresh = response.data?.refresh;
     const user = response.data?.user;
-    
-    if (!access || !refresh) {
-      throw new Error('Invalid token response');
-    }
-    
-    setTokens({ access, refresh });
-    if (user) localStorage.setItem('user_data', JSON.stringify(user));
-    set({ user, isAuthenticated: true });
-    get().syncFromCookies();
-  },
 
-  signUp: async ({ email, password, first_name, last_name, captcha_token }) => {
-    const response = await api.post('sign_up/', { 
-      email, 
-      password, 
-      first_name, 
-      last_name,
-      captcha_token,
-    });
-    
-    const access = response.data?.access;
-    const refresh = response.data?.refresh;
-    const user = response.data?.user;
-    
     if (!access || !refresh) {
       throw new Error('Invalid token response');
     }
-    
-    setTokens({ access, refresh });
-    if (user) localStorage.setItem('user_data', JSON.stringify(user));
-    set({ user, isAuthenticated: true });
-    get().syncFromCookies();
-  },
 
-  googleLogin: async ({ credential, email, given_name, family_name, picture }) => {
-    const response = await api.post('google_login/', {
-      credential,
-      email,
-      given_name,
-      family_name,
-      picture,
-    });
-    
-    const access = response.data?.access;
-    const refresh = response.data?.refresh;
-    const user = response.data?.user;
-    
-    if (!access || !refresh) {
-      throw new Error('Invalid token response');
-    }
-    
     setTokens({ access, refresh });
     if (user) localStorage.setItem('user_data', JSON.stringify(user));
     set({ user, isAuthenticated: true });
@@ -117,7 +79,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     if (!token) return;
 
     try {
-      const response = await api.get('validate_token/');
+      const response = await api.get(API_ENDPOINTS.VALIDATE_TOKEN);
       const user = response.data?.user;
 
       if (user) {
@@ -130,16 +92,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       set({ accessToken: null, refreshToken: null, user: null, isAuthenticated: false });
     }
   },
-  
+
   sendPasswordResetCode: async (email: string) => {
-    await api.post('send_passcode/', { email });
+    await api.post(API_ENDPOINTS.SEND_PASSCODE, { email });
   },
-  
+
   resetPassword: async ({ email, code, new_password }) => {
-    await api.post('verify_passcode_and_reset_password/', { 
-      email, 
-      code, 
-      new_password 
-    });
+    await api.post(API_ENDPOINTS.RESET_PASSWORD, { email, code, new_password });
   },
 }));

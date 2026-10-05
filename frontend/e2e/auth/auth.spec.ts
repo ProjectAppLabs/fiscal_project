@@ -1,139 +1,132 @@
 import { test, expect } from '../test-with-coverage';
-import { waitForPageLoad } from '../fixtures';
-import { AUTH_SIGN_IN_FORM, AUTH_SIGN_UP_FORM, AUTH_LOGIN_INVALID, AUTH_PROTECTED_REDIRECT, AUTH_FORGOT_PASSWORD_FORM } from '../helpers/flow-tags';
+import {
+  clearSession,
+  signInWithCookies,
+  stubNoCaptcha,
+  stubSendPasscode,
+  stubSignInRejected,
+  stubSignInSuccess,
+  stubValidToken,
+  testOperator,
+  waitForPageLoad,
+} from '../fixtures';
+import {
+  AUTH_FORGOT_PASSWORD_FORM,
+  AUTH_FORGOT_PASSWORD_SEND_CODE,
+  AUTH_LOGIN_INVALID,
+  AUTH_LOGIN_SUCCESS,
+  AUTH_PROTECTED_REDIRECT,
+  AUTH_SIGN_IN_FORM,
+  AUTH_SIGN_OUT,
+} from '../helpers/flow-tags';
 
 test.describe('Authentication', () => {
+  test.beforeEach(async ({ context, page }) => {
+    await clearSession(context, page);
+    await stubNoCaptcha(page);
+  });
 
-  test('should show validation on empty form submission', { tag: [...AUTH_SIGN_IN_FORM, '@outcome:error'] }, async ({ page }) => {
+  test('keeps the operator on sign-in when the form is submitted empty', { tag: [...AUTH_SIGN_IN_FORM, '@outcome:error'] }, async ({ page }) => {
     await page.goto('/sign-in');
     await waitForPageLoad(page);
-    
-    // Try to submit empty form
-    const submitBtn = page.locator('button[type="submit"]');
-    await submitBtn.click();
-    
-    // Should still be on sign-in page
+
+    await page.getByRole('button', { name: 'Iniciar sesión' }).click();
+
     await expect(page).toHaveURL(/.*sign-in/);
   });
 
-  test('should accept input in form fields', { tag: [...AUTH_SIGN_IN_FORM, '@outcome:display'] }, async ({ page }) => {
+  test('accepts typing in the sign-in fields', { tag: [...AUTH_SIGN_IN_FORM, '@outcome:display'] }, async ({ page }) => {
     await page.goto('/sign-in');
     await waitForPageLoad(page);
-    
-    // Fill email (using placeholder)
-    const emailInput = page.getByPlaceholder('Email');
-    await emailInput.fill('test@example.com');
-    await expect(emailInput).toHaveValue('test@example.com');
-    
-    // Fill password
-    const passwordInput = page.locator('input[type="password"]');
-    await passwordInput.fill('password123');
-    await expect(passwordInput).toHaveValue('password123');
+
+    const emailInput = page.getByLabel('Correo electrónico');
+    await emailInput.fill(testOperator.email);
+    const passwordInput = page.getByLabel('Contraseña');
+    await passwordInput.fill(testOperator.password);
+
+    await expect(emailInput).toHaveValue(testOperator.email);
+    await expect(passwordInput).toHaveValue(testOperator.password);
   });
 
-  test('should handle invalid credentials gracefully', { tag: [...AUTH_LOGIN_INVALID, '@outcome:error'] }, async ({ page }) => {
+  test('shows the backend rejection for invalid credentials', { tag: [...AUTH_LOGIN_INVALID, '@outcome:error'] }, async ({ page }) => {
     // Catches a regression where the sign-in form stops surfacing the
-    // backend's rejection message (frontend/app/sign-in/page.tsx:55) and
-    // instead fails silently or shows nothing.
-    await page.route('**/sign_in/', (route) =>
-      route.fulfill({ status: 401, contentType: 'application/json', body: '{}' })
-    );
-
+    // backend's rejection message and fails silently instead.
+    await stubSignInRejected(page, 'Credenciales inválidas.');
     await page.goto('/sign-in');
     await waitForPageLoad(page);
 
-    // Fill with invalid credentials (using placeholder)
-    const emailInput = page.getByPlaceholder('Email');
-    await emailInput.fill('invalid@example.com');
+    await page.getByLabel('Correo electrónico').fill(testOperator.email);
+    await page.getByLabel('Contraseña').fill('clave-equivocada');
+    await page.getByRole('button', { name: 'Iniciar sesión' }).click();
 
-    const passwordInput = page.getByPlaceholder('Password');
-    await passwordInput.fill('wrongpassword');
-
-    // Submit
-    const submitBtn = page.locator('button[type="submit"]');
-    await submitBtn.click();
-
-    // Shows the backend's rejection message and stays on sign-in page
-    await expect(page.getByText('Invalid credentials')).toBeVisible();
+    await expect(page.getByText('Credenciales inválidas.')).toBeVisible();
     await expect(page).toHaveURL(/.*sign-in/);
+  });
+
+  test('lands on the console after signing in', { tag: [...AUTH_LOGIN_SUCCESS, '@outcome:success'] }, async ({ page }) => {
+    await stubSignInSuccess(page);
+    await stubValidToken(page);
+    await page.goto('/sign-in');
+    await waitForPageLoad(page);
+
+    await page.getByLabel('Correo electrónico').fill(testOperator.email);
+    await page.getByLabel('Contraseña').fill(testOperator.password);
+    await page.getByRole('button', { name: 'Iniciar sesión' }).click();
+
+    await page.waitForURL(/.*dashboard/);
+    await expect(page.getByText('Consola de operación')).toBeVisible();
   });
 
   test('redirects to sign-in when opening the dashboard without a session', { tag: [...AUTH_PROTECTED_REDIRECT, '@outcome:success'] }, async ({ page }) => {
     // quality: allow-no-interaction (no UI link to /dashboard when logged out; the guard redirect on direct navigation is the behavior)
-    await page.context().clearCookies();
-    await page.addInitScript(() => localStorage.clear());
     await page.goto('/dashboard');
     await waitForPageLoad(page);
 
     await expect(page).toHaveURL(/.*sign-in/);
   });
 
-  test('redirects to sign-in when opening the backoffice without a session', { tag: [...AUTH_PROTECTED_REDIRECT, '@outcome:success'] }, async ({ page }) => {
-    // quality: allow-no-interaction (no UI link to /backoffice when logged out; the guard redirect on direct navigation is the behavior)
-    await page.context().clearCookies();
-    await page.addInitScript(() => localStorage.clear());
-    await page.goto('/backoffice');
+  test('signs the operator out from the header', { tag: [...AUTH_SIGN_OUT, '@outcome:success'] }, async ({ context, page, baseURL }) => {
+    await signInWithCookies(context, page, baseURL ?? 'http://localhost:3000');
+    await page.goto('/dashboard');
     await waitForPageLoad(page);
 
-    await expect(page).toHaveURL(/.*sign-in/);
+    await page.getByRole('banner').getByRole('button', { name: 'Cerrar sesión' }).click();
+
+    await page.waitForURL(/.*sign-in/);
+    await expect(page.getByRole('heading', { name: 'Iniciar sesión' })).toBeVisible();
   });
 
-  test('should validate password mismatch on sign-up', { tag: [...AUTH_SIGN_UP_FORM, '@outcome:error'] }, async ({ page }) => {
-    await page.goto('/sign-up');
-    await waitForPageLoad(page);
-
-    // Fill form with mismatched passwords
-    await page.getByPlaceholder('First Name').fill('Test');
-    await page.getByPlaceholder('Last Name').fill('User');
-    await page.getByPlaceholder('Email').fill('test@example.com');
-    await page.getByPlaceholder('Password', { exact: true }).fill('password123');
-    await page.getByPlaceholder('Confirm Password').fill('different456');
-
-    await page.getByRole('button', { name: 'Create account' }).click();
-
-    // Should show password mismatch error and stay on sign-up page
-    await expect(page.getByText('Passwords do not match')).toBeVisible();
-    await expect(page).toHaveURL(/.*sign-up/);
-  });
-
-  test('should accept input in sign-up form fields', { tag: [...AUTH_SIGN_UP_FORM, '@outcome:display'] }, async ({ page }) => {
-    // Catches a broken/removed onChange handler on any sign-up field
-    // (controlled-input wiring regression).
-    await page.goto('/sign-up');
-    await waitForPageLoad(page);
-
-    const firstNameInput = page.getByPlaceholder('First Name');
-    await firstNameInput.fill('Ana');
-    await expect(firstNameInput).toHaveValue('Ana');
-
-    const lastNameInput = page.getByPlaceholder('Last Name');
-    await lastNameInput.fill('Garcia');
-    await expect(lastNameInput).toHaveValue('Garcia');
-
-    const emailInput = page.getByPlaceholder('Email');
-    await emailInput.fill('ana@example.com');
-    await expect(emailInput).toHaveValue('ana@example.com');
-
-    const passwordInput = page.getByPlaceholder('Password', { exact: true });
-    await passwordInput.fill('password123');
-    await expect(passwordInput).toHaveValue('password123');
-
-    const confirmPasswordInput = page.getByPlaceholder('Confirm Password');
-    await confirmPasswordInput.fill('password123');
-    await expect(confirmPasswordInput).toHaveValue('password123');
-  });
-
-  test('should navigate from sign-in to forgot password', { tag: [...AUTH_FORGOT_PASSWORD_FORM, '@outcome:display'] }, async ({ page }) => {
+  test('opens the password recovery form from sign-in', { tag: [...AUTH_FORGOT_PASSWORD_FORM, '@outcome:display'] }, async ({ page }) => {
     await page.goto('/sign-in');
     await waitForPageLoad(page);
 
-    // Click forgot password link
-    const forgotLink = page.getByRole('link', { name: 'Forgot password?' });
-    await expect(forgotLink).toBeVisible();
-    await forgotLink.click();
-    await page.waitForURL(/.*forgot-password/, { timeout: 10_000 });
+    await page.getByRole('link', { name: '¿Olvidaste tu contraseña?' }).click();
 
-    await expect(page).toHaveURL(/.*forgot-password/);
-    await expect(page.getByRole('heading', { name: 'Reset Password' })).toBeVisible();
+    await page.waitForURL(/.*forgot-password/);
+    await expect(page.getByRole('heading', { name: 'Restablecer contraseña' })).toBeVisible();
+  });
+
+  test('moves to the code step after requesting a passcode', { tag: [...AUTH_FORGOT_PASSWORD_SEND_CODE, '@outcome:success'] }, async ({ page }) => {
+    await stubSendPasscode(page, 200);
+    await page.goto('/forgot-password');
+    await waitForPageLoad(page);
+
+    await page.getByLabel('Correo electrónico').fill(testOperator.email);
+    await page.getByRole('button', { name: 'Enviar código' }).click();
+
+    await expect(page.getByLabel('Código de verificación')).toBeVisible();
+    await expect(page.getByText('Te enviamos el código a tu correo.')).toBeVisible();
+  });
+
+  test('shows an error when the passcode cannot be sent', { tag: [...AUTH_FORGOT_PASSWORD_SEND_CODE, '@outcome:failure'] }, async ({ page }) => {
+    await stubSendPasscode(page, 500, {});
+    await page.goto('/forgot-password');
+    await waitForPageLoad(page);
+
+    await page.getByLabel('Correo electrónico').fill(testOperator.email);
+    await page.getByRole('button', { name: 'Enviar código' }).click();
+
+    await expect(page.getByText('No se pudo enviar el código.')).toBeVisible();
+    await expect(page.getByLabel('Código de verificación')).toBeHidden();
   });
 });

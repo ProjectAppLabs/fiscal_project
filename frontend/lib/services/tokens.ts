@@ -2,8 +2,10 @@
 
 import Cookies from 'js-cookie';
 
-const ACCESS_TOKEN_KEY = 'access_token';
-const REFRESH_TOKEN_KEY = 'refresh_token';
+import { COOKIE_KEYS } from '@/lib/constants';
+
+const ACCESS_TOKEN_KEY = COOKIE_KEYS.ACCESS_TOKEN;
+const REFRESH_TOKEN_KEY = COOKIE_KEYS.REFRESH_TOKEN;
 
 export const getAccessToken = () => Cookies.get(ACCESS_TOKEN_KEY) || null;
 export const getRefreshToken = () => Cookies.get(REFRESH_TOKEN_KEY) || null;
