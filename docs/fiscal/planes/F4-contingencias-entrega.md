@@ -64,7 +64,7 @@ El CUFE no cambia al pasar a tipo 04: su cadena (§11.2) no incluye el tipo de f
   - una transcripción 03 que espera a la DIAN no se vuelve a firmar como 04: ya se entregó en papel;
   - una nota marcada como contingencia se rechaza (`contingency_not_allowed`).
 
-### F4 PR 4 · Alertas y salud (`feat/…-alerts-health`)
+### F4 PR 4 · Alertas y salud (`feat/…-alerts-health`) — ✅ hecho
 
 - Modelo `Alert` (emisor, tipo, severidad, mensaje, clave de deduplicación, abierta o resuelta).
 - Revisión periódica (Huey):

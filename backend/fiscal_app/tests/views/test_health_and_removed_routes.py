@@ -3,14 +3,18 @@
 import pytest
 from django.test import Client
 
+from fiscal_app.services.health import beat
+
 
 @pytest.mark.django_db
 def test_health_identifies_project_and_environment():
     """Fails if /api/health/ stops telling external probes WHO answered (project and environment)."""
+    beat()
     response = Client().get('/api/health/')
 
+    data = response.json()
     assert response.status_code == 200
-    assert response.json() == {'status': 'ok', 'project': 'fiscal_project', 'environment': 'development'}
+    assert (data['status'], data['project'], data['environment']) == ('ok', 'fiscal_project', 'development')
 
 
 @pytest.mark.django_db

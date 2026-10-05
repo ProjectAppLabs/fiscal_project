@@ -309,6 +309,23 @@ Cada vez que un documento queda `validated`, `rejected` o entra en `contingency_
 {"event": "document.state_changed", "document": { "…": "lo mismo que GET /api/v1/documents/{id}/, sin events" }}
 ```
 
+Además, cuando algo exige acción del comercio, llega un aviso `issuer.alert`:
+
+```json
+{"event": "issuer.alert", "alert": {"kind": "certificate_expiring", "severity": "warning", "message": "…",
+ "issuer": "900373115", "document": null, "created_at": "2026-10-05T08:00:00-05:00"}}
+```
+
+| `kind` | Cuándo |
+|---|---|
+| `certificate_expiring` | El certificado vence en 30, 15 o 7 días (crítica a los 7) |
+| `range_low` | Al rango vigente le queda menos del 10 % de los números |
+| `resolution_expiring` | La resolución de numeración vence en 30 días o menos |
+| `contingency_deadline` | Una factura lleva 24 h (o 40 h, crítica) en contingencia sin transmitirse; el plazo es de 48 h |
+| `rejection` | La DIAN rechazó un documento (`document` trae su id) |
+
+Cada condición se avisa una vez. ProjectApp recibe además todas las alertas por correo, también la de cola detenida.
+
 - **Firma:** las mismas tres cabeceras `X-Fiscal-*`, con el secreto vigente del cliente. El texto canónico usa la ruta y
   la consulta del `webhook_url`. **El sistema cliente debe verificar la firma y la hora antes de creer el aviso**, y
   aceptar esa ruta solo desde la red de Fiscal.

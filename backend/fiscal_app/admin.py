@@ -18,6 +18,7 @@ from .models import (
     StagingPhaseBanner,
     User,
     WebhookDelivery,
+    Alert,
 )
 
 # ============================================================================
@@ -209,6 +210,11 @@ class WebhookDeliveryAdmin(ReadOnlyAdmin):
     list_filter = ('client',)
 
 
+class AlertAdmin(ReadOnlyAdmin):
+    list_display = ('kind', 'severity', 'issuer', 'message', 'created_at', 'resolved_at')
+    list_filter = ('kind', 'severity')
+
+
 # ============================================================================
 # CUSTOM ADMIN SITE - ORGANIZED BY SECTIONS
 # ============================================================================
@@ -237,7 +243,7 @@ class FiscalAdminSite(admin.AdminSite):
                 'app_label': 'fiscal_documents',
                 'models': [
                     model for model in base_app_models
-                    if model['object_name'] in ['Document', 'DocumentEvent', 'Artifact', 'WebhookDelivery']
+                    if model['object_name'] in ['Document', 'DocumentEvent', 'Artifact', 'WebhookDelivery', 'Alert']
                 ]
             },
             {
@@ -284,3 +290,4 @@ admin_site.register(Document, DocumentAdmin)
 admin_site.register(DocumentEvent, DocumentEventAdmin)
 admin_site.register(Artifact, ArtifactAdmin)
 admin_site.register(WebhookDelivery, WebhookDeliveryAdmin)
+admin_site.register(Alert, AlertAdmin)
