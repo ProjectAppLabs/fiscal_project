@@ -33,5 +33,6 @@ class ConsoleDocumentDetailSerializer(ConsoleDocumentListSerializer):
 
     class Meta(ConsoleDocumentListSerializer.Meta):
         fields = ConsoleDocumentListSerializer.Meta.fields + (
-            'idempotency_key', 'cufe', 'qr_url', 'errors', 'original', 'payload', 'artifacts', 'events',
+            'idempotency_key', 'invoice_type', 'cufe', 'qr_url', 'errors', 'original', 'contingency_started_at', 'payload',
+            'artifacts', 'events',
         )

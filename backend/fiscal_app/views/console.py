@@ -1,6 +1,6 @@
 """Operator console API (JWT): what the ProjectApp team needs to watch Fiscal. Client systems cannot use it."""
 
-from datetime import date
+from datetime import date, timedelta
 from urllib.parse import quote
 
 from django.db.models import Count
@@ -12,13 +12,14 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import BasePermission, IsAuthenticated
 from rest_framework.response import Response
 
-from fiscal_app.models import ClientSystem, Document, Issuer, User
+from fiscal_app.models import Alert, ClientSystem, Document, DocumentEvent, Issuer, User
 from fiscal_app.models.choices import DocumentState
 from fiscal_app.serializers import (
     ConsoleDocumentDetailSerializer,
     ConsoleDocumentListSerializer,
 )
 from fiscal_app.services.contingency_letter import draft_letter
+from fiscal_app.services.health import report
 
 
 class IsConsoleOperator(BasePermission):
@@ -56,7 +57,24 @@ def console_summary(request):
             'errors': rejection.errors,
             'at': rejection.updated_at,
         } if rejection else None,
+        'alerts': _open_alerts(),
+        'rejection_rate_24h': _rejection_rate(now),
+        'health': report(now)[0],
     })
+
+
+def _open_alerts():
+    counts = dict(Alert.objects.filter(resolved_at__isnull=True).values_list('severity').annotate(total=Count('id')).order_by())
+    return {'total': sum(counts.values()), 'critical': counts.get(Alert.Severity.CRITICAL, 0)}
+
+
+def _rejection_rate(now):
+    """Share of the DIAN's answers of the last 24 hours that were rejections (None without answers)."""
+    answers = DocumentEvent.objects.filter(
+        created_at__gte=now - timedelta(hours=24), state__in=(DocumentState.VALIDATED, DocumentState.REJECTED)
+    )
+    total = answers.count()
+    return round(answers.filter(state=DocumentState.REJECTED).count() / total, 4) if total else None
 
 
 @api_view(['GET'])
