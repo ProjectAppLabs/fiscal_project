@@ -16,11 +16,15 @@ def health_check(request):
     # 'project' (the clone dir name == canonical fleet name) and 'environment'
     # let external probes verify WHO answered — a dead staging domain can fall
     # through DNS/nginx to another app (measured: /qa pilot #3, F24).
+    # Fiscal.: database, queue, worker and DIAN (fiscal_app.services.health); 503 only when the database is down.
+    from fiscal_app.services.health import report
+
+    data, status = report()
     return JsonResponse({
-        'status': 'ok',
+        **data,
         'project': settings.BASE_DIR.parent.name,
         'environment': getattr(settings, 'DJANGO_ENV', os.getenv('DJANGO_ENV', 'development')),
-    })
+    }, status=status)
 
 
 urlpatterns = [

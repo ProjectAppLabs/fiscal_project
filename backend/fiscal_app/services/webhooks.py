@@ -36,6 +36,18 @@ def enqueue_notice(document: Document) -> WebhookDelivery | None:
     )
 
 
+def enqueue_alert(alert) -> WebhookDelivery | None:
+    """Record an `issuer.alert` notice for the client system of the alert's issuer; None without webhook URL."""
+    client = alert.issuer.client
+    if not client.webhook_url:
+        return None
+    payload = {'event': 'issuer.alert', 'alert': {
+        'kind': alert.kind, 'severity': alert.severity, 'message': alert.message, 'issuer': alert.issuer.nit,
+        'document': alert.document_id, 'created_at': alert.created_at.isoformat(),
+    }}
+    return WebhookDelivery.objects.create(client=client, document=alert.document, payload=payload, next_attempt_at=timezone.now())
+
+
 def deliver(delivery: WebhookDelivery) -> bool:
     """POST the notice signed with the client's current secret. True when the client answered 2xx."""
     client = delivery.client

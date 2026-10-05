@@ -21,7 +21,7 @@ from django.utils import timezone
 from dian.gateway import DianUnavailable, GatewayRefused, Submission
 from fiscal_app.models import Document, DocumentEvent
 from fiscal_app.models.choices import ArtifactKind, DocumentKind, DocumentState
-from fiscal_app.services import artifacts, delivery, webhooks
+from fiscal_app.services import alerts, artifacts, delivery, webhooks
 from fiscal_app.services.gateways import get_gateway
 
 logger = logging.getLogger(__name__)
@@ -172,6 +172,8 @@ def _record_result(document, result):
             detail = _with_delivery(document, detail)
         DocumentEvent.objects.create(document=document, state=document.state, detail=detail)
         _notify(document)
+        if document.state == DocumentState.REJECTED:
+            alerts.rejection(document)
     return document
 
 

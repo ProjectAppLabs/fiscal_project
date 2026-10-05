@@ -396,3 +396,5 @@ FISCAL_SIGNATURE_MAX_AGE = int(os.getenv('FISCAL_SIGNATURE_MAX_AGE', '300'))
 # Artifacts with legal value live outside MEDIA_ROOT and are only served through the signed API.
 FISCAL_ARTIFACTS_DIR = os.getenv('FISCAL_ARTIFACTS_DIR', str(BASE_DIR / 'artifacts'))
 FISCAL_WEBHOOK_TIMEOUT = int(os.getenv('FISCAL_WEBHOOK_TIMEOUT', '10'))
+# ProjectApp addresses that receive every alert (comma separated); the business hears through its client system.
+FISCAL_ALERT_EMAILS = [address.strip() for address in os.getenv('FISCAL_ALERT_EMAILS', '').split(',') if address.strip()]

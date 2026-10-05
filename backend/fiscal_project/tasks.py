@@ -230,3 +230,19 @@ def deliver_pending_webhooks():
     from fiscal_app.services.webhooks import deliver, pending_deliveries
 
     return sum(1 for delivery in pending_deliveries()[:100] if deliver(delivery))
+
+
+@db_periodic_task(crontab(minute='*'))
+def worker_heartbeat():
+    """Prove the worker is alive; api/health/ reports it silent after three minutes."""
+    from fiscal_app.services.health import beat
+
+    beat()
+
+
+@db_periodic_task(crontab(minute='*/15'))
+def check_alerts():
+    """Certificates, numbering, resolutions, contingency deadlines and the queue (fiscal_app.services.alerts)."""
+    from fiscal_app.services.alerts import check_all
+
+    return check_all()
