@@ -5,6 +5,7 @@ from decimal import ROUND_HALF_EVEN, Decimal
 
 from lxml import etree
 
+from dian import codes
 from dian.catalogs import code_list
 
 NS = {
@@ -280,3 +281,43 @@ class DocumentSpec:
     @property
     def taxes(self) -> list[Tax]:
         return [tax for line in self.lines for tax in line.taxes]
+
+
+def dian_extensions(root, spec, qr, resolution=None):
+    """First ext:UBLExtension with sts:DianExtensions; InvoiceControl only for documents with a DIAN resolution."""
+    extensions = sub(root, 'ext:UBLExtensions')
+    content = sub(sub(extensions, 'ext:UBLExtension'), 'ext:ExtensionContent')
+    dian = sub(content, 'sts:DianExtensions')
+    if resolution is not None:
+        _invoice_control(dian, resolution)
+    _rest_of_extensions(dian, spec, qr)
+
+
+def _invoice_control(dian, resolution):
+    control = sub(dian, 'sts:InvoiceControl')
+    sub(control, 'sts:InvoiceAuthorization', resolution.number)
+    period = sub(control, 'sts:AuthorizationPeriod')
+    sub(period, 'cbc:StartDate', resolution.valid_from)
+    sub(period, 'cbc:EndDate', resolution.valid_to)
+    authorized = sub(control, 'sts:AuthorizedInvoices')
+    if resolution.prefix:
+        sub(authorized, 'sts:Prefix', resolution.prefix)
+    sub(authorized, 'sts:From', resolution.number_from)
+    sub(authorized, 'sts:To', resolution.number_to)
+
+
+def _rest_of_extensions(dian, spec, qr):
+    source = sub(dian, 'sts:InvoiceSource')
+    sub(source, 'cbc:IdentificationCode', 'CO', listAgencyID='6',
+        listAgencyName='United Nations Economic Commission for Europe',
+        listSchemeURI='urn:oasis:names:specification:ubl:codelist:gc:CountryIdentificationCode-2.1')
+    provider = sub(dian, 'sts:SoftwareProvider')
+    # Software «propio o adquirido» (D1): the issuer is its own technology provider (FAB19).
+    sub(provider, 'sts:ProviderID', spec.issuer.id_number, schemeID=spec.issuer.dv, schemeName='31', **DIAN_AGENCY)
+    sub(provider, 'sts:SoftwareID', spec.software.software_id, **DIAN_AGENCY)
+    sub(dian, 'sts:SoftwareSecurityCode',
+        codes.software_security_code(spec.software.software_id, spec.software.pin, spec.full_number), **DIAN_AGENCY)
+    authorization = sub(dian, 'sts:AuthorizationProvider')
+    sub(authorization, 'sts:AuthorizationProviderID', DIAN_NIT, schemeID=DIAN_DV, schemeName='31', **DIAN_AGENCY)
+    # FAB36: the lookup URL with the CUFE/CUDE of cbc:UUID.
+    sub(dian, 'sts:QRCode', qr)

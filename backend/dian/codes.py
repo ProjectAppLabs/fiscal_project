@@ -41,7 +41,8 @@ class CodeInput:
     environment: str  # '1' production, '2' testing
 
 
-def _chain(data: CodeInput, secret: str) -> str:
+def code_chain(data: CodeInput, secret: str) -> str:
+    """The concatenated string the CUFE/CUDE hashes (the «Composición» of the annex examples)."""
     return (
         data.number + data.issue_date + data.issue_time + truncated(data.line_extension)
         + '01' + truncated(data.iva) + '04' + truncated(data.inc) + '03' + truncated(data.ica)
@@ -51,12 +52,12 @@ def _chain(data: CodeInput, secret: str) -> str:
 
 def cufe(data: CodeInput, technical_key: str) -> str:
     """CUFE of an invoice (§11.2), with the technical key of its numbering range."""
-    return hashlib.sha384(_chain(data, technical_key).encode()).hexdigest()
+    return hashlib.sha384(code_chain(data, technical_key).encode()).hexdigest()
 
 
 def cude(data: CodeInput, software_pin: str) -> str:
     """CUDE of a credit/debit note or a contingency type-03 invoice (§11.4), with the software PIN."""
-    return hashlib.sha384(_chain(data, software_pin).encode()).hexdigest()
+    return hashlib.sha384(code_chain(data, software_pin).encode()).hexdigest()
 
 
 def software_security_code(software_id: str, software_pin: str, document_number: str) -> str:
