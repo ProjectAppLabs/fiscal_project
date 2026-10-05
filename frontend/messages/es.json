@@ -4,7 +4,8 @@
   },
   "header": {
     "mainNav": "Navegación principal",
-    "console": "Consola",
+    "dashboard": "Tablero",
+    "documents": "Documentos",
     "signIn": "Iniciar sesión",
     "signOut": "Cerrar sesión"
   },
@@ -58,10 +59,111 @@
     "backToEmail": "Volver al correo",
     "backToSignIn": "Volver a iniciar sesión"
   },
+  "console": {
+    "states": {
+      "queued": "En cola",
+      "transmitting": "Transmitiendo",
+      "validated": "Validados",
+      "rejected": "Rechazados",
+      "contingency_dian": "Contingencia DIAN",
+      "contingency_issuer": "Contingencia del emisor"
+    },
+    "state": {
+      "queued": "En cola",
+      "transmitting": "Transmitiendo",
+      "validated": "Validado",
+      "rejected": "Rechazado",
+      "contingency_dian": "Contingencia DIAN",
+      "contingency_issuer": "Contingencia del emisor"
+    },
+    "kinds": {
+      "invoice": "Factura",
+      "credit_note": "Nota crédito",
+      "debit_note": "Nota débito"
+    },
+    "issuer": "{name} · NIT {nit}",
+    "loading": "Cargando…",
+    "retry": "Reintentar"
+  },
   "dashboard": {
     "subtitle": "Consola de operación",
     "emptyTitle": "Todavía no hay documentos",
-    "emptyBody": "Cuando se emitan facturas y otros documentos electrónicos, aparecerán aquí."
+    "emptyBody": "Cuando se emitan facturas y otros documentos electrónicos, aparecerán aquí.",
+    "error": "No pudimos cargar el tablero.",
+    "documentsTitle": "Documentos por estado",
+    "total": "Total",
+    "setupTitle": "Configuración",
+    "issuers": "Emisores",
+    "clientSystems": "Sistemas cliente",
+    "queueTitle": "Cola de transmisión",
+    "queueDue": "Listos para enviar",
+    "queueOldest": "En cola desde",
+    "lastRejectionTitle": "Último rechazo",
+    "lastRejectionAt": "Rechazado el {date}",
+    "viewDocument": "Ver documento",
+    "viewAll": "Ver todos los documentos"
+  },
+  "documents": {
+    "title": "Documentos",
+    "filtersLabel": "Filtros",
+    "filterState": "Estado",
+    "allStates": "Todos",
+    "filterIssuer": "NIT del emisor",
+    "filterSubmit": "Filtrar",
+    "tableCaption": "Documentos electrónicos",
+    "columns": {
+      "number": "Número",
+      "kind": "Tipo",
+      "issuer": "Emisor",
+      "client": "Sistema cliente",
+      "state": "Estado",
+      "attempts": "Intentos",
+      "issued": "Emitido",
+      "created": "Creado",
+      "validated": "Validado"
+    },
+    "empty": "No hay documentos con esos filtros.",
+    "error": "No pudimos cargar los documentos.",
+    "pagination": "Paginación",
+    "previous": "Anterior",
+    "next": "Siguiente",
+    "pageInfo": "Página {page} · {count, plural, one {# documento} other {# documentos}}"
+  },
+  "documentDetail": {
+    "back": "Volver a documentos",
+    "notFoundTitle": "No encontramos ese documento",
+    "notFoundBody": "Puede que el enlace esté mal o que el documento no exista.",
+    "error": "No pudimos cargar el documento.",
+    "dataTitle": "Datos del documento",
+    "fields": {
+      "kind": "Tipo",
+      "state": "Estado",
+      "issuer": "Emisor",
+      "client": "Sistema cliente",
+      "attempts": "Intentos",
+      "idempotencyKey": "Clave de idempotencia",
+      "issued": "Emitido",
+      "created": "Creado",
+      "validated": "Validado",
+      "original": "Documento original",
+      "cufe": "CUFE"
+    },
+    "viewOriginal": "Ver documento {id}",
+    "qr": "Ver código QR",
+    "errorsTitle": "Errores de la DIAN",
+    "noErrors": "La DIAN no reportó errores.",
+    "artifactsTitle": "Artefactos",
+    "artifactsCaption": "Artefactos guardados",
+    "artifactColumns": {
+      "kind": "Tipo",
+      "size": "Tamaño",
+      "sha256": "SHA-256",
+      "created": "Creado"
+    },
+    "noArtifacts": "Todavía no hay artefactos.",
+    "eventsTitle": "Historia",
+    "noEvents": "Todavía no hay eventos.",
+    "payloadTitle": "Contenido recibido"
   },
   "staging": {
     "remainsOne": "queda",

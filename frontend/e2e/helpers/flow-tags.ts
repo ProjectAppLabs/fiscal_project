@@ -23,6 +23,14 @@ export const AUTH_FORGOT_PASSWORD_SEND_CODE = ['@flow:auth-forgot-password-send-
 // ── Dashboard ──
 export const DASHBOARD_EMPTY_STATE = ['@flow:dashboard-empty-state', '@module:dashboard', '@priority:P1'];
 
+// ── Console ──
+export const CONSOLE_DASHBOARD_COUNTERS = ['@flow:console-dashboard-counters', '@module:console', '@priority:P1'];
+export const CONSOLE_DASHBOARD_RETRY = ['@flow:console-dashboard-retry', '@module:console', '@priority:P2'];
+export const CONSOLE_DOCUMENTS_FILTER = ['@flow:console-documents-filter', '@module:console', '@priority:P1'];
+export const CONSOLE_DOCUMENTS_PAGINATION = ['@flow:console-documents-pagination', '@module:console', '@priority:P2'];
+export const CONSOLE_DOCUMENT_DETAIL = ['@flow:console-document-detail', '@module:console', '@priority:P1'];
+export const CONSOLE_DOCUMENT_NOT_FOUND = ['@flow:console-document-not-found', '@module:console', '@priority:P2'];
+
 // ── i18n ──
 export const I18N_LOCALE_SWITCH = ['@flow:i18n-locale-switch', '@module:i18n', '@priority:P2'];
 

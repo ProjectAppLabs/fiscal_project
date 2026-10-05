@@ -79,6 +79,7 @@ it('writes the chosen locale to the next-intl cookie', () => {
 **Store Coverage:**
 - ✅ `authStore.test.ts` - Authentication state (sign-in, sign-out, token handling, passcode reset)
 - ✅ `localeStore.test.ts` - Locale selection and the `NEXT_LOCALE` cookie
+- ✅ `consoleStore.test.ts` - Console summary, document list (filters, pages) and document detail
 
 ### Components and pages
 
@@ -99,7 +100,9 @@ it('shows the empty state while there are no documents', () => {
 - ✅ `app/__tests__/providers.test.tsx` - Providers and auth restore
 - ✅ `app/sign-in/__tests__/page.test.tsx` - Sign-in form, errors, reCAPTCHA
 - ✅ `app/forgot-password/__tests__/page.test.tsx` - Passcode flow
-- ✅ `app/dashboard/__tests__/page.test.tsx` - Console skeleton and empty state
+- ✅ `app/dashboard/__tests__/page.test.tsx` - Dashboard counters, queue, latest rejection, empty and error states
+- ✅ `app/documents/__tests__/page.test.tsx` - Document list, filters, pagination, empty and error states
+- ✅ `app/documents/[documentId]/__tests__/page.test.tsx` - Document detail, DIAN errors, artifacts, history, not found
 - ✅ `FiscalLogo.test.tsx` - Wordmark
 - ✅ `layout.test.tsx` / `LocaleSwitcher.test.tsx` - Header, footer, locale switch
 
@@ -107,6 +110,8 @@ it('shows the empty state while there are no documents', () => {
 
 - ✅ `useRequireAuth.test.ts` - Auth guard hook
 - ✅ `http.test.ts` / `tokens.test.ts` / `errors.test.ts` - API client, token helpers, error messages
+- ✅ `console.test.ts` - Console API calls, pagination links, DIAN error text
+- ✅ `format.test.ts` - Dates in Colombia time, byte sizes, short hashes
 - ✅ `config.test.ts` - i18n config
 - ✅ `constants.test.ts` - Routes and API endpoints
 

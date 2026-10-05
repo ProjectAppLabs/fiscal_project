@@ -205,18 +205,20 @@ Los reintentos siguen el anexo §12.4: 5 s × 3 ante un error del servicio y 2 m
   - un aviso sale sin firma o no se reintenta;
   - un artefacto no coincide con su hash.
 
-### PR 6 · Consola mínima (`feat/…-console-skeleton`)
+### PR 6 · Consola mínima (`feat/…-console-skeleton`) — ✅ hecho
 
-- [ ] Backend (JWT, solo operadores): `GET /api/console/summary/` (documentos por estado y por emisor, último
+La API de consola (JWT, solo operadores activos) está en `/api/console/summary/`, `/api/console/documents/` (filtros `state` e `issuer`, 25 por página) y `/api/console/documents/{id}/`. Una firma HMAC de un sistema cliente no la abre. El frontend tiene el tablero con contadores, la lista con filtros y paginación, y el detalle con errores, artefactos y eventos; son 6 flujos E2E nuevos. Las pruebas usan un hasher de contraseñas rápido.
+
+- [x] Backend (JWT, solo operadores): `GET /api/console/summary/` (documentos por estado y por emisor, último
   error, salud de la cola) y `GET /api/console/documents/` (lista con filtros).
-- [ ] Frontend:
+- [x] Frontend:
   - inicio de sesión de la plantilla con la marca Fiscal.;
   - tablero con los contadores;
   - lista de documentos;
   - detalle con eventos.
 
   La consola completa es F5.
-- [ ] E2E en Playwright con `create_fake_data`, flujos registrados en `flow-definitions.json`.
+- [x] E2E en Playwright con `create_fake_data`, flujos registrados en `flow-definitions.json`.
 - **Fails if:** la consola es accesible sin sesión de operador; un sistema cliente con HMAC entra a `/api/console/`; el
   tablero no refleja los estados de la fake data.
 

@@ -1,8 +1,8 @@
 /**
  * E2E fixtures and helpers.
  *
- * The backend is stubbed per test with `page.route` for auth responses, so the
- * specs do not depend on seeded users.
+ * The backend is stubbed per test with `page.route` for auth and console
+ * responses, so the specs do not depend on seeded users or documents.
  */
 
 import type { BrowserContext, Page, Route } from '@playwright/test';
@@ -64,17 +64,188 @@ export async function stubSendPasscode(page: Page, status: number, body: unknown
   await page.route('**/api/send_passcode/', (route) => fulfillJson(route, status, body));
 }
 
-/** Start the test already signed in: token cookies plus a valid `validate_token/`. */
+/** Stub `staging-banner/` as hidden: with the fake token the real backend answers 401. */
+export async function stubHiddenStagingBanner(page: Page) {
+  await page.route('**/api/staging-banner/', (route) =>
+    fulfillJson(route, 200, {
+      is_visible: false,
+      current_phase: 'development',
+      phase_labels: { es: 'Desarrollo', en: 'Development' },
+      started_at: null,
+      expires_at: null,
+      days_remaining: null,
+      is_expired: false,
+      contact_whatsapp: '',
+      contact_email: '',
+    }),
+  );
+}
+
+/**
+ * Start the test already signed in: token cookies, a valid `validate_token/` and every other call the shell makes
+ * stubbed. An unstubbed call reaches the real backend with the fake token, gets 401, fails the token refresh and
+ * signs the operator out in the middle of the test.
+ */
 export async function signInWithCookies(context: BrowserContext, page: Page, baseURL: string) {
   await context.addCookies([
     { name: 'access_token', value: FAKE_ACCESS_TOKEN, url: baseURL },
     { name: 'refresh_token', value: FAKE_REFRESH_TOKEN, url: baseURL },
   ]);
   await stubValidToken(page);
+  await stubHiddenStagingBanner(page);
 }
 
 /** Start the test without any session or stored user. */
 export async function clearSession(context: BrowserContext, page: Page) {
   await context.clearCookies();
   await page.addInitScript(() => localStorage.clear());
+}
+
+// ── Console (dashboard, documents) ──
+
+const testIssuer = { nit: '900373115', legal_name: 'Restaurante de Prueba SAS' };
+
+/** A NIT no stubbed document belongs to. */
+export const unknownIssuerNit = '800000000';
+
+export const rejectedDocument = {
+  id: 7,
+  client: 'Waiter',
+  issuer: testIssuer,
+  kind: 'invoice',
+  full_number: 'SETP990000007',
+  state: 'rejected',
+  attempts: 1,
+  issue_datetime: '2026-10-04T14:59:00Z',
+  created_at: '2026-10-04T15:00:00Z',
+  validated_at: null,
+};
+
+export const validatedDocument = {
+  ...rejectedDocument,
+  id: 6,
+  full_number: 'SETP990000006',
+  state: 'validated',
+  validated_at: '2026-10-04T14:30:00Z',
+};
+
+/** The only document on the second page of the stubbed list. */
+export const olderDocument = {
+  ...validatedDocument,
+  id: 5,
+  full_number: 'SETP990000005',
+};
+
+export const rejectedDocumentDetail = {
+  ...rejectedDocument,
+  idempotency_key: 'waiter-order-42',
+  cufe: 'a1b2c3d4e5f6a7b8c9d0',
+  qr_url: 'https://catalogo-vpfe.dian.gov.co/document/searchqr?documentkey=a1b2c3',
+  errors: [{ rule: 'FAD06', message: 'El CUFE no corresponde.' }],
+  original: null,
+  payload: { lines: [] },
+  artifacts: [
+    {
+      kind: 'signed_xml',
+      sha256: '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef',
+      size: 2048,
+      content_type: 'application/xml',
+      created_at: '2026-10-04T15:00:30Z',
+    },
+  ],
+  events: [
+    { state: 'queued', detail: '', created_at: '2026-10-04T15:00:00Z' },
+    { state: 'rejected', detail: 'La DIAN rechazó el documento.', created_at: '2026-10-04T15:01:00Z' },
+  ],
+};
+
+export const consoleSummary = {
+  documents: {
+    total: 12,
+    by_state: { queued: 2, transmitting: 0, validated: 8, rejected: 1, contingency_dian: 1, contingency_issuer: 0 },
+  },
+  issuers: 1,
+  client_systems: 1,
+  queue: { due: 2, oldest_queued_at: '2026-10-04T15:00:00Z' },
+  last_rejection: {
+    id: rejectedDocument.id,
+    full_number: rejectedDocument.full_number,
+    issuer: testIssuer,
+    errors: rejectedDocumentDetail.errors,
+    at: '2026-10-04T15:01:00Z',
+  },
+};
+
+export const emptyConsoleSummary = {
+  documents: {
+    total: 0,
+    by_state: { queued: 0, transmitting: 0, validated: 0, rejected: 0, contingency_dian: 0, contingency_issuer: 0 },
+  },
+  issuers: 1,
+  client_systems: 1,
+  queue: { due: 0, oldest_queued_at: null },
+  last_rejection: null,
+};
+
+const DOCUMENT_LIST_URL = /\/api\/console\/documents\/?(\?.*)?$/;
+const DOCUMENT_DETAIL_URL = /\/api\/console\/documents\/\d+\/?$/;
+const DOCUMENTS_PAGE_SIZE = 25;
+
+/** Stub `console/summary/` with the given body. */
+export async function stubConsoleSummary(page: Page, body: unknown = consoleSummary) {
+  await page.route('**/api/console/summary/', (route) => fulfillJson(route, 200, body));
+}
+
+/** Stub `console/summary/` with a server error on every call. */
+export async function stubConsoleSummaryFailing(page: Page) {
+  await page.route('**/api/console/summary/', (route) => fulfillJson(route, 500, { detail: 'Error' }));
+}
+
+/** Stub `console/summary/` to fail once and then answer with the counters. */
+export async function stubConsoleSummaryFailingUntilRecovered(page: Page): Promise<() => void> {
+  // Fails every call until the test recovers it: React may fetch twice on mount in development (StrictMode), so
+  // "fail only the first call" would let the second succeed before the error is ever shown.
+  let recovered = false;
+  await page.route('**/api/console/summary/', (route) =>
+    recovered ? fulfillJson(route, 200, consoleSummary) : fulfillJson(route, 500, { detail: 'Error' }),
+  );
+  return () => {
+    recovered = true;
+  };
+}
+
+/**
+ * Stub `console/documents/` like the backend: `state` and `issuer` filter the
+ * two first-page documents, and `page=2` holds one older document.
+ */
+export async function stubDocumentList(page: Page) {
+  await page.route(DOCUMENT_LIST_URL, (route) => {
+    const params = new URL(route.request().url()).searchParams;
+    const pageNumber = Number(params.get('page') ?? '1');
+    const firstPage = [rejectedDocument, validatedDocument].filter(
+      (document) =>
+        (!params.get('state') || document.state === params.get('state')) &&
+        (!params.get('issuer') || document.issuer.nit === params.get('issuer'))
+    );
+    const isFiltered = params.has('state') || params.has('issuer');
+    const total = isFiltered ? firstPage.length : DOCUMENTS_PAGE_SIZE + 1;
+    const listUrl = route.request().url().split('?')[0];
+
+    return fulfillJson(route, 200, {
+      count: total,
+      next: !isFiltered && pageNumber === 1 ? `${listUrl}?page=2` : null,
+      previous: pageNumber === 2 ? listUrl : null,
+      results: pageNumber === 2 ? [olderDocument] : firstPage,
+    });
+  });
+}
+
+/** Stub `console/documents/<id>/`: the rejected document exists, anything else is a 404. */
+export async function stubDocumentDetail(page: Page) {
+  await page.route(DOCUMENT_DETAIL_URL, (route) => {
+    const id = Number(route.request().url().match(/documents\/(\d+)/)?.[1]);
+    return id === rejectedDocumentDetail.id
+      ? fulfillJson(route, 200, rejectedDocumentDetail)
+      : fulfillJson(route, 404, { detail: 'No encontrado.' });
+  });
 }

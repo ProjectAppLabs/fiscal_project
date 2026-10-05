@@ -4,7 +4,8 @@
   },
   "header": {
     "mainNav": "Main navigation",
-    "console": "Console",
+    "dashboard": "Dashboard",
+    "documents": "Documents",
     "signIn": "Sign in",
     "signOut": "Sign out"
   },
@@ -58,10 +59,111 @@
     "backToEmail": "Back to email",
     "backToSignIn": "Back to sign in"
   },
+  "console": {
+    "states": {
+      "queued": "Queued",
+      "transmitting": "Transmitting",
+      "validated": "Validated",
+      "rejected": "Rejected",
+      "contingency_dian": "DIAN contingency",
+      "contingency_issuer": "Issuer contingency"
+    },
+    "state": {
+      "queued": "Queued",
+      "transmitting": "Transmitting",
+      "validated": "Validated",
+      "rejected": "Rejected",
+      "contingency_dian": "DIAN contingency",
+      "contingency_issuer": "Issuer contingency"
+    },
+    "kinds": {
+      "invoice": "Invoice",
+      "credit_note": "Credit note",
+      "debit_note": "Debit note"
+    },
+    "issuer": "{name} · NIT {nit}",
+    "loading": "Loading…",
+    "retry": "Retry"
+  },
   "dashboard": {
     "subtitle": "Operations console",
     "emptyTitle": "There are no documents yet",
-    "emptyBody": "Invoices and other electronic documents will show up here once they are issued."
+    "emptyBody": "Invoices and other electronic documents will show up here once they are issued.",
+    "error": "We could not load the dashboard.",
+    "documentsTitle": "Documents by state",
+    "total": "Total",
+    "setupTitle": "Setup",
+    "issuers": "Issuers",
+    "clientSystems": "Client systems",
+    "queueTitle": "Transmission queue",
+    "queueDue": "Ready to send",
+    "queueOldest": "Queued since",
+    "lastRejectionTitle": "Latest rejection",
+    "lastRejectionAt": "Rejected on {date}",
+    "viewDocument": "View document",
+    "viewAll": "View all documents"
+  },
+  "documents": {
+    "title": "Documents",
+    "filtersLabel": "Filters",
+    "filterState": "State",
+    "allStates": "All",
+    "filterIssuer": "Issuer NIT",
+    "filterSubmit": "Filter",
+    "tableCaption": "Electronic documents",
+    "columns": {
+      "number": "Number",
+      "kind": "Type",
+      "issuer": "Issuer",
+      "client": "Client system",
+      "state": "State",
+      "attempts": "Attempts",
+      "issued": "Issued",
+      "created": "Created",
+      "validated": "Validated"
+    },
+    "empty": "There are no documents matching these filters.",
+    "error": "We could not load the documents.",
+    "pagination": "Pagination",
+    "previous": "Previous",
+    "next": "Next",
+    "pageInfo": "Page {page} · {count, plural, one {# document} other {# documents}}"
+  },
+  "documentDetail": {
+    "back": "Back to documents",
+    "notFoundTitle": "We could not find that document",
+    "notFoundBody": "The link may be wrong or the document may not exist.",
+    "error": "We could not load the document.",
+    "dataTitle": "Document data",
+    "fields": {
+      "kind": "Type",
+      "state": "State",
+      "issuer": "Issuer",
+      "client": "Client system",
+      "attempts": "Attempts",
+      "idempotencyKey": "Idempotency key",
+      "issued": "Issued",
+      "created": "Created",
+      "validated": "Validated",
+      "original": "Original document",
+      "cufe": "CUFE"
+    },
+    "viewOriginal": "View document {id}",
+    "qr": "View QR code",
+    "errorsTitle": "DIAN errors",
+    "noErrors": "The DIAN reported no errors.",
+    "artifactsTitle": "Artifacts",
+    "artifactsCaption": "Stored artifacts",
+    "artifactColumns": {
+      "kind": "Type",
+      "size": "Size",
+      "sha256": "SHA-256",
+      "created": "Created"
+    },
+    "noArtifacts": "There are no artifacts yet.",
+    "eventsTitle": "History",
+    "noEvents": "There are no events yet.",
+    "payloadTitle": "Received payload"
   },
   "staging": {
     "remainsOne": "remains",

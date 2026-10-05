@@ -31,8 +31,9 @@ plan de implementación detallado de F1.
 
 ## Próximos pasos
 
-1. F1 PR 6: consola mínima de operación (tablero y lista de documentos con JWT).
-2. F2: las 221 reglas Schematron de la DIAN (XPath 2.0) validan el XML armado; lxml no ejecuta XSLT 2.0, así que
+1. F1 cerrada: falta el recorrido de punta a punta con un script que haga de Waiter (definición de hecho de F1).
+2. F2, librería `dian/`: UBL 2.1, CUFE/CUDE con los ejemplos del anexo, XAdES-EPES y SOAP; F2 termina con el set de pruebas, que necesita el certificado y el registro del software de ProjectApp.
+3. F2: las 221 reglas Schematron de la DIAN (XPath 2.0) validan el XML armado; lxml no ejecuta XSLT 2.0, así que
    hace falta un motor XSLT 2.0 (Saxon). Caja de herramientas y anexos en `~/.cache/fiscal-dian/`.
 3. Del dueño, sin bloquear F1: registrar Fiscal. en el portal de habilitación de ProjectApp y, hacia el final de F2,
    el certificado.
