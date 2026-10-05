@@ -59,19 +59,23 @@ jobs:
           python -m pip install --require-hashes --requirement requirements.txt
           pip-audit --require-hashes --disable-pip --progress-spinner=off --requirement requirements.txt
 
+      - name: Generate a throwaway encryption key for this run
+        # Fiscal. refuses to start without FISCAL_ENCRYPTION_KEY (manage.py check, migrate, gunicorn --check-config).
+        run: echo "FISCAL_ENCRYPTION_KEY=$(python -c 'from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())')" >> "$GITHUB_ENV"
+
       - name: Verify Python dependencies and WSGI configuration
         env:
-          DJANGO_SETTINGS_MODULE: base_feature_project.settings_dev
+          DJANGO_SETTINGS_MODULE: fiscal_project.settings_dev
         run: |
           python -m pip check
           python manage.py check
-          gunicorn --check-config base_feature_project.wsgi:application
+          gunicorn --check-config fiscal_project.wsgi:application
 
       - name: Run migrations
         run: python manage.py migrate --no-input
 
       - name: Run pytest with coverage
-        run: pytest -v --tb=short --junitxml=pytest-results.xml --cov=base_feature_app --cov-branch --cov-report=json:coverage-backend.json --cov-report=xml:coverage-backend.xml
+        run: pytest -v --tb=short --junitxml=pytest-results.xml --cov=fiscal_app --cov-branch --cov-report=json:coverage-backend.json --cov-report=xml:coverage-backend.xml
 
       - name: Backend coverage summary
         if: always()
@@ -114,7 +118,7 @@ jobs:
 
       - name: Verify frontend dependencies and build
         run: |
-          npm audit --audit-level=high
+          node ../scripts/ci/npm-audit-gate.cjs
           npm run check:install-scripts
           npm run lint
           npm run typecheck
@@ -189,6 +193,11 @@ jobs:
         run: |
           python -m venv venv
           venv/bin/python -m pip install --require-hashes --requirement requirements.txt
+
+      - name: Generate a throwaway encryption key for this run
+        working-directory: backend
+        # Fiscal. refuses to start without FISCAL_ENCRYPTION_KEY; E2E data is disposable, so a fresh key per run.
+        run: echo "FISCAL_ENCRYPTION_KEY=$(venv/bin/python -c 'from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())')" >> "$GITHUB_ENV"
 
       - name: Run backend migrations
         working-directory: backend

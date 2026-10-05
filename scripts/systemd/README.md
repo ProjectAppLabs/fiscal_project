@@ -17,25 +17,25 @@ Huey handles background tasks: automated backups, Silk garbage collection, and w
 
 1. Copy service file:
    ```bash
-   sudo cp scripts/systemd/huey.service /etc/systemd/system/base_feature_project-huey.service
+   sudo cp scripts/systemd/huey.service /etc/systemd/system/fiscal_project-huey.service
    ```
 
 2. Edit paths and user/group in the copied file:
    ```bash
-   sudo nano /etc/systemd/system/base_feature_project-huey.service
+   sudo nano /etc/systemd/system/fiscal_project-huey.service
    ```
 
 3. Enable and start:
    ```bash
    sudo systemctl daemon-reload
-   sudo systemctl enable base_feature_project-huey
-   sudo systemctl start base_feature_project-huey
+   sudo systemctl enable fiscal_project-huey
+   sudo systemctl start fiscal_project-huey
    ```
 
 4. Verify:
    ```bash
-   sudo systemctl status base_feature_project-huey
-   journalctl -u base_feature_project-huey -f
+   sudo systemctl status fiscal_project-huey
+   journalctl -u fiscal_project-huey -f
    ```
 
 ### Prerequisites

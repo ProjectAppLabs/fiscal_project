@@ -1,38 +1,24 @@
 export const ROUTES = {
   HOME: '/',
   SIGN_IN: '/sign-in',
-  SIGN_UP: '/sign-up',
   FORGOT_PASSWORD: '/forgot-password',
   DASHBOARD: '/dashboard',
-  BACKOFFICE: '/backoffice',
-  CATALOG: '/catalog',
-  BLOGS: '/blogs',
-  CHECKOUT: '/checkout',
-  MANUAL: '/manual',
 } as const;
 
+// Paths relative to the axios base URL (`/api`), matching the backend's routes.
 export const API_ENDPOINTS = {
-  SIGN_IN: '/auth/sign-in/',
-  SIGN_UP: '/auth/sign-up/',
-  GOOGLE_LOGIN: '/auth/google-login/',
-  SEND_PASSCODE: '/auth/send-passcode/',
-  RESET_PASSWORD: '/auth/verify-passcode-and-reset-password/',
-  UPDATE_PASSWORD: '/auth/update-password/',
-  VALIDATE_TOKEN: '/auth/validate-token/',
-  BLOGS: '/blogs-data/',
-  BLOG_DETAIL: (id: number) => `/blogs-data/${id}/`,
-  PRODUCTS: '/products/',
-  PRODUCT_DETAIL: (id: number) => `/products/${id}/`,
-  SALES: '/sales/',
-  CREATE_SALE: '/create-sale/',
-  USERS: '/users/',
+  SIGN_IN: 'sign_in/',
+  SEND_PASSCODE: 'send_passcode/',
+  RESET_PASSWORD: 'verify_passcode_and_reset_password/',
+  UPDATE_PASSWORD: 'update_password/',
+  VALIDATE_TOKEN: 'validate_token/',
+  TOKEN_REFRESH: 'token/refresh/',
+  HEALTH: 'health/',
+  STAGING_BANNER: 'staging-banner/',
+  CAPTCHA_SITE_KEY: 'google-captcha/site-key/',
 } as const;
 
 export const COOKIE_KEYS = {
   ACCESS_TOKEN: 'access_token',
   REFRESH_TOKEN: 'refresh_token',
-} as const;
-
-export const PAGINATION = {
-  DEFAULT_PAGE_SIZE: 20,
 } as const;

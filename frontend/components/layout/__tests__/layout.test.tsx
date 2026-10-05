@@ -1,64 +1,73 @@
 import { describe, it, expect, beforeEach } from '@jest/globals';
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import Footer from '../Footer';
 import Header from '../Header';
-
+import { renderWithIntl } from '../../../lib/__tests__/intl';
 import { useAuthStore } from '../../../lib/stores/authStore';
-import { useCartStore } from '../../../lib/stores/cartStore';
 
 jest.mock('../../../lib/stores/authStore', () => ({
   useAuthStore: jest.fn(),
 }));
 
-jest.mock('../../../lib/stores/cartStore', () => ({
-  useCartStore: jest.fn(),
+jest.mock('next/navigation', () => ({
+  useRouter: () => ({ refresh: jest.fn() }),
 }));
 
 const mockUseAuthStore = useAuthStore as unknown as jest.Mock;
-const mockUseCartStore = useCartStore as unknown as jest.Mock;
 
-const renderHeader = (authState: { isAuthenticated: boolean; signOut: jest.Mock }, cartItems: Array<{ quantity: number }>) => {
-  mockUseAuthStore.mockImplementation((selector: (state: typeof authState) => unknown) => selector(authState));
-  mockUseCartStore.mockImplementation((selector: (state: { items: Array<{ quantity: number }> }) => unknown) =>
-    selector({ items: cartItems })
-  );
+type AuthState = { isAuthenticated: boolean; signOut: jest.Mock };
 
-  return render(<Header />);
+const renderHeader = (authState: AuthState) => {
+  mockUseAuthStore.mockImplementation((selector: (state: AuthState) => unknown) => selector(authState));
+  return renderWithIntl(<Header />);
 };
 
-describe('layout components', () => {
+describe('Footer', () => {
+  it('shows the Fiscal. brand', () => {
+    renderWithIntl(<Footer />);
+
+    expect(screen.getByRole('contentinfo')).toHaveTextContent('Fiscal.');
+  });
+});
+
+describe('Header', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  it('renders footer copy', () => {
-    render(<Footer />);
-    expect(screen.getByText(/Base Django \+ React \+ Next Feature Template/i)).toBeInTheDocument();
+  it('links the Fiscal. wordmark to the home page', () => {
+    renderHeader({ isAuthenticated: false, signOut: jest.fn() });
+
+    expect(screen.getByRole('link', { name: 'Fiscal.' })).toHaveAttribute('href', '/');
   });
 
-  it('renders header for signed out users with cart count', () => {
-    renderHeader({ isAuthenticated: false, signOut: jest.fn() }, [{ quantity: 1 }, { quantity: 3 }]);
+  it('offers the sign-in link to visitors without a session', () => {
+    renderHeader({ isAuthenticated: false, signOut: jest.fn() });
 
-    expect(screen.getByRole('link', { name: 'Catalog' })).toHaveAttribute('href', '/catalog');
-    expect(screen.getByRole('link', { name: 'Blogs' })).toHaveAttribute('href', '/blogs');
-    expect(screen.getByRole('link', { name: 'Sign in' })).toHaveAttribute('href', '/sign-in');
-    expect(screen.getByRole('link', { name: 'Sign up' })).toHaveAttribute('href', '/sign-up');
-    expect(screen.queryByRole('button', { name: 'Sign out' })).not.toBeInTheDocument();
-    expect(screen.getByText('4')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Iniciar sesión' })).toHaveAttribute('href', '/sign-in');
   });
 
-  it('renders header for authenticated users and signs out', async () => {
+  it('hides the console link from visitors without a session', () => {
+    renderHeader({ isAuthenticated: false, signOut: jest.fn() });
+
+    expect(screen.getByRole('link', { name: 'Fiscal.' })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Consola' })).not.toBeInTheDocument();
+  });
+
+  it('links signed-in users to the console', () => {
+    renderHeader({ isAuthenticated: true, signOut: jest.fn() });
+
+    expect(screen.getByRole('link', { name: 'Consola' })).toHaveAttribute('href', '/dashboard');
+  });
+
+  it('signs the user out from the header button', async () => {
     const signOut = jest.fn();
-    renderHeader({ isAuthenticated: true, signOut }, [{ quantity: 2 }]);
+    renderHeader({ isAuthenticated: true, signOut });
 
-    expect(screen.getByRole('link', { name: 'Account' })).toHaveAttribute('href', '/dashboard');
-    const signOutButton = screen.getByRole('button', { name: 'Sign out' });
-
-    await userEvent.click(signOutButton);
+    await userEvent.click(screen.getByRole('button', { name: 'Cerrar sesión' }));
 
     expect(signOut).toHaveBeenCalledTimes(1);
-    expect(screen.queryByRole('link', { name: 'Sign in' })).not.toBeInTheDocument();
   });
 });

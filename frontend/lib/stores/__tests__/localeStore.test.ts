@@ -1,36 +1,58 @@
 import { describe, it, expect, beforeEach } from '@jest/globals';
-import { renderHook, act } from '@testing-library/react';
+import { act, renderHook } from '@testing-library/react';
+import Cookies from 'js-cookie';
 
 import { useLocaleStore } from '../localeStore';
 
 describe('localeStore', () => {
   beforeEach(() => {
-    useLocaleStore.setState({ locale: 'en' });
+    Cookies.remove('NEXT_LOCALE');
+    useLocaleStore.setState({ locale: 'es' });
   });
 
-  it('initializes with default locale "en"', () => {
+  it('starts in Spanish', () => {
     const { result } = renderHook(() => useLocaleStore());
-
-    expect(result.current.locale).toBe('en');
-  });
-
-  it('sets locale when a valid locale is provided', () => {
-    const { result } = renderHook(() => useLocaleStore());
-
-    act(() => {
-      result.current.setLocale('es');
-    });
 
     expect(result.current.locale).toBe('es');
   });
 
-  it('ignores locale change when an invalid value is provided', () => {
+  it('switches to a supported locale', () => {
+    const { result } = renderHook(() => useLocaleStore());
+
+    act(() => {
+      result.current.setLocale('en');
+    });
+
+    expect(result.current.locale).toBe('en');
+  });
+
+  it('writes the chosen locale to the next-intl cookie', () => {
+    const { result } = renderHook(() => useLocaleStore());
+
+    act(() => {
+      result.current.setLocale('en');
+    });
+
+    expect(Cookies.get('NEXT_LOCALE')).toBe('en');
+  });
+
+  it('ignores an unsupported locale', () => {
     const { result } = renderHook(() => useLocaleStore());
 
     act(() => {
       result.current.setLocale('fr');
     });
 
-    expect(result.current.locale).toBe('en');
+    expect(result.current.locale).toBe('es');
+  });
+
+  it('leaves the cookie untouched for an unsupported locale', () => {
+    const { result } = renderHook(() => useLocaleStore());
+
+    act(() => {
+      result.current.setLocale('fr');
+    });
+
+    expect(Cookies.get('NEXT_LOCALE')).toBeUndefined();
   });
 });

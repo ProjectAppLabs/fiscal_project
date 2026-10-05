@@ -397,7 +397,7 @@ def resolve_backend_coverage_root(backend_root: Path) -> Path:
     core_path = backend_root / "core_app"
     if core_path.exists():
         return core_path
-    base_path = backend_root / "base_feature_app"
+    base_path = backend_root / "fiscal_app"
     if base_path.exists():
         return base_path
     return core_path

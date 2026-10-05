@@ -2,6 +2,7 @@
 
 import axios from 'axios';
 
+import { API_ENDPOINTS } from '@/lib/constants';
 import { clearTokens, getAccessToken, getRefreshToken, setTokens } from '@/lib/services/tokens';
 
 const API_BASE_URL = (process.env.NEXT_PUBLIC_API_BASE_URL || process.env.NEXT_PUBLIC_API_URL || '/api').replace(/\/$/, '');
@@ -26,12 +27,12 @@ const refreshAccessToken = async (): Promise<string | null> => {
   if (!refresh) return null;
 
   try {
-    const response = await axios.post(`${API_BASE_URL}/token/refresh/`, { refresh });
+    const response = await axios.post(`${API_BASE_URL}/${API_ENDPOINTS.TOKEN_REFRESH}`, { refresh });
     const access = response.data?.access;
     if (!access) return null;
     setTokens({ access, refresh });
     return access;
-  } catch (e) {
+  } catch {
     clearTokens();
     return null;
   }

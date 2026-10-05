@@ -1,29 +1,39 @@
 import type { Metadata } from 'next';
+import { NextIntlClientProvider } from 'next-intl';
+import { getLocale, getTranslations } from 'next-intl/server';
+
 import './globals.css';
+import { BRAND_NAME } from '@/components/brand/FiscalLogo';
+import Footer from '@/components/layout/Footer';
 import Header from '@/components/layout/Header';
 import StagingGate from '@/components/staging/StagingGate';
 import Providers from './providers';
 
-export const metadata: Metadata = {
-  title: 'Base Django + React + Next Feature Template',
-  description: 'A template for building web applications with Django and React',
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations('metadata');
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return {
+    title: BRAND_NAME,
+    description: t('description'),
+    applicationName: BRAND_NAME,
+  };
+}
+
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const locale = await getLocale();
+
   return (
-    <html lang="es" suppressHydrationWarning>
+    <html lang={locale} suppressHydrationWarning>
       <body className="antialiased">
-        <Providers>
-          <StagingGate>
-            <Header />
-            {children}
-            <footer className="border-t border-border mt-16">
-              <div className="max-w-6xl mx-auto px-6 py-10 text-sm text-muted-foreground">
-                &copy; 2026 Base Django + React + Next Feature Template
-              </div>
-            </footer>
-          </StagingGate>
-        </Providers>
+        <NextIntlClientProvider>
+          <Providers>
+            <StagingGate>
+              <Header />
+              {children}
+              <Footer />
+            </StagingGate>
+          </Providers>
+        </NextIntlClientProvider>
       </body>
     </html>
   );

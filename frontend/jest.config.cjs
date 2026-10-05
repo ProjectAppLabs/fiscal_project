@@ -22,7 +22,7 @@ const customJestConfig = {
     '!**/e2e/**',
     '!app/layout.tsx',
     '!app/globals.css',
-    '!lib/types.ts',
+    '!lib/i18n/request.ts',
   ],
   coverageProvider: 'v8',
   coverageThreshold: {
@@ -36,4 +36,14 @@ const customJestConfig = {
   coverageReporters: ['text-summary', 'text', 'lcov', 'html', 'json-summary'],
 };
 
-module.exports = createJestConfig(customJestConfig);
+// next-intl and use-intl ship ESM only, so Jest must transform them too.
+const ESM_PACKAGES = ['next-intl', 'use-intl', '@formatjs', '@schummar', 'icu-minify', 'intl-messageformat'];
+
+module.exports = async () => {
+  const config = await createJestConfig(customJestConfig)();
+  config.transformIgnorePatterns = [
+    `/node_modules/(?!(${ESM_PACKAGES.join('|')})/)`,
+    '^.+\\.module\\.(css|sass|scss)$',
+  ];
+  return config;
+};
