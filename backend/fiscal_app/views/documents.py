@@ -1,13 +1,19 @@
-"""Machine API for client systems: documents."""
+"""Machine API for client systems: documents and their artifacts."""
 
+import logging
+
+from django.http import HttpResponse
 from rest_framework import status
 from rest_framework.response import Response
 
 from fiscal_app.models import Document
 from fiscal_app.serializers import DocumentCreateSerializer, DocumentDetailSerializer
+from fiscal_app.services.artifacts import ArtifactIntegrityError, read
 from fiscal_app.services.documents import submit_document
 from fiscal_app.utils.errors import FiscalError
 from fiscal_app.views.issuers import machine_view
+
+logger = logging.getLogger(__name__)
 
 
 @machine_view(['POST'])
@@ -21,9 +27,33 @@ def create_document(request):
     return Response(DocumentDetailSerializer(document).data, status=code)
 
 
-@machine_view(['GET'])
-def retrieve_document(request, document_id):
-    document = Document.objects.filter(client=request.user, pk=document_id).select_related('issuer').first()
+def own_document(client, document_id):
+    document = Document.objects.filter(client=client, pk=document_id).select_related('issuer').first()
     if document is None:
         raise FiscalError('No hay un documento con ese identificador.', 'document_not_found', status.HTTP_404_NOT_FOUND)
-    return Response(DocumentDetailSerializer(document).data)
+    return document
+
+
+@machine_view(['GET'])
+def retrieve_document(request, document_id):
+    return Response(DocumentDetailSerializer(own_document(request.user, document_id)).data)
+
+
+@machine_view(['GET'])
+def retrieve_artifact(request, document_id, kind):
+    """Latest artifact of a kind (signed_xml, dian_response…), checked against its SHA-256 before it is served."""
+    artifact = own_document(request.user, document_id).artifacts.filter(kind=kind).order_by('-created_at').first()
+    if artifact is None:
+        raise FiscalError('El documento todavía no tiene ese archivo.', 'artifact_not_found', status.HTTP_404_NOT_FOUND)
+    try:
+        content = read(artifact)
+    except (ArtifactIntegrityError, OSError) as error:
+        logger.error('Artefacto %s ilegible o alterado: %s', artifact.pk, error)
+        raise FiscalError(
+            'El archivo no está disponible o no coincide con su huella registrada.',
+            'artifact_unavailable', status.HTTP_503_SERVICE_UNAVAILABLE,
+        ) from error
+    response = HttpResponse(content, content_type=artifact.content_type)
+    response['Content-Disposition'] = f'attachment; filename="{artifact.storage_path.rsplit("/", 1)[-1]}"'
+    response['X-Fiscal-SHA256'] = artifact.sha256
+    return response

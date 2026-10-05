@@ -34,6 +34,8 @@ class Document(models.Model):
     qr_url = models.URLField(max_length=500, blank=True, default='')
     errors = models.JSONField(default=list, blank=True)
     attempts = models.PositiveIntegerField(default=0)
+    # Consecutive answers in which the DIAN was unavailable; above the annex retries the document is in contingency.
+    transient_failures = models.PositiveSmallIntegerField(default=0)
     next_attempt_at = models.DateTimeField(null=True, blank=True)
     # The invoice a credit or debit note refers to (BillingReference).
     original = models.ForeignKey('self', on_delete=models.PROTECT, null=True, blank=True, related_name='notes')

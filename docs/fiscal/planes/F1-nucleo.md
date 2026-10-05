@@ -182,18 +182,20 @@ Los catálogos salen de las listas genericode oficiales de la caja de herramient
   - falta la dirección en un domicilio con consumidor final;
   - una nota no referencia su original.
 
-### PR 5 · Cola, gateway simulado y avisos (`feat/…-transmission-queue`)
+### PR 5 · Cola, gateway simulado y avisos (`feat/…-transmission-queue`) — ✅ hecho
 
-- [ ] `dian/gateway.py`: interfaz `DianGateway.send(document) -> GatewayResult` y `status(document)`, más la
+Los reintentos siguen el anexo §12.4: 5 s × 3 ante un error del servicio y 2 min × 5 ante una demora; después, `contingency_dian` con sondeo cada 30 min. Los documentos en contingencia se reservan para un trabajador sin cambiar de estado, y un contador `transient_failures` cuenta los fallos. El almacén vive fuera de `MEDIA_ROOT` (`FISCAL_ARTIFACTS_DIR`) y se descarga por `/api/v1/documents/{id}/artifacts/{kind}/`. Huey corre en modo inmediato fuera de producción (`HUEY_IMMEDIATE`), y el comando `transmit_pending` sirve en desarrollo. `skip_locked` está probado con dos trabajadores en MySQL.
+
+- [x] `dian/gateway.py`: interfaz `DianGateway.send(document) -> GatewayResult` y `status(document)`, más la
   excepción `DianUnavailable`. `dian/simulated.py`: acepta en `testing`; **se niega en `production`** (el documento
   queda en cola); rechaza con reglas reproducibles para las pruebas.
-- [ ] `services/emission.py`: máquina de estados `queued` → `transmitting` → `validated` o `rejected`. El número y el
+- [x] `services/emission.py`: máquina de estados `queued` → `transmitting` → `validated` o `rejected`. El número y el
   código no cambian en los reintentos. Rescate de lo que quedó `transmitting` más de 10 min.
-- [ ] Huey: `transmit_pending` (periódica cada 5 s, más un disparo inmediato al crear),
+- [x] Huey: `transmit_pending` (periódica cada 5 s, más un disparo inmediato al crear),
   `select_for_update(skip_locked)` y espera creciente.
-- [ ] `services/webhooks.py`: `POST` al `webhook_url` con el cuerpo del documento, firmado con el mismo esquema
+- [x] `services/webhooks.py`: `POST` al `webhook_url` con el cuerpo del documento, firmado con el mismo esquema
   HMAC; reintentos con espera creciente; `deliver_webhooks` en Huey.
-- [ ] `services/artifacts.py`: guarda bytes con hash y `retain_until` en `MEDIA_ROOT/fiscal/<nit>/<año>/…` (almacén
+- [x] `services/artifacts.py`: guarda bytes con hash y `retain_until` en `MEDIA_ROOT/fiscal/<nit>/<año>/…` (almacén
   local en F1; S3 compatible después).
 - **Fails if:**
   - el gateway simulado acepta un emisor en producción;

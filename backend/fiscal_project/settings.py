@@ -319,7 +319,9 @@ DBBACKUP_CLEANUP_KEEP_MEDIA = 4
 HUEY = RedisHuey(
     name='fiscal_project',
     url=os.getenv('REDIS_URL', 'redis://localhost:6380/1'),
-    immediate=not IS_PRODUCTION,
+    # Immediate mode runs tasks in-process and never runs periodic or delayed ones: set HUEY_IMMEDIATE=false and
+    # start `manage.py run_huey` to work with the real queue in development.
+    immediate=os.getenv('HUEY_IMMEDIATE', str(not IS_PRODUCTION)).lower() in {'1', 'true', 'yes', 'on'},
 )
 
 # ---------------------------------------------------------------------------
@@ -384,3 +386,6 @@ FISCAL_SOFTWARE_NAME = 'Fiscal.'
 FISCAL_RETENTION_YEARS = 10
 # Window in seconds in which a signed client request is accepted (both clocks must run NTP).
 FISCAL_SIGNATURE_MAX_AGE = int(os.getenv('FISCAL_SIGNATURE_MAX_AGE', '300'))
+# Artifacts with legal value live outside MEDIA_ROOT and are only served through the signed API.
+FISCAL_ARTIFACTS_DIR = os.getenv('FISCAL_ARTIFACTS_DIR', str(BASE_DIR / 'artifacts'))
+FISCAL_WEBHOOK_TIMEOUT = int(os.getenv('FISCAL_WEBHOOK_TIMEOUT', '10'))
