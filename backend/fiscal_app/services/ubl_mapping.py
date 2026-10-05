@@ -103,3 +103,19 @@ def resolution_of(numbering_range: NumberingRange) -> Resolution:
         number_from=numbering_range.number_from, number_to=numbering_range.number_to,
         technical_key=numbering_range.technical_key,
     )
+
+
+def invoice_reference(note: Document):
+    """BillingReference and DiscrepancyResponse of a note: the original invoice and the correction concept."""
+    from dian.catalogs import code_list
+    from dian.ubl.notes import InvoiceReference
+
+    original = note.original
+    reference = note.payload['billing_reference']
+    concepts = code_list('ConceptoNotaCredito' if note.kind == 'credit_note' else 'ConceptoNotaDebito')
+    issued = original.issue_datetime.astimezone(ZoneInfo(settings.BUSINESS_TIME_ZONE))
+    return InvoiceReference(
+        number=original.full_number, cufe=original.cufe, issue_date=issued.date().isoformat(),
+        concept_code=reference['concept_code'],
+        concept_description=reference.get('reason') or concepts.get(reference['concept_code'], ''),
+    )

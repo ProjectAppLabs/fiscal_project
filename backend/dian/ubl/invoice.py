@@ -13,9 +13,6 @@ from lxml import etree
 from dian import codes
 
 from .common import (
-    DIAN_AGENCY,
-    DIAN_DV,
-    DIAN_NIT,
     NS,
     TIP_CODE,
     DocumentSpec,
@@ -23,6 +20,7 @@ from .common import (
     address_block,
     allowance_charge_block,
     amount,
+    dian_extensions,
     party_block,
     qname,
     sub,
@@ -69,7 +67,7 @@ def build_invoice(spec: DocumentSpec, resolution: Resolution, invoice_type: str 
     qr = codes.qr_url(code, spec.environment)
 
     root = etree.Element(qname('inv', 'Invoice'), nsmap={None: NS['inv'], **{k: NS[k] for k in ('cac', 'cbc', 'ext', 'sts', 'ds', 'xades', 'xades141')}})
-    _dian_extensions(root, spec, resolution, qr)
+    dian_extensions(root, spec, qr, resolution)
     sub(root, 'cbc:UBLVersionID', 'UBL 2.1')
     sub(root, 'cbc:CustomizationID', spec.operation_type)
     sub(root, 'cbc:ProfileID', PROFILE)
@@ -94,7 +92,7 @@ def build_invoice(spec: DocumentSpec, resolution: Resolution, invoice_type: str 
     if spec.delivery_address:
         delivery = sub(root, 'cac:Delivery')
         address_block(delivery, 'cac:DeliveryAddress', spec.delivery_address)
-    _payment_means(root, spec)
+    payment_means(root, spec)
     for index, item in enumerate([*spec.allowances, *spec.charges], start=1):
         allowance_charge_block(root, index, item)
     tax_total_blocks(root, spec.taxes)
@@ -104,37 +102,7 @@ def build_invoice(spec: DocumentSpec, resolution: Resolution, invoice_type: str 
     return BuiltInvoice(root=root, code=code, qr_url=qr)
 
 
-def _dian_extensions(root, spec, resolution, qr):
-    extensions = sub(root, 'ext:UBLExtensions')
-    content = sub(sub(extensions, 'ext:UBLExtension'), 'ext:ExtensionContent')
-    dian = sub(content, 'sts:DianExtensions')
-    control = sub(dian, 'sts:InvoiceControl')
-    sub(control, 'sts:InvoiceAuthorization', resolution.number)
-    period = sub(control, 'sts:AuthorizationPeriod')
-    sub(period, 'cbc:StartDate', resolution.valid_from)
-    sub(period, 'cbc:EndDate', resolution.valid_to)
-    authorized = sub(control, 'sts:AuthorizedInvoices')
-    if resolution.prefix:
-        sub(authorized, 'sts:Prefix', resolution.prefix)
-    sub(authorized, 'sts:From', resolution.number_from)
-    sub(authorized, 'sts:To', resolution.number_to)
-    source = sub(dian, 'sts:InvoiceSource')
-    sub(source, 'cbc:IdentificationCode', 'CO', listAgencyID='6',
-        listAgencyName='United Nations Economic Commission for Europe',
-        listSchemeURI='urn:oasis:names:specification:ubl:codelist:gc:CountryIdentificationCode-2.1')
-    provider = sub(dian, 'sts:SoftwareProvider')
-    # Software «propio o adquirido» (D1): the issuer is its own technology provider (FAB19).
-    sub(provider, 'sts:ProviderID', spec.issuer.id_number, schemeID=spec.issuer.dv, schemeName='31', **DIAN_AGENCY)
-    sub(provider, 'sts:SoftwareID', spec.software.software_id, **DIAN_AGENCY)
-    sub(dian, 'sts:SoftwareSecurityCode',
-        codes.software_security_code(spec.software.software_id, spec.software.pin, spec.full_number), **DIAN_AGENCY)
-    authorization = sub(dian, 'sts:AuthorizationProvider')
-    sub(authorization, 'sts:AuthorizationProviderID', DIAN_NIT, schemeID=DIAN_DV, schemeName='31', **DIAN_AGENCY)
-    # FAB36: the lookup URL with the CUFE/CUDE of cbc:UUID.
-    sub(dian, 'sts:QRCode', qr)
-
-
-def _payment_means(root, spec):
+def payment_means(root, spec):
     for code in spec.payment.means:
         means = sub(root, 'cac:PaymentMeans')
         sub(means, 'cbc:ID', spec.payment.form)

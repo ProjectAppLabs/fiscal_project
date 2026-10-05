@@ -4,6 +4,7 @@ from decimal import Decimal
 
 from dian.codes import (
     CodeInput,
+    code_chain,
     cude,
     cufe,
     qr_text,
@@ -70,3 +71,31 @@ def test_qr_text_has_the_annex_fields():
         'DocAdq: 800199436',
     ]
     assert 'ValTolFac: 1785000.00' in text
+
+
+def test_credit_note_cude_matches_the_annex_example():
+    """Fails if a credit note CUDE differs from the annex FE 1.9 §11.4.3 example (software PIN 12301)."""
+    note = CodeInput(
+        number='8110007871', issue_date='2019-01-12', issue_time='07:00:00-05:00', line_extension=Decimal('5000.00'),
+        iva=Decimal('950.00'), inc=Decimal('0'), ica=Decimal('0'), payable=Decimal('5950.00'),
+        issuer_nit='900373076', buyer_id='8355990', environment='1',
+    )
+
+    assert cude(note, '12301') == (
+        '907e4444decc9e59c160a2fb3b6659b33dc5b632a5008922b9a62f83f757b1c448e47f5867f2b50dbdb96f48c7681168'
+    )
+
+
+def test_debit_note_chain_matches_the_annex_composition():
+    """Fails if the debit note CUDE string differs from the annex §11.4.5 composition.
+
+    The hash printed in that annex example does not match its own composition string (annex erratum), so the
+    composition is what is checked here; the hash itself is covered by the credit note example.
+    """
+    note = CodeInput(
+        number='ND1001', issue_date='2019-01-18', issue_time='10:58:00-05:00', line_extension=Decimal('30000.00'),
+        iva=Decimal('0'), inc=Decimal('2400.00'), ica=Decimal('0'), payable=Decimal('32400.00'),
+        issuer_nit='900197264', buyer_id='10254102', environment='2',
+    )
+
+    assert code_chain(note, '10201') == 'ND10012019-01-1810:58:00-05:0030000.00010.00042400.00030.0032400.0090019726410254102102012'

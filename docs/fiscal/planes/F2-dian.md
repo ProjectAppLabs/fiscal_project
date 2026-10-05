@@ -43,11 +43,13 @@ La factura de restaurante (consumidor final, INC, propina y canje de puntos) y l
 - **Pruebas:** vectores del anexo; la factura de restaurante de F1 valida contra el XSD; truncado frente a redondeo;
   hora en −05:00; propina como en el ejemplo oficial; consumidor final.
 
-### F2 PR 2 · Notas crédito y débito (`feat/…-ubl-notes`)
+### F2 PR 2 · Notas crédito y débito (`feat/…-ubl-notes`) — ✅ hecho
 
 - `CreditNote` y `DebitNote` con `DiscrepancyResponse` (concepto), `BillingReference` (número, CUFE y fecha de la
   factura) y su CUDE.
 - Validan contra el XSD. Estructura comparada con `CreditNote.xml` y `DebitNote.xml` de la caja.
+- **Hallazgo:** el ejemplo de CUDE de la nota débito del anexo (§11.4) no coincide con su propia «Composición»: la
+  prueba verifica la cadena concatenada (`code_chain`) y el hash del ejemplo de la nota crédito, que sí coincide.
 
 ### F2 PR 3 · Firma XAdES-EPES (`feat/…-xades`)
 
