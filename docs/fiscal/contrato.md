@@ -279,9 +279,10 @@ estados son:
 | `transmitting` | Un trabajador la está enviando |
 | `validated` | La DIAN la validó: trae `cufe`, `qr_url` y los artefactos `signed_xml` y `dian_response` |
 | `rejected` | La DIAN la rechazó: `errors` trae las reglas incumplidas |
-| `contingency_dian` | La DIAN no respondió tras los reintentos del anexo (§12.4): 3 a los 5 s ante un error del servicio y 5 cada 2 minutos ante una demora. Fiscal. vuelve a intentar cada 30 minutos (el tipo 04 completo llega en F4) |
+| `contingency_dian` | La DIAN no respondió tras los reintentos del anexo (§12.4): 3 a los 5 s ante un error del servicio y 5 cada 2 minutos ante una demora. Una **factura** se firma de nuevo como tipo 04, con el mismo número y CUFE (`invoice_type: "04"`, `cufe`, `qr_url`): **se puede entregar al comprador sin validación previa** (§12.2). Las notas no tienen contingencia: esperan. Fiscal. reintenta cada 30 minutos y, cuando la DIAN responde, transmite el tipo 04 y el documento pasa a `validated` o `rejected` |
 
-El número y el CUFE de un documento nunca cambian entre reintentos.
+El número y el CUFE de un documento nunca cambian entre reintentos, ni al pasar a tipo 04. `invoice_type` dice el tipo del
+XML vigente (`01`, `03` o `04`; vacío en las notas) y `contingency_started_at`, desde cuándo está en contingencia.
 
 Cada elemento de `errors` es `{"rule": "FAJ43b", "severity": "rechazo", "message": "…"}`, con la regla y el mensaje
 tal como los da la DIAN. Un documento `validated` también puede traer elementos con `"severity": "notificacion"`: son
