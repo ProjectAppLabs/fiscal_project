@@ -246,3 +246,13 @@ def check_alerts():
     from fiscal_app.services.alerts import check_all
 
     return check_all()
+
+
+@db_periodic_task(crontab(minute='*/2'))
+def check_test_sets():
+    """Ask the DIAN for the result of the test sets still in process (fiscal_app.services.test_set)."""
+    from fiscal_app.models import TestSetRun
+    from fiscal_app.services.test_set import check
+
+    for run in TestSetRun.objects.filter(state=TestSetRun.State.PROCESSING).select_related('issuer')[:20]:
+        check(run)
