@@ -375,3 +375,9 @@ FISCAL_ENCRYPTION_KEY = require_fernet_key(
 DIAN_GATEWAY = require_dian_gateway(os.getenv('DIAN_GATEWAY'))
 # Legal time of Colombia: the DIAN requires issue and signing times in -05:00. Storage stays in UTC.
 BUSINESS_TIME_ZONE = 'America/Bogota'
+# Manufacturer of the software, written in every document and in each issuer's DIAN registration (D1).
+FISCAL_MANUFACTURER_NIT = os.getenv('FISCAL_MANUFACTURER_NIT', '')
+FISCAL_MANUFACTURER_NAME = os.getenv('FISCAL_MANUFACTURER_NAME', 'ProjectApp')
+FISCAL_SOFTWARE_NAME = 'Fiscal.'
+# Years an artifact with legal value is kept (Ley 962 de 2005 art. 28; ET art. 632 asks for 5).
+FISCAL_RETENTION_YEARS = 10

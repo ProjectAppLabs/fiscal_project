@@ -19,7 +19,7 @@ def test_password_code_admin_disables_add_permission():
 
 @pytest.mark.django_db
 def test_admin_site_custom_sections():
-    """Fails if the admin index stops grouping operators and the staging banner, or still lists demo models."""
+    """Fails if the admin index loses a Fiscal. section or still lists template demo models."""
     User.objects.create_superuser(email='admin@example.com', password='pass1234')
     request = RequestFactory().get('/admin/')
     request.user = User.objects.get(email='admin@example.com')
@@ -27,7 +27,10 @@ def test_admin_site_custom_sections():
     app_list = admin_site.get_app_list(request)
 
     object_names = {model['object_name'] for section in app_list for model in section['models']}
-    assert object_names == {'User', 'PasswordCode', 'StagingPhaseBanner'}
+    assert object_names == {
+        'User', 'PasswordCode', 'StagingPhaseBanner', 'ClientSystem', 'Issuer', 'SoftwareRegistration',
+        'Certificate', 'NumberingRange', 'Document', 'DocumentEvent', 'Artifact', 'WebhookDelivery',
+    }
 
 
 def test_user_admin_has_no_impersonation_route():
@@ -35,3 +38,26 @@ def test_user_admin_has_no_impersonation_route():
     assert not hasattr(FiscalUserAdmin, 'login_as_link')
     with pytest.raises(NoReverseMatch):
         reverse('myadmin:fiscal_app_user_login_as', args=[1])
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    ('model_name', 'secret_field'),
+    [
+        ('SoftwareRegistration', 'software_pin'),
+        ('Certificate', 'p12'),
+        ('Certificate', 'password'),
+        ('NumberingRange', 'technical_key'),
+    ],
+)
+def test_admin_forms_never_show_secrets(admin_user, model_name, secret_field):
+    """Fails if an admin change form exposes a certificate, its password, a software PIN or a technical key."""
+    from fiscal_app import models
+
+    model = getattr(models, model_name)
+    request = RequestFactory().get('/admin/')
+    request.user = admin_user
+
+    fields = admin_site._registry[model].get_fields(request)
+
+    assert secret_field not in fields

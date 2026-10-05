@@ -31,7 +31,8 @@ plan de implementación detallado de F1.
 
 ## Próximos pasos
 
-1. F0 técnico: Python 3.14 y rueda de `mysqlclient`, `fiscal-redis` y la caja de herramientas de la DIAN.
-2. F1, PR 1: adaptar la plantilla (renombre, retiro de demos, MySQL y marca). Plan en `docs/fiscal/planes/F1-nucleo.md`.
+1. F1 PR 3: autenticación HMAC de sistemas cliente y API de emisores, certificados, software y rangos.
+2. F1 PR 4: contrato v1 y validación previa, con catálogos generados desde las listas genericode oficiales de la
+   DIAN (caja de herramientas FE 1.9 v2026, descargada en `~/.cache/fiscal-dian/`).
 3. Del dueño, sin bloquear F1: registrar Fiscal. en el portal de habilitación de ProjectApp y, hacia el final de F2,
    el certificado.

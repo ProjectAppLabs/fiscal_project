@@ -92,6 +92,56 @@ jobs:
           retention-days: 5
 
   # ───────────────────────────────────────────
+  # Backend — MySQL-only tests (collations, row locks)
+  # ───────────────────────────────────────────
+  backend-mysql-tests:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: fiscal-root
+          MYSQL_DATABASE: fiscal
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -pfiscal-root"
+          --health-interval=5s --health-timeout=5s --health-retries=20
+    env:
+      DJANGO_TEST_DB_ENGINE: django.db.backends.mysql
+      DB_NAME: fiscal
+      DB_USER: root
+      DB_PASSWORD: fiscal-root
+      DB_HOST: 127.0.0.1
+      DB_PORT: '3306'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version-file: '.python-version'
+          cache: 'pip'
+          cache-dependency-path: backend/requirements.txt
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq pkg-config default-libmysqlclient-dev
+
+      - name: Install locked Python dependencies
+        run: python -m pip install --require-hashes --requirement requirements.txt
+
+      - name: Run MySQL-only tests
+        # The SQLite job skips them; here they run against the engine used in development and production.
+        run: pytest -m mysql -v --tb=short -p no:cacheprovider --no-cov
+
+  # ───────────────────────────────────────────
   # Frontend — Jest unit & component tests
   # ───────────────────────────────────────────
   frontend-unit-tests:

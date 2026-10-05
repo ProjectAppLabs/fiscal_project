@@ -5,7 +5,20 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from .forms.user import UserChangeForm, UserCreationForm
-from .models import PasswordCode, StagingPhaseBanner, User
+from .models import (
+    Artifact,
+    Certificate,
+    ClientSystem,
+    Document,
+    DocumentEvent,
+    Issuer,
+    NumberingRange,
+    PasswordCode,
+    SoftwareRegistration,
+    StagingPhaseBanner,
+    User,
+    WebhookDelivery,
+)
 
 # ============================================================================
 # USER MANAGEMENT
@@ -105,6 +118,97 @@ class StagingPhaseBannerAdmin(admin.ModelAdmin):
     hide_banner.short_description = _('🙈 Hide banner')
 
 
+
+# ============================================================================
+# FISCAL. — secrets never appear in admin forms or lists
+# ============================================================================
+
+class ReadOnlyAdmin(admin.ModelAdmin):
+    """Records written only by the service (documents and their trail): visible, never edited by hand."""
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
+class ClientSystemAdmin(admin.ModelAdmin):
+    list_display = ('name', 'key_id', 'active', 'webhook_url', 'created_at')
+    list_filter = ('active',)
+    search_fields = ('name', 'key_id')
+    readonly_fields = ('key_id', 'created_at')
+    fields = ('name', 'key_id', 'webhook_url', 'active', 'created_at')
+
+    def has_add_permission(self, request):
+        # Created with `manage.py create_client_system`, which shows the secret once.
+        return False
+
+
+class IssuerAdmin(admin.ModelAdmin):
+    list_display = ('legal_name', 'nit', 'dv', 'client', 'environment', 'active')
+    list_filter = ('environment', 'active', 'client')
+    search_fields = ('legal_name', 'trade_name', 'nit')
+
+
+class SoftwareRegistrationAdmin(admin.ModelAdmin):
+    list_display = ('issuer', 'environment', 'software_id', 'software_name', 'active')
+    list_filter = ('environment', 'active')
+    search_fields = ('issuer__nit', 'issuer__legal_name', 'software_id')
+    exclude = ('software_pin',)
+
+    def has_add_permission(self, request):
+        # The PIN is a secret: it only enters through the API.
+        return False
+
+
+class CertificateAdmin(admin.ModelAdmin):
+    list_display = ('issuer', 'subject', 'serial', 'not_after', 'active')
+    list_filter = ('active',)
+    search_fields = ('issuer__nit', 'subject', 'serial')
+    fields = ('issuer', 'subject', 'issued_by', 'serial', 'not_before', 'not_after', 'active', 'created_at')
+    readonly_fields = fields
+
+    def has_add_permission(self, request):
+        # Certificates are validated and encrypted by the API; they are never typed in by hand.
+        return False
+
+
+class NumberingRangeAdmin(admin.ModelAdmin):
+    list_display = ('issuer', 'kind', 'prefix', 'number_from', 'number_to', 'valid_to', 'active')
+    list_filter = ('kind', 'active')
+    search_fields = ('issuer__nit', 'resolution_number', 'prefix')
+    exclude = ('technical_key',)
+
+    def has_add_permission(self, request):
+        # The technical key is a secret: ranges enter through the API.
+        return False
+
+
+class DocumentAdmin(ReadOnlyAdmin):
+    list_display = ('full_number', 'kind', 'issuer', 'state', 'attempts', 'created_at')
+    list_filter = ('state', 'kind')
+    search_fields = ('issuer__nit', 'idempotency_key', 'cufe')
+
+
+class DocumentEventAdmin(ReadOnlyAdmin):
+    list_display = ('document', 'state', 'created_at')
+    list_filter = ('state',)
+
+
+class ArtifactAdmin(ReadOnlyAdmin):
+    list_display = ('document', 'kind', 'size', 'sha256', 'retain_until')
+    list_filter = ('kind',)
+
+
+class WebhookDeliveryAdmin(ReadOnlyAdmin):
+    list_display = ('client', 'document', 'attempts', 'last_status', 'delivered_at')
+    list_filter = ('client',)
+
+
 # ============================================================================
 # CUSTOM ADMIN SITE - ORGANIZED BY SECTIONS
 # ============================================================================
@@ -120,6 +224,22 @@ class FiscalAdminSite(admin.AdminSite):
         
         # Custom structure for the admin index organized by sections
         custom_app_list = [
+            {
+                'name': _('🧾 Fiscal. · Clientes y emisores'),
+                'app_label': 'fiscal_parties',
+                'models': [
+                    model for model in base_app_models
+                    if model['object_name'] in ['ClientSystem', 'Issuer', 'SoftwareRegistration', 'Certificate', 'NumberingRange']
+                ]
+            },
+            {
+                'name': _('📄 Fiscal. · Documentos'),
+                'app_label': 'fiscal_documents',
+                'models': [
+                    model for model in base_app_models
+                    if model['object_name'] in ['Document', 'DocumentEvent', 'Artifact', 'WebhookDelivery']
+                ]
+            },
             {
                 'name': _('👥 User Management'),
                 'app_label': 'user_management',
@@ -155,3 +275,12 @@ admin_site = FiscalAdminSite(name='myadmin')
 admin_site.register(User, FiscalUserAdmin)
 admin_site.register(PasswordCode, PasswordCodeAdmin)
 admin_site.register(StagingPhaseBanner, StagingPhaseBannerAdmin)
+admin_site.register(ClientSystem, ClientSystemAdmin)
+admin_site.register(Issuer, IssuerAdmin)
+admin_site.register(SoftwareRegistration, SoftwareRegistrationAdmin)
+admin_site.register(Certificate, CertificateAdmin)
+admin_site.register(NumberingRange, NumberingRangeAdmin)
+admin_site.register(Document, DocumentAdmin)
+admin_site.register(DocumentEvent, DocumentEventAdmin)
+admin_site.register(Artifact, ArtifactAdmin)
+admin_site.register(WebhookDelivery, WebhookDeliveryAdmin)

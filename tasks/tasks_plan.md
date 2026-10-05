@@ -10,8 +10,8 @@
 |---|---|---|
 | Inventario (DIAN, Waiter, operación, negocio y legal) | ✅ hecho 2026-10-04 | — |
 | Decisiones D1 a D7 | ✅ tomadas 2026-10-04 | — |
-| Plantilla adaptada a Fiscal. (nombres, marca, MySQL, limpieza de features demo) | ⏳ pendiente | F1 |
-| Núcleo: sistemas cliente, emisores, certificados, rangos, documentos, cola | ⏳ pendiente | F1 |
+| Plantilla adaptada a Fiscal. (nombres, marca, MySQL, limpieza de features demo) | ✅ PR #2, 2026-10-04 | F1 |
+| Núcleo: sistemas cliente, emisores, certificados, rangos, documentos, cola | 🔄 modelos y cifrado hechos (F1 PR 2); faltan API, contrato, cola y consola | F1 |
 | Librería `dian/`: UBL, CUFE/CUDE, XAdES, SOAP | ⏳ pendiente | F2 |
 | Habilitación de ProjectApp (set de pruebas) | ⏳ pendiente | F3 |
 | Notas, contingencias 04 y 03, entrega (AttachedDocument y PDF) | ⏳ pendiente | F4 |
@@ -151,7 +151,8 @@ Plan de implementación: `docs/fiscal/planes/F1-nucleo.md` (seis PRs).
 
 ## Known issues
 
-1. La plantilla trae features demo (blog, productos, ventas) y nombres `base_feature_*` que hay que retirar o
-   renombrar en F1.
-2. Python 3.14.7 no está instalado en el equipo de desarrollo.
+1. Avisos de docstrings (pydocstyle) en pruebas heredadas de la plantilla: el gate los ve en local, donde
+   encuentra el ruff del venv, pero no en CI.
+2. `frontend/npm-audit-allowlist.json` acepta `braces` GHSA-vfj7-8cjw-p6xm hasta el 2026-11-04 (no hay versión
+   corregida). Revisarlo antes de esa fecha.
 3. El contrato es un borrador anterior al inventario (`docs/fiscal/contrato-borrador.md`).
