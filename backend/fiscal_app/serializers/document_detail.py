@@ -25,5 +25,6 @@ class DocumentDetailSerializer(serializers.ModelSerializer):
         model = Document
         fields = (
             'id', 'idempotency_key', 'issuer', 'kind', 'prefix', 'number', 'full_number', 'issue_datetime', 'state',
-            'cufe', 'qr_url', 'errors', 'attempts', 'original', 'validated_at', 'created_at', 'artifacts', 'events',
+            'invoice_type', 'cufe', 'qr_url', 'errors', 'attempts', 'original', 'validated_at', 'contingency_started_at',
+            'created_at', 'artifacts', 'events',
         )

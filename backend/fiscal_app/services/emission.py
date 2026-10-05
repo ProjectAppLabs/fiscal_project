@@ -4,10 +4,13 @@ The database is the source of truth: a document's state and next attempt live in
 A document's number, CUFE and signed XML never change on retries (DIAN regla 90).
 
 Retries follow the annex FE 1.9 §12.4: an 'error' answer is retried every 5 s three times, a 'delay' (timeout) every
-2 minutes five times; after that the document enters DIAN contingency (type 04), which F4 completes (re-signing as
-04, delivery without validation and the 48-hour transmission). The DIAN service is then polled every 30 minutes.
+2 minutes five times; after that the document enters DIAN contingency (§12.2). A sale invoice is signed again as
+type 04 with the same number and CUFE, the evidence of the failures is kept, and the client system is told so it can
+deliver it without validation. Notes have no contingency scheme: they just wait. The DIAN is then polled every
+30 minutes with the latest signed XML; the first answer transmits it, well inside the 48 hours the annex allows.
 """
 
+import json
 import logging
 from datetime import timedelta
 
@@ -68,7 +71,7 @@ def transmit(document_id: int, gateway=None) -> Document:
         logger.warning('Documento %s rechazado por el gateway configurado: %s', document.pk, refusal)
         return _requeue(document, REFUSED_RETRY, {'gateway_refused': str(refusal)})
     except DianUnavailable as unavailable:
-        return _after_unavailable(document, unavailable)
+        return _after_unavailable(document, unavailable, gateway)
     return _record_result(document, result)
 
 
@@ -84,12 +87,12 @@ def _submission(document):
 def _requeue(document, wait, detail):
     document.state = DocumentState.QUEUED
     document.next_attempt_at = timezone.now() + wait
-    document.save(update_fields=['state', 'next_attempt_at', 'attempts', 'updated_at'])
+    document.save(update_fields=['state', 'next_attempt_at', 'attempts', 'transient_failures', 'updated_at'])
     DocumentEvent.objects.create(document=document, state=document.state, detail=detail)
     return document
 
 
-def _after_unavailable(document, unavailable):
+def _after_unavailable(document, unavailable, gateway):
     wait, max_retries = RETRY_POLICY.get(unavailable.kind, RETRY_POLICY['error'])
     detail = {'dian_unavailable': str(unavailable), 'kind': unavailable.kind}
     already_in_contingency = document.state == DocumentState.CONTINGENCY_DIAN
@@ -98,12 +101,41 @@ def _after_unavailable(document, unavailable):
         return _requeue(document, wait, detail)
     document.state = DocumentState.CONTINGENCY_DIAN
     document.next_attempt_at = timezone.now() + CONTINGENCY_POLL
-    document.save(update_fields=['state', 'next_attempt_at', 'attempts', 'transient_failures', 'updated_at'])
-    if not already_in_contingency:
-        # Entering contingency is announced once; the 30-minute polls afterwards stay quiet.
+    if already_in_contingency:
+        # The 30-minute polls stay quiet.
+        document.save(update_fields=['state', 'next_attempt_at', 'attempts', 'transient_failures', 'updated_at'])
+        return document
+    _enter_contingency(document, detail, gateway)
+    return document
+
+
+def _enter_contingency(document, detail, gateway):
+    """Keep the evidence, sign the invoice as type 04 and announce it once (annex §12.2 and §12.4)."""
+    document.contingency_started_at = timezone.now()
+    with transaction.atomic():
+        artifacts.store(document, ArtifactKind.EVIDENCE, _evidence(document, detail), 'application/json')
+        try:
+            prepared = gateway.prepare_contingency(_submission(document))
+        except GatewayRefused as refusal:
+            logger.warning('Documento %s en contingencia sin tipo 04: %s', document.pk, refusal)
+            prepared, detail = None, {**detail, 'contingency_refused': str(refusal)}
+        if prepared is not None:
+            document.cufe, document.qr_url, document.invoice_type = prepared.cufe, prepared.qr_url, '04'
+            detail = {**detail, 'invoice_type': '04'}
+        document.save()
         DocumentEvent.objects.create(document=document, state=document.state, detail=detail)
         _notify(document)
-    return document
+
+
+def _evidence(document, detail) -> bytes:
+    """The failed attempts that justify the contingency (§12.2: «mantener o archivar las evidencias»)."""
+    failures = [
+        {'at': event.created_at.isoformat(), **event.detail}
+        for event in document.events.order_by('created_at', 'id') if 'dian_unavailable' in event.detail
+    ]
+    failures.append({'at': timezone.now().isoformat(), **detail})
+    summary = {'document': document.full_number, 'attempts': document.attempts, 'failures': failures}
+    return json.dumps(summary, ensure_ascii=False, indent=2).encode()
 
 
 def _record_result(document, result):
@@ -116,6 +148,7 @@ def _record_result(document, result):
         document.state = DocumentState.VALIDATED if result.state == 'validated' else DocumentState.REJECTED
         document.cufe = result.cufe or document.cufe
         document.qr_url = result.qr_url or document.qr_url
+        document.invoice_type = result.invoice_type or document.invoice_type
         document.errors = list(result.errors)
         document.transient_failures = 0
         document.next_attempt_at = None

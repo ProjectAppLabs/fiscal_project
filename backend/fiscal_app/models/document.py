@@ -40,6 +40,10 @@ class Document(models.Model):
     # The invoice a credit or debit note refers to (BillingReference).
     original = models.ForeignKey('self', on_delete=models.PROTECT, null=True, blank=True, related_name='notes')
     validated_at = models.DateTimeField(null=True, blank=True)
+    # InvoiceTypeCode of the XML last signed (01 sale, 03 issuer contingency, 04 DIAN contingency); empty for notes.
+    invoice_type = models.CharField(max_length=2, blank=True, default='')
+    # When the document entered DIAN contingency; the 24 h and 40 h alerts count from here (annex §12.2).
+    contingency_started_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

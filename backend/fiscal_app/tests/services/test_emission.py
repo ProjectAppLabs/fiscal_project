@@ -116,6 +116,17 @@ def test_fourth_service_error_enters_dian_contingency(queued_document):
 
 
 @pytest.mark.django_db
+def test_consecutive_errors_are_counted_until_contingency(queued_document):
+    """Fails if the failure count is not saved between attempts, so a document never reaches contingency."""
+    for _ in range(4):
+        Document.objects.filter(pk=queued_document.pk).update(state=DocumentState.TRANSMITTING)
+        document = transmit(queued_document.pk, Unavailable('error'))
+
+    assert document.state == DocumentState.CONTINGENCY_DIAN
+    assert Document.objects.get(pk=queued_document.pk).transient_failures == 4
+
+
+@pytest.mark.django_db
 @freeze_time('2026-10-04 15:00:00')
 def test_contingency_polls_stay_quiet(queued_document):
     """Fails if every 30-minute poll during a DIAN outage adds another event and another notice."""

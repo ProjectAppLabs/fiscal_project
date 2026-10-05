@@ -47,9 +47,23 @@ class GatewayResult:
     errors: list = field(default_factory=list)
     signed_xml: bytes = b''
     dian_response: bytes = b''
+    invoice_type: str = ''  # InvoiceTypeCode of the XML sent; empty for notes
+
+
+@dataclass(frozen=True)
+class ContingencyDocument:
+    """The invoice signed again as type 04 (annex FE 1.9 §12.2): same number and CUFE, delivered without validation."""
+
+    signed_xml: bytes
+    cufe: str
+    qr_url: str
 
 
 class DianGateway(ABC):
     @abstractmethod
     def send(self, submission: Submission) -> GatewayResult:
         """Send one document. Must be safe to call again with the same submission."""
+
+    def prepare_contingency(self, submission: Submission) -> ContingencyDocument | None:
+        """Sign the invoice as type 04 when the DIAN is unavailable; None when the gateway has no real XML."""
+        return None
