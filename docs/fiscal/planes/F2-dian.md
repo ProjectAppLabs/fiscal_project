@@ -51,7 +51,7 @@ La factura de restaurante (consumidor final, INC, propina y canje de puntos) y l
 - **Hallazgo:** el ejemplo de CUDE de la nota débito del anexo (§11.4) no coincide con su propia «Composición»: la
   prueba verifica la cadena concatenada (`code_chain`) y el hash del ejemplo de la nota crédito, que sí coincide.
 
-### F2 PR 3 · Firma XAdES-EPES (`feat/…-xades`)
+### F2 PR 3 · Firma XAdES-EPES (`feat/…-xades`) — ✅ hecho
 
 - `dian/signing.py`: firma envuelta (enveloped) en la segunda `ext:UBLExtension`, con RSA-SHA256, C14N, el
   certificado X.509 y `SignedProperties` (`SigningTime` en −05:00, `SigningCertificate`, política de firma de la DIAN
@@ -62,6 +62,15 @@ La factura de restaurante (consumidor final, INC, propina y canje de puntos) y l
   - cambiar un byte la rompe;
   - el XML firmado sigue validando contra el XSD;
   - no se reformatea el XML después de firmar.
+- **Resultado:** implementación propia sobre lxml y cryptography (`dian/signing.py`), sin `signxml`: permite generar
+  exactamente la estructura de los ejemplos oficiales. Se verificó contra cuatro ejemplos firmados de la caja (copiados
+  en `dian/resources/examples/`), que pasan con el mismo C14N inclusivo y los mismos resúmenes.
+- La política es la URL `v2` del anexo con el SHA-256 de su PDF (igual al de los ejemplos); el rol es `supplier`
+  porque el emisor firma con su propio certificado (D1).
+- `X509IssuerName` va en RFC 4514. Al habilitar con un certificado real se confirma que la DIAN lo acepta; si no, se
+  cambia al orden de los ejemplos (de `C=` a `CN=`).
+- Al cargar un certificado, Fiscal. ya exige las reglas del §10.14 (llave RSA, firma SHA-2, firma digital y no
+  repudio). Los certificados autofirmados de desarrollo declaran ese uso de llave.
 
 ### F2 PR 4 · Cliente SOAP y gateway real (`feat/…-soap-gateway`)
 
