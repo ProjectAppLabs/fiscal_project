@@ -149,9 +149,11 @@ La API de máquina quedó bajo `/api/v1/`: así va versionada y se distingue de 
 - Se porta del prototipo (`fiscal_project_borrador`, rama `prototipo/z1-base`): firma, cifrado, DV, validación del
   `.p12` y sus pruebas, adaptados a FBV y serializers.
 
-### PR 4 · Contrato del documento y validación previa (`feat/…-document-contract`)
+### PR 4 · Contrato del documento y validación previa (`feat/…-document-contract`) — ✅ hecho
 
-- [ ] `docs/fiscal/contrato.md` v1, reemplazando el borrador. Forma del documento comercial:
+Los catálogos salen de las listas genericode oficiales de la caja de herramientas FE 1.9 v2026, copiadas en `backend/dian/resources/genericode/`. Las reglas siguen el anexo FE 1.9: totales FAU02 a FAU14, líneas FAV04b, FAV05 y FAV06, impuestos FAS07, pago FAN y adquirente FAK; el redondeo es half-to-even y la tolerancia de ±2,00 / IVA ±5,00 (§5.2.1). Las rutas finales son `/api/v1/documents/create/` y `/api/v1/documents/{id}/`. La descarga de artefactos pasa al PR 5, con el almacén.
+
+- [x] `docs/fiscal/contrato.md` v1, reemplazando el borrador. Forma del documento comercial:
 
 | Bloque | Campos |
 |---|---|
@@ -165,10 +167,10 @@ La API de máquina quedó bajo `/api/v1/`: así va versionada y se distingue de 
 | Referencias (notas) | `original` (id del documento en Fiscal. o prefijo, número, CUFE y fecha), `concept_code` (por ejemplo 2 = anulación) |
 | Contingencia del emisor | `issuer_contingency: true`, rango de contingencia y número del papel (se usa en F4) |
 
-- [ ] `POST /api/documents/create/` (HMAC): `202` si es nuevo; `200` si es el mismo cuerpo con la misma clave;
+- [x] `POST /api/documents/create/` (HMAC): `202` si es nuevo; `200` si es el mismo cuerpo con la misma clave;
   `409 idempotency_conflict` si es la misma clave con otro contenido; `409 duplicate_number` si el número se repite.
-- [ ] `GET /api/documents/{id}/` y `GET /api/documents/{id}/artifacts/{kind}/` (HMAC, solo los del cliente).
-- [ ] `services/validation.py`: cuadres de líneas, impuestos y totales con tolerancia de la DIAN; propina fuera de la
+- [x] `GET /api/documents/{id}/` y `GET /api/documents/{id}/artifacts/{kind}/` (HMAC, solo los del cliente).
+- [x] `services/validation.py`: cuadres de líneas, impuestos y totales con tolerancia de la DIAN; propina fuera de la
   base y como máximo el 10 %; códigos en catálogo; número dentro del rango vigente para la fecha; consumidor final;
   dirección de entrega; nota con original válido. Cada falla devuelve un `code` y un mensaje en español.
 - **Fails if:**

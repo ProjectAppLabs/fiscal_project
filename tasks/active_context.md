@@ -31,7 +31,8 @@ plan de implementación detallado de F1.
 
 ## Próximos pasos
 
-1. F1 PR 4: contrato v1 y validación previa, con catálogos generados desde las listas genericode oficiales de la
-   DIAN (caja de herramientas FE 1.9 v2026, descargada en `~/.cache/fiscal-dian/`).
+1. F1 PR 5: cola de transmisión con Huey, gateway simulado, avisos firmados y almacén de artefactos.
+2. F2: las 221 reglas Schematron de la DIAN (XPath 2.0) validan el XML armado; lxml no ejecuta XSLT 2.0, así que
+   hace falta un motor XSLT 2.0 (Saxon). Caja de herramientas y anexos en `~/.cache/fiscal-dian/`.
 3. Del dueño, sin bloquear F1: registrar Fiscal. en el portal de habilitación de ProjectApp y, hacia el final de F2,
    el certificado.

@@ -160,3 +160,61 @@ def other_signed_client(db):
 
     client, secret = create_client_system('Otra casa de software')
     return SignedClient(client.key_id, secret)
+
+
+def restaurant_bill():
+    """A valid restaurant bill (contract v1): two lines with INC 8 %, points redemption and a 10 % tip.
+
+    2 × 18.450 + 1 × 6.000 = 42.900; INC 8 % = 3.432; −5.000 points; +4.290 tip; payable 45.622.
+    """
+    return {
+        'buyer': {'final_consumer': True},
+        'lines': [
+            {
+                'code': 'HAM-01', 'description': 'Hamburguesa de la casa', 'quantity': '2', 'unit_code': '94',
+                'unit_price': '18450.00', 'line_extension': '36900.00',
+                'taxes': [{'code': '04', 'rate': '8.00', 'taxable_amount': '36900.00', 'amount': '2952.00'}],
+            },
+            {
+                'code': 'LIM-01', 'description': 'Limonada natural', 'quantity': '1', 'unit_code': '94',
+                'unit_price': '6000.00', 'line_extension': '6000.00',
+                'taxes': [{'code': '04', 'rate': '8.00', 'taxable_amount': '6000.00', 'amount': '480.00'}],
+            },
+        ],
+        'allowances': [{'reason': 'Canje de puntos', 'amount': '5000.00'}],
+        'charges': [{'kind': 'tip', 'reason': 'Propina voluntaria', 'amount': '4290.00'}],
+        'totals': {
+            'line_extension': '42900.00', 'tax_exclusive': '42900.00', 'tax_inclusive': '46332.00',
+            'allowance_total': '5000.00', 'charge_total': '4290.00', 'payable': '45622.00',
+        },
+        'payment': {'form': '1', 'means': ['10']},
+    }
+
+
+@pytest.fixture
+def ready_issuer(issuer, invoice_range):
+    """An issuer that can issue: active certificate and software registration in its environment."""
+    from fiscal_app.models import SoftwareRegistration
+    from fiscal_app.services.certificates import set_certificate
+    from fiscal_app.services.self_signed import self_signed_p12
+
+    set_certificate(issuer, self_signed_p12('Restaurante de Prueba SAS', 'clave'), 'clave')
+    SoftwareRegistration.objects.create(issuer=issuer, environment=issuer.environment, software_id='sw-1', software_pin='1')
+    return issuer
+
+
+@pytest.fixture
+def document_envelope(ready_issuer):
+    """Build the envelope of a document of the ready issuer; keyword arguments override it."""
+    from django.utils import timezone
+
+    def build(**overrides):
+        envelope = {
+            'idempotency_key': 'waiter:org-1:doc-1', 'issuer': ready_issuer.nit, 'kind': 'invoice',
+            'prefix': 'SETP', 'number': 990_000_001, 'issue_datetime': timezone.now().isoformat(),
+            'document': restaurant_bill(),
+        }
+        envelope.update(overrides)
+        return envelope
+
+    return build
