@@ -21,7 +21,7 @@ from django.utils import timezone
 from dian.gateway import DianUnavailable, GatewayRefused, Submission
 from fiscal_app.models import Document, DocumentEvent
 from fiscal_app.models.choices import ArtifactKind, DocumentKind, DocumentState
-from fiscal_app.services import artifacts, webhooks
+from fiscal_app.services import artifacts, delivery, webhooks
 from fiscal_app.services.gateways import get_gateway
 
 logger = logging.getLogger(__name__)
@@ -123,8 +123,20 @@ def _enter_contingency(document, detail, gateway):
             document.cufe, document.qr_url, document.invoice_type = prepared.cufe, prepared.qr_url, '04'
             detail = {**detail, 'invoice_type': '04'}
         document.save()
+        if prepared is not None:
+            detail = _with_delivery(document, detail)
         DocumentEvent.objects.create(document=document, state=document.state, detail=detail)
         _notify(document)
+
+
+def _with_delivery(document, detail):
+    """Build the AttachedDocument and the PDF; a failure is recorded but never undoes the DIAN's answer."""
+    try:
+        delivery.build_delivery(document)
+    except Exception as error:
+        logger.exception('No se pudo armar la entrega del documento %s', document.pk)
+        return {**detail, 'delivery_failed': f'{type(error).__name__}: {error}'}
+    return detail
 
 
 def _evidence(document, detail) -> bytes:
@@ -155,7 +167,10 @@ def _record_result(document, result):
         if document.state == DocumentState.VALIDATED:
             document.validated_at = timezone.now()
         document.save()
-        DocumentEvent.objects.create(document=document, state=document.state, detail={'errors': list(result.errors)})
+        detail = {'errors': list(result.errors)}
+        if document.state == DocumentState.VALIDATED:
+            detail = _with_delivery(document, detail)
+        DocumentEvent.objects.create(document=document, state=document.state, detail=detail)
         _notify(document)
     return document
 

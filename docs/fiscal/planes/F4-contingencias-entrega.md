@@ -33,7 +33,7 @@ El CUFE no cambia al pasar a tipo 04: su cadena (§11.2) no incluye el tipo de f
 - **Hecho.** Además se corrigió un error de F1: `_requeue` no guardaba `transient_failures`, así que ningún
   documento llegaba a la contingencia. La prueba de F1 fijaba el contador en la base y no lo atrapaba.
 
-### F4 PR 2 · `AttachedDocument` y representación gráfica (`feat/…-delivery`)
+### F4 PR 2 · `AttachedDocument` y representación gráfica (`feat/…-delivery`) — ✅ hecho
 
 - `dian/ubl/attached.py`: contenedor firmado con el documento y, si existe, el `ApplicationResponse` y su
   `ResultOfVerification`. Valida contra `UBL-AttachedDocument-2.1.xsd`.
@@ -43,6 +43,9 @@ El CUFE no cambia al pasar a tipo 04: su cadena (§11.2) no incluye el tipo de f
 - Se generan al validarse el documento y al entrar en contingencia 04: artefactos `attached_document` y `pdf`.
 - El aviso al sistema cliente indica qué artefactos hay; la entrega al comprador (correo o impresión) la hace el
   sistema cliente (F6).
+- **Resultado:** el PDF se revisó a la vista. El fabricante del software no viaja en el XML de la factura: se toma del
+  registro del software del emisor (num. 18 del art. 1.5.1.2.2.1). Un error al armar la entrega queda en los eventos
+  del documento y no deshace la validación.
 
 ### F4 PR 3 · Contingencia del emisor, tipo 03 (`feat/…-issuer-contingency`)
 

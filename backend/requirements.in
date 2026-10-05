@@ -9,6 +9,8 @@ djangorestframework-simplejwt==5.5.1
 cryptography==50.0.2
 # Fiscal.: UBL 2.1 XML, XSD validation and canonicalization for the DIAN (F2).
 lxml==6.1.3
+# Fiscal.: graphical representation (PDF with the DIAN QR) of each document (F4).
+reportlab==5.0.1
 gunicorn==26.2.0
 huey==3.3.4
 mysqlclient==2.2.8
