@@ -82,6 +82,8 @@ def build_invoice(spec: DocumentSpec, resolution: Resolution, invoice_type: str 
     sub(root, 'cbc:DocumentCurrencyCode', spec.currency, listAgencyID='6',
         listAgencyName='United Nations Economic Commission for Europe', listID='ISO 4217 Alpha')
     sub(root, 'cbc:LineCountNumeric', len(spec.lines))
+    if invoice_type == '03':
+        _paper_invoice_reference(root, spec, code)
 
     supplier = sub(root, 'cac:AccountingSupplierParty')
     sub(supplier, 'cbc:AdditionalAccountID', spec.issuer.person_type)
@@ -100,6 +102,18 @@ def build_invoice(spec: DocumentSpec, resolution: Resolution, invoice_type: str 
     for line in spec.lines:
         _invoice_line(root, line, spec.currency)
     return BuiltInvoice(root=root, code=code, qr_url=qr)
+
+
+def _paper_invoice_reference(root, spec, code):
+    """FAI01–FAI05: a type-03 transcription references the paper invoice it copies (same number, its issue date).
+
+    The paper invoice has no CUFE; the annex asks for one (FAI03), so the transcription's own CUDE is informed. To be
+    confirmed in habilitación.
+    """
+    reference = sub(root, 'cac:AdditionalDocumentReference')
+    sub(reference, 'cbc:ID', spec.full_number)
+    sub(reference, 'cbc:UUID', code, schemeName='CUDE-SHA384')
+    sub(reference, 'cbc:IssueDate', spec.issue_date)
 
 
 def payment_means(root, spec):

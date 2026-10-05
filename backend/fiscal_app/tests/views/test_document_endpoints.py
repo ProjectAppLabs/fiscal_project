@@ -154,3 +154,19 @@ def test_credit_note_for_an_unknown_invoice_is_refused(signed_client, document_e
     )
 
     assert response.json()['error']['problems'][0]['code'] == 'original_not_found'
+
+
+@pytest.mark.django_db
+def test_credit_note_in_issuer_contingency_is_refused(signed_client, document_envelope):
+    """Fails if a note is accepted as issuer contingency: notes have no contingency scheme (annex §12.1)."""
+    invoice_id = signed_client.post(CREATE, document_envelope()).json()['id']
+    note = restaurant_bill()
+    note['billing_reference'] = {'document_id': invoice_id, 'concept_code': '2'}
+    note['issuer_contingency'] = True
+
+    response = signed_client.post(
+        CREATE, document_envelope(idempotency_key='waiter:nc-1', kind='credit_note', prefix='NC', number=1, document=note)
+    )
+
+    assert response.status_code == 400
+    assert response.json()['error']['code'] == 'contingency_not_allowed'
