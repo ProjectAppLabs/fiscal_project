@@ -42,7 +42,7 @@ def retrieve_document(request, document_id):
 @machine_view(['GET'])
 def retrieve_artifact(request, document_id, kind):
     """Latest artifact of a kind (signed_xml, dian_response…), checked against its SHA-256 before it is served."""
-    artifact = own_document(request.user, document_id).artifacts.filter(kind=kind).order_by('-created_at').first()
+    artifact = own_document(request.user, document_id).artifacts.filter(kind=kind).order_by('-created_at', '-id').first()
     if artifact is None:
         raise FiscalError('El documento todavía no tiene ese archivo.', 'artifact_not_found', status.HTTP_404_NOT_FOUND)
     try:

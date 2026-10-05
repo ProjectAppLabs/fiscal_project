@@ -1,4 +1,4 @@
-# Plan de implementación F4 · Contingencias, entrega, alertas y salud
+# Plan de implementación F4 · Contingencias, entrega, alertas y salud — ✅ terminada (PRs #13 a #16)
 
 > 2026-10-04. Fase F4 de `tasks/tasks_plan.md`. No necesita la DIAN real: se prueba con el gateway simulado, con
 > respuestas grabadas y con certificados de prueba, como F2. Fuente: anexo técnico FE 1.9 (`~/.cache/fiscal-dian/`).
