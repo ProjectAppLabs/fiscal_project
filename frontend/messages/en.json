@@ -7,7 +7,11 @@
     "dashboard": "Dashboard",
     "documents": "Documents",
     "signIn": "Sign in",
-    "signOut": "Sign out"
+    "signOut": "Sign out",
+    "issuers": "Issuers",
+    "contingencies": "Contingencies",
+    "alerts": "Alerts",
+    "clientSystems": "Client systems"
   },
   "footer": {
     "tagline": "ProjectApp's internal electronic invoicing console."
@@ -101,7 +105,22 @@
     "lastRejectionTitle": "Latest rejection",
     "lastRejectionAt": "Rejected on {date}",
     "viewDocument": "View document",
-    "viewAll": "View all documents"
+    "viewAll": "View all documents",
+    "alertsTitle": "Open alerts",
+    "alertsCritical": "{count, plural, =0 {None critical} one {# critical} other {# critical}}",
+    "viewAlerts": "View alerts",
+    "rejectionRate": "Rejections in 24 h",
+    "rejectionRateNone": "No DIAN answers in 24 h",
+    "healthTitle": "Service health",
+    "healthStatus": {
+      "ok": "All good",
+      "degraded": "Degraded",
+      "down": "Down"
+    },
+    "workerOk": "Worker running",
+    "workerSilent": "The worker is not answering",
+    "dianContingency": "{count, plural, =0 {No documents in contingency} one {# document in contingency} other {# documents in contingency}}",
+    "viewContingencies": "View contingencies"
   },
   "documents": {
     "title": "Documents",
@@ -146,7 +165,9 @@
       "created": "Created",
       "validated": "Validated",
       "original": "Original document",
-      "cufe": "CUFE"
+      "cufe": "CUFE",
+      "invoiceType": "DIAN invoice type",
+      "contingencyStarted": "In contingency since"
     },
     "viewOriginal": "View document {id}",
     "qr": "View QR code",
@@ -158,12 +179,31 @@
       "kind": "Type",
       "size": "Size",
       "sha256": "SHA-256",
-      "created": "Created"
+      "created": "Created",
+      "actions": "File"
     },
     "noArtifacts": "There are no artifacts yet.",
     "eventsTitle": "History",
     "noEvents": "There are no events yet.",
-    "payloadTitle": "Received payload"
+    "payloadTitle": "Received payload",
+    "invoiceTypes": {
+      "01": "01 · Sale",
+      "03": "03 · Issuer contingency transcription",
+      "04": "04 · DIAN contingency"
+    },
+    "notification": "Notification",
+    "download": "Download",
+    "downloadError": "The file could not be downloaded.",
+    "eventKeys": {
+      "text": "",
+      "errors": "Rules",
+      "dian_unavailable": "DIAN not answering",
+      "gateway_refused": "Stopped",
+      "contingency_refused": "No type 04",
+      "invoice_type": "Signed as type",
+      "waiting_for": "Waiting for invoice",
+      "delivery_failed": "Delivery failed"
+    }
   },
   "staging": {
     "remainsOne": "remains",
@@ -176,5 +216,118 @@
     "expiredCta": "To continue with the next phase or coordinate adjustments, please contact the ProjectApp team:",
     "whatsapp": "WhatsApp",
     "email": "Email"
+  },
+  "operations": {
+    "artifactKinds": {
+      "pdf": "PDF",
+      "attached_document": "AttachedDocument",
+      "signed_xml": "Signed XML",
+      "dian_response": "DIAN answer",
+      "evidence": "Evidence"
+    },
+    "environments": {
+      "1": "Production",
+      "2": "Habilitación (testing)"
+    },
+    "rangeKinds": {
+      "invoice": "Invoicing",
+      "contingency": "Contingency"
+    },
+    "severities": {
+      "critical": "Critical",
+      "warning": "Warning"
+    },
+    "alertKinds": {
+      "certificate_expiring": "Certificate expiring",
+      "range_low": "Numbering running out",
+      "resolution_expiring": "Resolution expiring",
+      "contingency_deadline": "Contingency deadline",
+      "rejection": "DIAN rejection",
+      "queue_stuck": "Queue stuck"
+    }
+  },
+  "issuers": {
+    "title": "Issuers",
+    "searchLabel": "Search by NIT or name",
+    "searchSubmit": "Search",
+    "tableCaption": "Registered issuers",
+    "empty": "No issuers match that search.",
+    "error": "We could not load the issuers.",
+    "columns": {
+      "issuer": "Issuer",
+      "environment": "Environment",
+      "client": "Client system",
+      "documents": "Documents",
+      "certificate": "Certificate expires",
+      "alerts": "Open alerts"
+    },
+    "certificateDays": "{days, plural, =0 {today} one {in # day} other {in # days}}",
+    "certificateExpired": "Expired",
+    "noCertificate": "No certificate",
+    "pageInfo": "Page {page} · {count} issuers",
+    "previous": "Previous",
+    "next": "Next",
+    "pagination": "Issuer pagination"
+  },
+  "issuerDetail": {
+    "back": "Back to issuers",
+    "notFoundTitle": "We could not find that issuer",
+    "notFoundBody": "The link may be wrong or the issuer does not exist.",
+    "error": "We could not load the issuer.",
+    "dataTitle": "Issuer data",
+    "fields": {
+      "nit": "NIT",
+      "environment": "Environment",
+      "client": "Client system",
+      "personType": "Person type",
+      "responsibilities": "Responsibilities",
+      "address": "Address",
+      "email": "Email"
+    },
+    "personTypes": {
+      "1": "Legal entity",
+      "2": "Natural person"
+    },
+    "certificatesTitle": "Certificates",
+    "certificatesCaption": "Issuer certificates",
+    "noCertificates": "The issuer has no certificates.",
+    "certificateColumns": {
+      "subject": "Holder",
+      "issuedBy": "Issued by",
+      "validTo": "Expires",
+      "state": "State"
+    },
+    "active": "Active",
+    "inactive": "Inactive",
+    "softwareTitle": "Registered software",
+    "softwareCaption": "Software registered with the DIAN",
+    "noSoftware": "The issuer has not registered the software.",
+    "softwareColumns": {
+      "environment": "Environment",
+      "softwareId": "Identifier",
+      "testSet": "Test set",
+      "state": "State"
+    },
+    "testSetYes": "With TestSetId",
+    "testSetNo": "Without TestSetId",
+    "rangesTitle": "Numbering ranges",
+    "rangesCaption": "Issuer numbering ranges",
+    "noRanges": "The issuer has no ranges.",
+    "rangeColumns": {
+      "kind": "Kind",
+      "resolution": "Resolution",
+      "numbers": "Numbers",
+      "validity": "Validity",
+      "used": "Used",
+      "last": "Last number"
+    },
+    "alertsTitle": "Open alerts",
+    "noAlerts": "No open alerts.",
+    "letterTitle": "Contingency letter to the DIAN",
+    "letterBody": "Draft for the legal representative to sign and the business to send to contingencia.facturadorvp@dian.gov.co (technical annex, section 12.1).",
+    "letterFrom": "From",
+    "letterTo": "To",
+    "letterSubmit": "Download draft",
+    "letterError": "The letter could not be generated. Check the dates."
   }
 }

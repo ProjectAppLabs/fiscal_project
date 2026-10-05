@@ -127,7 +127,7 @@ describe('DocumentDetailPage', () => {
   });
 
   it.each([
-    ['the artifact kind', 'signed_xml'],
+    ['the artifact kind', 'XML firmado'],
     ['the artifact size', '2 KB'],
     ['the abbreviated sha256', '0123456789ab…'],
   ])('shows %s', async (_field, text) => {
@@ -138,13 +138,64 @@ describe('DocumentDetailPage', () => {
     expect(within(table).getByText(text)).toBeInTheDocument();
   });
 
-  it('offers no download for the artifacts', async () => {
+  it('downloads an artifact through the authenticated API', async () => {
+    const createObjectURL = jest.fn(() => 'blob:fiscal');
+    Object.assign(URL, { createObjectURL, revokeObjectURL: jest.fn() });
+    renderSignedIn();
+    const section = await screen.findByRole('region', { name: 'Artefactos' });
+    mockGet.mockResolvedValueOnce({ data: new Blob(['<Invoice/>']) });
+
+    await userEvent.click(within(section).getByRole('button', { name: 'Descargar' }));
+
+    expect(mockGet).toHaveBeenLastCalledWith('console/documents/7/artifacts/signed_xml/', { responseType: 'blob' });
+    expect(createObjectURL).toHaveBeenCalledTimes(1);
+  });
+
+  it('says so when an artifact cannot be downloaded', async () => {
+    renderSignedIn();
+    const section = await screen.findByRole('region', { name: 'Artefactos' });
+    mockGet.mockRejectedValueOnce(httpError(503));
+
+    await userEvent.click(within(section).getByRole('button', { name: 'Descargar' }));
+
+    expect(await within(section).findByRole('alert')).toHaveTextContent('No se pudo descargar el archivo.');
+  });
+
+  it('shows the DIAN invoice type of a contingency invoice', async () => {
+    mockGet.mockResolvedValue({ data: buildDocumentDetail({ invoice_type: '04', contingency_started_at: '2026-10-05T12:00:00Z' }) });
+
     renderSignedIn();
 
-    const section = await screen.findByRole('region', { name: 'Artefactos' });
+    expect(await screen.findByRole('group', { name: 'Tipo de factura DIAN' })).toHaveTextContent('04 · Contingencia de la DIAN');
+    expect(screen.getByRole('group', { name: 'En contingencia desde' })).toBeInTheDocument();
+  });
 
-    expect(within(section).getByText('signed_xml')).toBeInTheDocument();
-    expect(within(section).queryByRole('link')).not.toBeInTheDocument();
+  it('tells a DIAN notification apart from a rejection', async () => {
+    mockGet.mockResolvedValue({
+      data: buildDocumentDetail({ errors: [{ rule: 'FAJ40', message: 'Contenido no válido', severity: 'notificacion' }] }),
+    });
+
+    renderSignedIn();
+
+    expect(await screen.findByText('Notificación: FAJ40: Contenido no válido')).toBeInTheDocument();
+  });
+
+  it('reads the event details the backend records as objects', async () => {
+    mockGet.mockResolvedValue({
+      data: buildDocumentDetail({
+        events: [
+          { state: 'contingency_dian', detail: { dian_unavailable: 'HTTP 503', kind: 'error', invoice_type: '04' }, created_at: '2026-10-05T12:00:00Z' },
+          { state: 'rejected', detail: { errors: [{ rule: 'FAD06', message: 'CUFE' }] }, created_at: '2026-10-05T12:30:00Z' },
+        ],
+      }),
+    });
+
+    renderSignedIn();
+
+    const history = await screen.findByRole('region', { name: 'Historia' });
+    expect(history).toHaveTextContent('DIAN sin respuesta: HTTP 503');
+    expect(history).toHaveTextContent('Firmada como tipo: 04');
+    expect(history).toHaveTextContent('Reglas: FAD06: CUFE');
   });
 
   it('says there are no artifacts yet when the list is empty', async () => {

@@ -1,6 +1,6 @@
 {
   "version": "2.0.0",
-  "lastUpdated": "2026-10-04",
+  "lastUpdated": "2026-10-05",
   "flows": {
     "home-redirect": {
       "name": "Home redirects by session",
@@ -225,6 +225,73 @@
       "expectedSpecs": 1,
       "outcomes": [
         "failure"
+      ]
+    },
+    "console-document-download": {
+      "name": "Download a document artifact",
+      "module": "console",
+      "roles": [
+        "operator"
+      ],
+      "priority": "P1",
+      "description": "Operator opens a document and downloads its signed XML (or PDF, AttachedDocument, DIAN answer, evidence) through the authenticated API",
+      "expectedSpecs": 1,
+      "outcomes": [
+        "success"
+      ]
+    },
+    "console-dashboard-health": {
+      "name": "Dashboard alerts and service health",
+      "module": "console",
+      "roles": [
+        "operator"
+      ],
+      "priority": "P1",
+      "description": "Operator sees open alerts, the 24-hour rejection rate and whether the worker and the DIAN are healthy",
+      "expectedSpecs": 1,
+      "outcomes": [
+        "display"
+      ]
+    },
+    "console-issuers-list": {
+      "name": "Issuer list and search",
+      "module": "console",
+      "roles": [
+        "operator"
+      ],
+      "priority": "P1",
+      "description": "Operator lists the issuers with their certificate expiry and open alerts and searches them by NIT or name",
+      "expectedSpecs": 1,
+      "outcomes": [
+        "display",
+        "success"
+      ]
+    },
+    "console-issuer-detail": {
+      "name": "Issuer detail",
+      "module": "console",
+      "roles": [
+        "operator"
+      ],
+      "priority": "P1",
+      "description": "Operator opens an issuer and sees its data, certificates, registered software, range usage and open alerts",
+      "expectedSpecs": 1,
+      "outcomes": [
+        "display"
+      ]
+    },
+    "console-contingency-letter": {
+      "name": "Contingency letter draft",
+      "module": "console",
+      "roles": [
+        "operator"
+      ],
+      "priority": "P2",
+      "description": "Operator downloads the draft of the issuer's contingency letter to the DIAN for a period; reversed dates show an error",
+      "expectedSpecs": 1,
+      "outcomes": [
+        "success",
+        "error"
       ]
     }
   }

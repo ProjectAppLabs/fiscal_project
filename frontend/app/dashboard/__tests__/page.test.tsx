@@ -3,7 +3,7 @@ import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import DashboardPage from '../page';
-import { buildEmptySummary, buildSummary, httpError } from '../../../lib/__tests__/consoleFactories';
+import { buildEmptySummary, buildHealth, buildSummary, httpError } from '../../../lib/__tests__/consoleFactories';
 import { renderWithIntl } from '../../../lib/__tests__/intl';
 import { useRequireAuth } from '../../../lib/hooks/useRequireAuth';
 import { api } from '../../../lib/services/http';
@@ -190,5 +190,47 @@ describe('DashboardPage', () => {
     renderSignedIn({ locale: 'en' });
 
     expect(await screen.findByRole('heading', { level: 2, name: 'There are no documents yet' })).toBeInTheDocument();
+  });
+
+  it('shows the open alerts and the rejection rate of the last 24 hours', async () => {
+    renderSignedIn();
+
+    const alerts = await screen.findByRole('region', { name: 'Alertas abiertas' });
+
+    expect(within(alerts).getByRole('group', { name: 'Alertas abiertas' })).toHaveTextContent('3');
+    expect(within(alerts).getByRole('group', { name: 'Rechazos en 24 h' })).toHaveTextContent('12,5');
+    expect(within(alerts).getByText('1 crítica')).toBeInTheDocument();
+  });
+
+  it('says when the DIAN gave no answers in 24 hours', async () => {
+    mockGet.mockResolvedValue({ data: buildSummary({ rejection_rate_24h: null }) });
+
+    renderSignedIn();
+
+    expect(await screen.findByText('Sin respuestas de la DIAN en 24 h')).toBeInTheDocument();
+  });
+
+  it('shows a healthy service', async () => {
+    renderSignedIn();
+
+    const health = await screen.findByRole('region', { name: 'Salud del servicio' });
+
+    expect(health).toHaveTextContent('Todo en orden');
+    expect(health).toHaveTextContent('Trabajador activo');
+  });
+
+  it('warns when the worker is silent and documents wait for the DIAN', async () => {
+    mockGet.mockResolvedValue({
+      data: buildSummary({
+        health: buildHealth({ status: 'degraded', worker: { last_beat_at: null, ok: false }, dian: { in_contingency: 2, last_answer_at: null } }),
+      }),
+    });
+
+    renderSignedIn();
+
+    const health = await screen.findByRole('region', { name: 'Salud del servicio' });
+    expect(health).toHaveTextContent('Con problemas');
+    expect(within(health).getByText('El trabajador no responde')).toHaveClass('text-destructive');
+    expect(within(health).getByText('2 documentos en contingencia')).toHaveClass('text-destructive');
   });
 });

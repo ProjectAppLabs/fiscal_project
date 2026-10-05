@@ -4,10 +4,18 @@ export const ROUTES = {
   FORGOT_PASSWORD: '/forgot-password',
   DASHBOARD: '/dashboard',
   DOCUMENTS: '/documents',
+  ISSUERS: '/issuers',
+  CONTINGENCIES: '/contingencies',
+  ALERTS: '/alerts',
+  CLIENT_SYSTEMS: '/client-systems',
 } as const;
 
 export function documentDetailRoute(id: number | string): string {
   return `${ROUTES.DOCUMENTS}/${id}`;
+}
+
+export function issuerDetailRoute(id: number | string): string {
+  return `${ROUTES.ISSUERS}/${id}`;
 }
 
 // Paths relative to the axios base URL (`/api`), matching the backend's routes.
@@ -23,6 +31,10 @@ export const API_ENDPOINTS = {
   CAPTCHA_SITE_KEY: 'google-captcha/site-key/',
   CONSOLE_SUMMARY: 'console/summary/',
   CONSOLE_DOCUMENTS: 'console/documents/',
+  CONSOLE_ISSUERS: 'console/issuers/',
+  CONSOLE_ALERTS: 'console/alerts/',
+  CONSOLE_CONTINGENCIES: 'console/contingencies/',
+  CONSOLE_CLIENT_SYSTEMS: 'console/client-systems/',
 } as const;
 
 export function consoleDocumentEndpoint(id: number | string): string {

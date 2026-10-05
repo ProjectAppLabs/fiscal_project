@@ -3,13 +3,20 @@
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
-import { useEffect, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 
 import { ConsoleLoadError, ConsoleLoading, DocumentStateBadge } from '@/components/console/ConsoleStatus';
 import { ROUTES, documentDetailRoute } from '@/lib/constants';
 import { formatBytes, formatDateTime, shortHash } from '@/lib/format';
 import { useRequireAuth } from '@/lib/hooks/useRequireAuth';
-import { describeDianError, type DocumentDetail } from '@/lib/services/console';
+import {
+  describeDianError,
+  eventDetailParts,
+  isDianNotification,
+  type DocumentDetail,
+  type DocumentEvent,
+} from '@/lib/services/console';
+import { ARTIFACT_KINDS, artifactFileName, downloadArtifact, type ArtifactKind } from '@/lib/services/operations';
 import { useConsoleStore, type DetailStatus } from '@/lib/stores/consoleStore';
 
 const CARD_CLASS = 'rounded-2xl border border-border bg-card p-6';
@@ -115,6 +122,12 @@ function DocumentData({ document }: { document: DocumentDetail }) {
             </Link>
           </Field>
         ) : null}
+        {document.invoice_type ? (
+          <Field label={t('fields.invoiceType')}>{invoiceTypeLabel(document.invoice_type, t)}</Field>
+        ) : null}
+        {document.contingency_started_at ? (
+          <Field label={t('fields.contingencyStarted')}>{formatDateTime(document.contingency_started_at, locale)}</Field>
+        ) : null}
         {document.cufe ? (
           <Field label={t('fields.cufe')}>
             <span className="font-mono text-xs break-all">{document.cufe}</span>
@@ -146,10 +159,18 @@ function DianErrors({ document }: { document: DocumentDetail }) {
       {document.errors.length === 0 ? (
         <p className="mt-3 text-sm text-muted-foreground">{t('noErrors')}</p>
       ) : (
-        <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-destructive">
-          {document.errors.map((error, index) => (
-            <li key={index}>{describeDianError(error)}</li>
-          ))}
+        <ul className="mt-3 list-disc space-y-1 pl-5 text-sm">
+          {document.errors.map((error, index) =>
+            isDianNotification(error) ? (
+              <li className="text-muted-foreground" key={index}>
+                {t('notification')}: {describeDianError(error)}
+              </li>
+            ) : (
+              <li className="text-destructive" key={index}>
+                {describeDianError(error)}
+              </li>
+            ),
+          )}
         </ul>
       )}
     </section>
@@ -158,6 +179,7 @@ function DianErrors({ document }: { document: DocumentDetail }) {
 
 function Artifacts({ document }: { document: DocumentDetail }) {
   const t = useTranslations('documentDetail');
+  const tArtifacts = useTranslations('operations.artifactKinds');
   const locale = useLocale();
 
   return (
@@ -176,18 +198,24 @@ function Artifacts({ document }: { document: DocumentDetail }) {
                 <th className="py-2 pr-4 font-medium" scope="col">{t('artifactColumns.kind')}</th>
                 <th className="py-2 pr-4 font-medium" scope="col">{t('artifactColumns.size')}</th>
                 <th className="py-2 pr-4 font-medium" scope="col">{t('artifactColumns.sha256')}</th>
-                <th className="py-2 font-medium" scope="col">{t('artifactColumns.created')}</th>
+                <th className="py-2 pr-4 font-medium" scope="col">{t('artifactColumns.created')}</th>
+                <th className="py-2 font-medium" scope="col">{t('artifactColumns.actions')}</th>
               </tr>
             </thead>
             <tbody>
               {document.artifacts.map((artifact) => (
-                <tr className="border-b border-border last:border-0" key={artifact.sha256}>
-                  <td className="py-2 pr-4">{artifact.kind}</td>
+                <tr className="border-b border-border last:border-0" key={`${artifact.kind}-${artifact.sha256}`}>
+                  <td className="py-2 pr-4">{isArtifactKind(artifact.kind) ? tArtifacts(artifact.kind) : artifact.kind}</td>
                   <td className="py-2 pr-4 tabular-nums">{formatBytes(artifact.size, locale)}</td>
                   <td className="py-2 pr-4 font-mono" title={artifact.sha256}>
                     {shortHash(artifact.sha256)}
                   </td>
-                  <td className="py-2 whitespace-nowrap">{formatDateTime(artifact.created_at, locale)}</td>
+                  <td className="py-2 pr-4 whitespace-nowrap">{formatDateTime(artifact.created_at, locale)}</td>
+                  <td className="py-2">
+                    {isArtifactKind(artifact.kind) ? (
+                      <DownloadButton documentId={document.id} fullNumber={document.full_number} kind={artifact.kind} />
+                    ) : null}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -217,7 +245,7 @@ function Events({ document }: { document: DocumentDetail }) {
               <time className="text-muted-foreground" dateTime={event.created_at}>
                 {formatDateTime(event.created_at, locale)}
               </time>
-              {event.detail ? <span>{event.detail}</span> : null}
+              <EventDetail detail={event.detail} />
             </li>
           ))}
         </ol>
@@ -225,6 +253,65 @@ function Events({ document }: { document: DocumentDetail }) {
     </section>
   );
 }
+
+function EventDetail({ detail }: { detail: DocumentEvent['detail'] }) {
+  const t = useTranslations('documentDetail.eventKeys');
+  const parts = eventDetailParts(detail);
+  if (parts.length === 0) return null;
+
+  return (
+    <span className="flex flex-wrap gap-x-3 gap-y-1">
+      {parts.map((part) => (
+        <span key={part.key}>
+          {part.key === 'text' ? part.value : `${t(part.key)}: ${part.value}`}
+        </span>
+      ))}
+    </span>
+  );
+}
+
+function DownloadButton({ documentId, fullNumber, kind }: { documentId: number; fullNumber: string; kind: ArtifactKind }) {
+  const t = useTranslations('documentDetail');
+  const [status, setStatus] = useState<'idle' | 'loading' | 'error'>('idle');
+
+  const onClick = async () => {
+    setStatus('loading');
+    try {
+      await downloadArtifact({ documentId, kind, fileName: artifactFileName(fullNumber, kind) });
+      setStatus('idle');
+    } catch {
+      setStatus('error');
+    }
+  };
+
+  return (
+    <span className="inline-flex items-center gap-2">
+      <button
+        className="rounded-full border border-border px-3 py-1 text-xs hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
+        disabled={status === 'loading'}
+        onClick={() => void onClick()}
+        type="button"
+      >
+        {t('download')}
+      </button>
+      {status === 'error' ? (
+        <span className="text-xs text-destructive" role="alert">
+          {t('downloadError')}
+        </span>
+      ) : null}
+    </span>
+  );
+}
+
+function invoiceTypeLabel(code: string, t: ReturnType<typeof useTranslations<'documentDetail'>>): string {
+  return INVOICE_TYPES.includes(code as (typeof INVOICE_TYPES)[number]) ? t(`invoiceTypes.${code as (typeof INVOICE_TYPES)[number]}`) : code;
+}
+
+function isArtifactKind(kind: string): kind is ArtifactKind {
+  return (ARTIFACT_KINDS as readonly string[]).includes(kind);
+}
+
+const INVOICE_TYPES = ['01', '03', '04'] as const;
 
 function Field({ label, children }: { label: string; children: ReactNode }) {
   return (

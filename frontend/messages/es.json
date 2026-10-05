@@ -7,7 +7,11 @@
     "dashboard": "Tablero",
     "documents": "Documentos",
     "signIn": "Iniciar sesión",
-    "signOut": "Cerrar sesión"
+    "signOut": "Cerrar sesión",
+    "issuers": "Emisores",
+    "contingencies": "Contingencias",
+    "alerts": "Alertas",
+    "clientSystems": "Sistemas cliente"
   },
   "footer": {
     "tagline": "Consola interna de facturación electrónica de ProjectApp."
@@ -101,7 +105,22 @@
     "lastRejectionTitle": "Último rechazo",
     "lastRejectionAt": "Rechazado el {date}",
     "viewDocument": "Ver documento",
-    "viewAll": "Ver todos los documentos"
+    "viewAll": "Ver todos los documentos",
+    "alertsTitle": "Alertas abiertas",
+    "alertsCritical": "{count, plural, =0 {Ninguna crítica} one {# crítica} other {# críticas}}",
+    "viewAlerts": "Ver alertas",
+    "rejectionRate": "Rechazos en 24 h",
+    "rejectionRateNone": "Sin respuestas de la DIAN en 24 h",
+    "healthTitle": "Salud del servicio",
+    "healthStatus": {
+      "ok": "Todo en orden",
+      "degraded": "Con problemas",
+      "down": "Caído"
+    },
+    "workerOk": "Trabajador activo",
+    "workerSilent": "El trabajador no responde",
+    "dianContingency": "{count, plural, =0 {Sin documentos en contingencia} one {# documento en contingencia} other {# documentos en contingencia}}",
+    "viewContingencies": "Ver contingencias"
   },
   "documents": {
     "title": "Documentos",
@@ -146,7 +165,9 @@
       "created": "Creado",
       "validated": "Validado",
       "original": "Documento original",
-      "cufe": "CUFE"
+      "cufe": "CUFE",
+      "invoiceType": "Tipo de factura DIAN",
+      "contingencyStarted": "En contingencia desde"
     },
     "viewOriginal": "Ver documento {id}",
     "qr": "Ver código QR",
@@ -158,12 +179,31 @@
       "kind": "Tipo",
       "size": "Tamaño",
       "sha256": "SHA-256",
-      "created": "Creado"
+      "created": "Creado",
+      "actions": "Archivo"
     },
     "noArtifacts": "Todavía no hay artefactos.",
     "eventsTitle": "Historia",
     "noEvents": "Todavía no hay eventos.",
-    "payloadTitle": "Contenido recibido"
+    "payloadTitle": "Contenido recibido",
+    "invoiceTypes": {
+      "01": "01 · Venta",
+      "03": "03 · Transcripción de contingencia del emisor",
+      "04": "04 · Contingencia de la DIAN"
+    },
+    "notification": "Notificación",
+    "download": "Descargar",
+    "downloadError": "No se pudo descargar el archivo.",
+    "eventKeys": {
+      "text": "",
+      "errors": "Reglas",
+      "dian_unavailable": "DIAN sin respuesta",
+      "gateway_refused": "Detenido",
+      "contingency_refused": "Sin tipo 04",
+      "invoice_type": "Firmada como tipo",
+      "waiting_for": "Espera la factura",
+      "delivery_failed": "Falló la entrega"
+    }
   },
   "staging": {
     "remainsOne": "queda",
@@ -176,5 +216,118 @@
     "expiredCta": "Para continuar con la siguiente fase o coordinar ajustes, contacta al equipo de ProjectApp:",
     "whatsapp": "WhatsApp",
     "email": "Correo"
+  },
+  "operations": {
+    "artifactKinds": {
+      "pdf": "PDF",
+      "attached_document": "AttachedDocument",
+      "signed_xml": "XML firmado",
+      "dian_response": "Respuesta DIAN",
+      "evidence": "Evidencia"
+    },
+    "environments": {
+      "1": "Producción",
+      "2": "Habilitación"
+    },
+    "rangeKinds": {
+      "invoice": "Facturación",
+      "contingency": "Contingencia"
+    },
+    "severities": {
+      "critical": "Crítica",
+      "warning": "Advertencia"
+    },
+    "alertKinds": {
+      "certificate_expiring": "Certificado por vencer",
+      "range_low": "Numeración por agotarse",
+      "resolution_expiring": "Resolución por vencer",
+      "contingency_deadline": "Plazo de contingencia",
+      "rejection": "Rechazo de la DIAN",
+      "queue_stuck": "Cola detenida"
+    }
+  },
+  "issuers": {
+    "title": "Emisores",
+    "searchLabel": "Buscar por NIT o nombre",
+    "searchSubmit": "Buscar",
+    "tableCaption": "Emisores registrados",
+    "empty": "No hay emisores con esa búsqueda.",
+    "error": "No pudimos cargar los emisores.",
+    "columns": {
+      "issuer": "Emisor",
+      "environment": "Ambiente",
+      "client": "Sistema cliente",
+      "documents": "Documentos",
+      "certificate": "Certificado vence",
+      "alerts": "Alertas abiertas"
+    },
+    "certificateDays": "{days, plural, =0 {hoy} one {en # día} other {en # días}}",
+    "certificateExpired": "Vencido",
+    "noCertificate": "Sin certificado",
+    "pageInfo": "Página {page} · {count} emisores",
+    "previous": "Anterior",
+    "next": "Siguiente",
+    "pagination": "Paginación de emisores"
+  },
+  "issuerDetail": {
+    "back": "Volver a emisores",
+    "notFoundTitle": "No encontramos ese emisor",
+    "notFoundBody": "Puede que el enlace esté mal o que el emisor no exista.",
+    "error": "No pudimos cargar el emisor.",
+    "dataTitle": "Datos del emisor",
+    "fields": {
+      "nit": "NIT",
+      "environment": "Ambiente",
+      "client": "Sistema cliente",
+      "personType": "Tipo de persona",
+      "responsibilities": "Responsabilidades",
+      "address": "Dirección",
+      "email": "Correo"
+    },
+    "personTypes": {
+      "1": "Persona jurídica",
+      "2": "Persona natural"
+    },
+    "certificatesTitle": "Certificados",
+    "certificatesCaption": "Certificados del emisor",
+    "noCertificates": "El emisor no tiene certificados.",
+    "certificateColumns": {
+      "subject": "Titular",
+      "issuedBy": "Emitido por",
+      "validTo": "Vence",
+      "state": "Estado"
+    },
+    "active": "Activo",
+    "inactive": "Inactivo",
+    "softwareTitle": "Software registrado",
+    "softwareCaption": "Software registrado ante la DIAN",
+    "noSoftware": "El emisor no ha registrado el software.",
+    "softwareColumns": {
+      "environment": "Ambiente",
+      "softwareId": "Identificador",
+      "testSet": "Set de pruebas",
+      "state": "Estado"
+    },
+    "testSetYes": "Con TestSetId",
+    "testSetNo": "Sin TestSetId",
+    "rangesTitle": "Rangos de numeración",
+    "rangesCaption": "Rangos de numeración del emisor",
+    "noRanges": "El emisor no tiene rangos.",
+    "rangeColumns": {
+      "kind": "Tipo",
+      "resolution": "Resolución",
+      "numbers": "Números",
+      "validity": "Vigencia",
+      "used": "Usado",
+      "last": "Último número"
+    },
+    "alertsTitle": "Alertas abiertas",
+    "noAlerts": "Sin alertas abiertas.",
+    "letterTitle": "Carta de contingencia a la DIAN",
+    "letterBody": "Borrador para que el representante legal lo firme y el comercio lo envíe a contingencia.facturadorvp@dian.gov.co (anexo técnico, numeral 12.1).",
+    "letterFrom": "Desde",
+    "letterTo": "Hasta",
+    "letterSubmit": "Descargar borrador",
+    "letterError": "No se pudo generar la carta. Revisa las fechas."
   }
 }
