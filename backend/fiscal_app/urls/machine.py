@@ -4,4 +4,5 @@ from django.urls import include, path
 
 urlpatterns = [
     path('', include('fiscal_app.urls.issuers')),
+    path('', include('fiscal_app.urls.documents')),
 ]

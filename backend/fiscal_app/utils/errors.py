@@ -12,10 +12,11 @@ MACHINE_API_PREFIX = '/api/v1/'
 
 
 class FiscalError(exceptions.APIException):
-    """An expected business error with a stable code (e.g. issuer_not_found)."""
+    """An expected business error with a stable code (e.g. issuer_not_found), optionally with extra data."""
 
-    def __init__(self, message, code, status_code=status.HTTP_400_BAD_REQUEST):
+    def __init__(self, message, code, status_code=status.HTTP_400_BAD_REQUEST, extra=None):
         self.status_code = status_code
+        self.extra = extra or {}
         super().__init__(message, code)
 
 
@@ -45,5 +46,6 @@ def fiscal_exception_handler(exc, context):
             body['code'] = code
     else:
         body = {'code': getattr(detail, 'code', None) or 'error', 'message': str(detail)}
+        body.update(getattr(exc, 'extra', {}))
     response.data = {'error': body}
     return response

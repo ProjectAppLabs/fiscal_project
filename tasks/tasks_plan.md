@@ -11,7 +11,7 @@
 | Inventario (DIAN, Waiter, operación, negocio y legal) | ✅ hecho 2026-10-04 | — |
 | Decisiones D1 a D7 | ✅ tomadas 2026-10-04 | — |
 | Plantilla adaptada a Fiscal. (nombres, marca, MySQL, limpieza de features demo) | ✅ PR #2, 2026-10-04 | F1 |
-| Núcleo: sistemas cliente, emisores, certificados, rangos, documentos, cola | 🔄 modelos y cifrado (F1 PR 2) y API de emisores con firma HMAC (F1 PR 3) hechos; faltan documentos, cola y consola | F1 |
+| Núcleo: sistemas cliente, emisores, certificados, rangos, documentos, cola | 🔄 modelos y cifrado (PR 2), API de emisores con firma HMAC (PR 3) y documentos con validación previa por reglas DIAN (PR 4) hechos; faltan cola, avisos y consola | F1 |
 | Librería `dian/`: UBL, CUFE/CUDE, XAdES, SOAP | ⏳ pendiente | F2 |
 | Habilitación de ProjectApp (set de pruebas) | ⏳ pendiente | F3 |
 | Notas, contingencias 04 y 03, entrega (AttachedDocument y PDF) | ⏳ pendiente | F4 |

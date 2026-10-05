@@ -1,7 +1,7 @@
 # Fiscal. · Contrato v1 de la API para sistemas cliente
 
-> Estado: autenticación, emisores, certificados, software y rangos (F1 PR 3). Los documentos entran en F1 PR 4 y los
-> avisos de vuelta en F1 PR 5. Reemplaza al borrador previo al inventario.
+> Estado: autenticación, emisores, certificados, software y rangos (F1 PR 3) y documentos con validación previa
+> (F1 PR 4). Los avisos de vuelta y la transmisión llegan en F1 PR 5. Reemplaza al borrador previo al inventario.
 
 API de máquina para los sistemas que usan Fiscal. (Waiter primero; después otras casas de software). Base:
 `/api/v1/`. Cuerpos JSON en UTF-8.
@@ -78,6 +78,12 @@ por campo.
 | `invalid_certificate`, `certificate_expired` | 400 | El `.p12` no abre, no trae la llave o ya venció |
 | `invalid_range`, `invalid_validity`, `technical_key_required` | 400 | Rango invertido, vigencia invertida o rango de facturación sin clave técnica |
 | `duplicate_range` | 409 | Esa resolución y ese prefijo ya están registrados |
+| `issuer_not_ready` | 409 | El emisor no tiene certificado vigente o registro del software en su ambiente |
+| `number_out_of_range` | 400 | El número no está en un rango vigente del emisor para la fecha de emisión |
+| `issue_datetime_in_future`, `issue_datetime_too_old` | 400 | Fecha de emisión futura, o de hace más de 24 h sin ser contingencia |
+| `invalid_document` | 400 | El documento tiene problemas que la DIAN rechazaría; ver `problems` |
+| `idempotency_conflict`, `duplicate_number` | 409 | Misma clave con otro contenido; número repetido |
+| `document_not_found` | 404 | El documento no existe en **este** sistema cliente |
 
 ## Emisores
 
@@ -166,3 +172,85 @@ Queda como el registro activo de ese ambiente. El PIN se guarda cifrado, porque 
 ### `GET /api/v1/issuers/{nit}/ranges/`
 
 Lista los rangos del emisor, sin claves técnicas.
+
+## Documentos
+
+### `POST /api/v1/documents/create/`
+
+```json
+{
+  "idempotency_key": "waiter:<org>:<id del documento en Waiter>",
+  "issuer": "900373115",
+  "kind": "invoice",
+  "prefix": "SETP",
+  "number": 990000001,
+  "issue_datetime": "2026-10-04T13:05:00-05:00",
+  "document": { "…": "documento comercial, abajo" }
+}
+```
+
+- `kind`: `invoice`, `credit_note` o `debit_note` (D2: factura electrónica para todo).
+- `prefix` y `number`: la numeración la asigna el sistema cliente. En una factura, el número debe estar en un rango
+  vigente del emisor para la fecha de emisión; las notas se numeran sin resolución.
+- `issue_datetime`: con zona horaria; Fiscal. la usa en hora de Colombia (−05:00). No puede ser futura, y fuera de
+  una contingencia no puede tener más de 24 horas, porque la DIAN exige que la fecha de emisión sea la de firma (FAD09e).
+- **Idempotencia:**
+  - el mismo cuerpo con la misma clave responde `200` con el mismo documento, así que tras un corte de red se reenvía
+    sin miedo;
+  - la misma clave con otro contenido responde `409 idempotency_conflict`.
+- Responde `202` con el documento en estado `queued`.
+
+#### Documento comercial
+
+Los montos van como texto con hasta dos decimales (`"36900.00"`); nunca negativos. Ejemplo de una cuenta de
+restaurante: 2 hamburguesas y 1 limonada con INC 8 %, canje de puntos y propina del 10 %.
+
+```json
+{
+  "buyer": {"final_consumer": true},
+  "sale_channel": "on_site",
+  "lines": [
+    {"code": "HAM-01", "description": "Hamburguesa de la casa", "quantity": "2", "unit_code": "94",
+     "unit_price": "18450.00", "line_extension": "36900.00",
+     "taxes": [{"code": "04", "rate": "8.00", "taxable_amount": "36900.00", "amount": "2952.00"}]},
+    {"code": "LIM-01", "description": "Limonada natural", "quantity": "1", "unit_code": "94",
+     "unit_price": "6000.00", "line_extension": "6000.00",
+     "taxes": [{"code": "04", "rate": "8.00", "taxable_amount": "6000.00", "amount": "480.00"}]}
+  ],
+  "allowances": [{"reason": "Canje de puntos", "amount": "5000.00"}],
+  "charges": [{"kind": "tip", "reason": "Propina voluntaria", "amount": "4290.00"}],
+  "totals": {"line_extension": "42900.00", "tax_exclusive": "42900.00", "tax_inclusive": "46332.00",
+             "allowance_total": "5000.00", "charge_total": "4290.00", "payable": "45622.00"},
+  "payment": {"form": "1", "means": ["10"]}
+}
+```
+
+| Bloque | Reglas |
+|---|---|
+| `buyer` | `{"final_consumer": true}`: Fiscal. lo informa como `222222222222`, tipo `13`, `R-99-PN` (anexo FE 1.9, FAK62 y FAK26). Si no, `id_type` (TipoIdFiscal: 13 cédula, 31 NIT…), `id_number` sin puntos, `dv` si es NIT (FAK64), `person_type`, `name`, `tax_responsibilities` (TipoResponsabilidad o `R-99-PN`), `tax_scheme` (01, 04 o ZZ), `email` y `address` opcionales |
+| `sale_channel` y `delivery_address` | `on_site` o `delivery`. Un domicilio a consumidor final o a una persona con cédula debe llevar `delivery_address` (`line` y `municipality_code` DANE) (Res. 000227 de 2025, art. 1.5.1.2.2.1 num. 3) |
+| `lines` | Entre 1 y 500. `quantity` > 0 (FAV04b); `unit_code` de UnidadesMedida (FAV05; 94 = unidad); `line_extension` = cantidad × precio − descuentos + cargos de la línea (FAV06) |
+| `lines[].taxes` | Un tributo por código en cada línea. Etapa 1: `01` IVA y `04` INC, con las tarifas de su lista (IVA 0, 5, 16, 19; INC 2, 4, 8, 16). `taxable_amount` = valor de la línea, así que **la propina nunca entra en la base**. `amount` = base × tarifa (FAS07) |
+| `allowances` | Descuentos globales (por ejemplo, el canje de puntos). **Nunca como línea negativa** |
+| `charges` | Cargos globales. La propina va con `"kind": "tip"`, sin impuestos y como máximo el 10 % del consumo (Ley 1935 de 2018) |
+| `totals` | Se comprueban como los compara la DIAN: FAU02 (suma de líneas), FAU04 (suma de bases), FAU06 (bruto + tributos), FAU08 (descuentos), FAU10 (cargos), FAU14 (`payable` = con tributos − descuentos + cargos + `rounding`) |
+| `payment` | `form` de FormasPago (1 contado, 2 crédito; a crédito exige `due_date`, FAN04); `means`: lista de MediosPago (10 efectivo, 48 tarjeta crédito, 49 tarjeta débito…) (FAN03) |
+| `billing_reference` (notas) | `document_id` (id en Fiscal. de la factura que corrige), `concept_code` (ConceptoNotaCredito: 2 = anulación…; ConceptoNotaDebito) y `reason` |
+| `currency` | `COP` en la etapa 1 |
+
+**Redondeo y tolerancia** (anexo FE 1.9, §5.2.1): redondeo half-to-even (NTC 3711); tolerancia de ±2,00 en los valores
+y de ±5,00 en el IVA cuando se aproxima a la decena.
+
+**Errores del documento:** `400 invalid_document`, con `problems`, la lista completa de problemas para corregirlos de
+una vez:
+
+```json
+{"error": {"code": "invalid_document", "message": "El documento tiene 1 problema(s) que la DIAN rechazaría.",
+  "problems": [{"path": "totals.payable", "code": "payable_mismatch", "rule": "FAU14",
+                "message": "Debe ser bruto con tributos − descuentos + cargos (45622.00)."}]}}
+```
+
+### `GET /api/v1/documents/{id}/`
+
+Estado del documento (`queued`, `transmitting`, `validated`, `rejected`, `contingency_dian` o `contingency_issuer`),
+CUFE o CUDE, URL del QR, errores de la DIAN, intentos, factura original (en las notas) y su historia de eventos.

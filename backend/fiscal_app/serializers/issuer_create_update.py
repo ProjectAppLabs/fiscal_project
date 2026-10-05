@@ -1,16 +1,14 @@
-import re
-
 from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework import serializers
+
+from dian.catalogs import code_list, is_valid
 
 from fiscal_app.models import Issuer
 from fiscal_app.models.choices import Environment, PersonType
 from fiscal_app.services.nit import validate_nit
 
 # Tax schemes of an issuer in stage 1 (TipoImpuesto / tributos): 01 IVA, 04 INC, ZZ not applicable.
-# PR 4 replaces these checks with the DIAN genericode catalogs.
 ISSUER_TAX_SCHEMES = ('01', '04', 'ZZ')
-RESPONSIBILITY_PATTERN = re.compile(r'^[A-Z0-9]{1,4}(-[A-Z0-9]{1,4})?$')
 
 
 class IssuerCreateUpdateSerializer(serializers.ModelSerializer):
@@ -35,9 +33,23 @@ class IssuerCreateUpdateSerializer(serializers.ModelSerializer):
 
     def validate_tax_responsibilities(self, value):
         codes = [code.strip().upper() for code in value]
-        if any(not RESPONSIBILITY_PATTERN.match(code) for code in codes):
-            raise serializers.ValidationError('Usa los códigos de responsabilidad de la DIAN (por ejemplo O-13 o ZZ).')
+        valid = code_list('TipoResponsabilidad')
+        if any(code not in valid for code in codes):
+            raise serializers.ValidationError(
+                f'Usa las responsabilidades de la lista de la DIAN: {", ".join(sorted(valid))}.',
+                code='invalid_tax_responsibility',
+            )
         return codes
+
+    def validate_municipality_code(self, value):
+        if not is_valid('Municipio', value):
+            raise serializers.ValidationError('El municipio no está en la lista DANE de la DIAN.', code='invalid_municipality')
+        return value
+
+    def validate_department_code(self, value):
+        if not is_valid('Departamentos', value):
+            raise serializers.ValidationError('El departamento no está en la lista DANE de la DIAN.', code='invalid_department')
+        return value
 
     def validate(self, attrs):
         nit = self.context['nit']
