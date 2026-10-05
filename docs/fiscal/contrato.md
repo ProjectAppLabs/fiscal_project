@@ -196,6 +196,12 @@ Lista los rangos del emisor, sin claves técnicas.
   vigente del emisor para la fecha de emisión; las notas se numeran sin resolución.
 - `issue_datetime`: con zona horaria; Fiscal. la usa en hora de Colombia (−05:00). No puede ser futura, y fuera de
   una contingencia no puede tener más de 24 horas, porque la DIAN exige que la fecha de emisión sea la de firma (FAD09e).
+- **Factura de contingencia del emisor (tipo 03):** si el comercio expidió una factura de talonario o de papel porque
+  su sistema o Fiscal. no estaban disponibles (anexo §12.1), la envía con `"issuer_contingency": true` en el documento
+  comercial, el prefijo y el número del rango de **contingencia** y la fecha y hora reales de la factura de papel
+  (puede tener más de 24 horas). Fiscal. la transcribe como tipo 03, con CUDE y referencia a la factura de papel, y la
+  transmite. Debe enviarse dentro de las 48 horas siguientes a superar la falla. Las notas no tienen contingencia
+  (`400 contingency_not_allowed`).
 - **Idempotencia:**
   - el mismo cuerpo con la misma clave responde `200` con el mismo documento, así que tras un corte de red se reenvía
     sin miedo;

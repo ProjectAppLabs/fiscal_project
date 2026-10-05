@@ -96,3 +96,29 @@ def test_document_detail_shows_history(authenticated_client, fake_data):
 def test_unknown_document_is_not_found(authenticated_client):
     """Fails if a missing document answers anything but 404."""
     assert authenticated_client.get('/api/console/documents/999999/').status_code == 404
+
+
+@pytest.mark.django_db
+def test_operator_downloads_the_contingency_letter(authenticated_client, issuer):
+    """Fails if the console does not hand the operator the letter draft with the DIAN's mailbox and subject."""
+    response = authenticated_client.get(f'/api/console/issuers/{issuer.pk}/contingency-letter/?from=2026-10-01&to=2026-10-03')
+
+    assert response.status_code == 200
+    assert response['Content-Type'] == 'application/pdf'
+    assert response['X-Fiscal-Mail-To'] == 'contingencia.facturadorvp@dian.gov.co'
+    assert response.content.startswith(b'%PDF')
+
+
+@pytest.mark.django_db
+def test_contingency_letter_needs_a_valid_period(authenticated_client, issuer):
+    """Fails if a letter is drafted without a period or with the dates reversed."""
+    url = f'/api/console/issuers/{issuer.pk}/contingency-letter/'
+
+    assert authenticated_client.get(url).json()['code'] == 'invalid_period'
+    assert authenticated_client.get(f'{url}?from=2026-10-05&to=2026-10-01').status_code == 400
+
+
+@pytest.mark.django_db
+def test_contingency_letter_is_only_for_operators(api_client, issuer):
+    """Fails if anyone without an operator session can download an issuer's letter."""
+    assert api_client.get(f'/api/console/issuers/{issuer.pk}/contingency-letter/?from=2026-10-01&to=2026-10-03').status_code == 401

@@ -1,6 +1,10 @@
 """Operator console API (JWT): what the ProjectApp team needs to watch Fiscal. Client systems cannot use it."""
 
+from datetime import date
+from urllib.parse import quote
+
 from django.db.models import Count
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from rest_framework.decorators import api_view, permission_classes
@@ -10,7 +14,11 @@ from rest_framework.response import Response
 
 from fiscal_app.models import ClientSystem, Document, Issuer, User
 from fiscal_app.models.choices import DocumentState
-from fiscal_app.serializers import ConsoleDocumentDetailSerializer, ConsoleDocumentListSerializer
+from fiscal_app.serializers import (
+    ConsoleDocumentDetailSerializer,
+    ConsoleDocumentListSerializer,
+)
+from fiscal_app.services.contingency_letter import draft_letter
 
 
 class IsConsoleOperator(BasePermission):
@@ -71,3 +79,23 @@ def console_documents(request):
 def console_document(request, document_id):
     document = get_object_or_404(Document.objects.select_related('client', 'issuer'), pk=document_id)
     return Response(ConsoleDocumentDetailSerializer(document).data)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated, IsConsoleOperator])
+def console_contingency_letter(request, issuer_id):
+    """Draft of the issuer's contingency letter to the DIAN (annex §12.1) for a period, as a PDF to sign."""
+    issuer = get_object_or_404(Issuer, pk=issuer_id)
+    try:
+        start = date.fromisoformat(request.query_params.get('from', ''))
+        end = date.fromisoformat(request.query_params.get('to', ''))
+    except ValueError:
+        return Response({'code': 'invalid_period', 'detail': 'Indica el período con from y to (AAAA-MM-DD).'}, status=400)
+    if start > end:
+        return Response({'code': 'invalid_period', 'detail': 'La fecha inicial es posterior a la final.'}, status=400)
+    draft = draft_letter(issuer, start, end, timezone.localdate())
+    response = HttpResponse(draft.pdf, content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="carta-contingencia-{issuer.nit}-{start}-{end}.pdf"'
+    response['X-Fiscal-Mail-Subject'] = quote(draft.subject)
+    response['X-Fiscal-Mail-To'] = draft.recipient
+    return response

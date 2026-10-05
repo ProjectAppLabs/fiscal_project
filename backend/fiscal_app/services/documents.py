@@ -110,6 +110,9 @@ def _check_issue_datetime(issue_datetime, contingency):
 
 
 def _check_number(issuer, kind, prefix, number, issue_datetime, contingency):
+    if contingency and kind != DocumentKind.INVOICE:
+        # Annex FE 1.9 §12.1: notes have no contingency scheme; they are issued once the failure is over.
+        raise FiscalError('Las notas no tienen contingencia: emítela cuando se supere la falla.', 'contingency_not_allowed')
     if kind != DocumentKind.INVOICE:
         # Notes are numbered by the issuer without a DIAN resolution.
         return None

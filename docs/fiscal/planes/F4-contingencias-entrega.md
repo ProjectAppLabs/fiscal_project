@@ -47,7 +47,7 @@ El CUFE no cambia al pasar a tipo 04: su cadena (§11.2) no incluye el tipo de f
   registro del software del emisor (num. 18 del art. 1.5.1.2.2.1). Un error al armar la entrega queda en los eventos
   del documento y no deshace la validación.
 
-### F4 PR 3 · Contingencia del emisor, tipo 03 (`feat/…-issuer-contingency`)
+### F4 PR 3 · Contingencia del emisor, tipo 03 (`feat/…-issuer-contingency`) — ✅ hecho
 
 - Las facturas con `issuer_contingency` (F1 ya las acepta con el rango de contingencia) se arman como tipo 03:
   - CUDE con el PIN;
@@ -58,6 +58,11 @@ El CUFE no cambia al pasar a tipo 04: su cadena (§11.2) no incluye el tipo de f
   representante legal y la envía el comercio.
 - **Por confirmar en habilitación:** qué `UUID` espera la DIAN en `AdditionalDocumentReference` para una factura de
   papel, que no tiene CUFE. Se informa el CUDE de la transcripción con `schemeName="CUDE-SHA384"`.
+- **Resultado:**
+  - la carta se descarga desde la consola (`GET /api/console/issuers/{id}/contingency-letter/?from=&to=`), con el
+    destinatario y el asunto en cabeceras;
+  - una transcripción 03 que espera a la DIAN no se vuelve a firmar como 04: ya se entregó en papel;
+  - una nota marcada como contingencia se rechaza (`contingency_not_allowed`).
 
 ### F4 PR 4 · Alertas y salud (`feat/…-alerts-health`)
 

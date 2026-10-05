@@ -80,7 +80,7 @@ class SoapGateway(DianGateway):
     def prepare_contingency(self, submission: Submission) -> ContingencyDocument | None:
         """Sign a sale invoice again as type 04; notes and paper transcriptions (03) have no DIAN contingency."""
         document, software, credentials = _prepare(submission)
-        if document.kind != DocumentKind.INVOICE or document.invoice_type not in ('', '01'):
+        if document.kind != DocumentKind.INVOICE or (document.invoice_type or default_invoice_type(document)) != '01':
             return None
         try:
             signed_xml = signed_xml_of(document, software, credentials, invoice_type='04')
@@ -118,13 +118,18 @@ def signed_xml_of(document: Document, software: SoftwareRegistration, credential
         return artifacts.read(stored)
     spec = document_spec(document, software)
     if document.kind == DocumentKind.INVOICE:
-        built = build_invoice(spec, resolution_of(document.numbering_range), invoice_type or '01')
+        built = build_invoice(spec, resolution_of(document.numbering_range), invoice_type or default_invoice_type(document))
     else:
         built = build_note(document.kind, spec, invoice_reference(document))
     signing.sign(built.root, credentials, timezone.now())
     content = built.tostring()
     artifacts.store(document, ArtifactKind.SIGNED_XML, content, 'application/xml')
     return content
+
+
+def default_invoice_type(document: Document) -> str:
+    """03 for the transcription of a paper invoice of the issuer's contingency (annex §12.1), 01 otherwise."""
+    return '03' if document.payload.get('issuer_contingency') else '01'
 
 
 def codes_of(signed_xml: bytes) -> tuple[str, str, str]:
