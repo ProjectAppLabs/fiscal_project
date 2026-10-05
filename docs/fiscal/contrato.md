@@ -262,8 +262,14 @@ CUFE o CUDE, URL del QR, errores de la DIAN, intentos, factura original (en las 
 Descarga el archivo más reciente de un tipo:
 - `signed_xml`: XML firmado;
 - `dian_response`: respuesta de la DIAN;
-- `attached_document`: el contenedor que se entrega al comprador (F4);
-- `pdf`: representación gráfica (F4).
+- `attached_document`: el contenedor firmado que se entrega al comprador, con el `ApplicationResponse` de la DIAN
+  (o sin él, en una factura tipo 04);
+- `pdf`: representación gráfica, con el QR de la DIAN en todas las páginas;
+- `evidence`: evidencia de las fallas de la DIAN que llevaron a la contingencia.
+
+`attached_document` y `pdf` se generan cuando la DIAN valida el documento y cuando una factura sale en contingencia
+tipo 04. El aviso al sistema cliente ya los lista en `artifacts`. La entrega al comprador (correo o impresión) la hace
+el sistema cliente.
 
 La respuesta trae el contenido con su tipo y la cabecera `X-Fiscal-SHA256`. Antes de entregarlo, Fiscal. verifica que
 el archivo coincide con la huella que registró al guardarlo. Los archivos se conservan 10 años.

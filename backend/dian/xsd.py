@@ -15,11 +15,13 @@ DOCUMENT_SCHEMAS = {
     'Invoice': 'maindoc/UBL-Invoice-2.1.xsd',
     'CreditNote': 'maindoc/UBL-CreditNote-2.1.xsd',
     'DebitNote': 'maindoc/UBL-DebitNote-2.1.xsd',
+    'AttachedDocument': 'maindoc/UBL-AttachedDocument-2.1.xsd',
 }
 NAMESPACES = {
     'Invoice': 'urn:oasis:names:specification:ubl:schema:xsd:Invoice-2',
     'CreditNote': 'urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2',
     'DebitNote': 'urn:oasis:names:specification:ubl:schema:xsd:DebitNote-2',
+    'AttachedDocument': 'urn:oasis:names:specification:ubl:schema:xsd:AttachedDocument-2',
 }
 
 

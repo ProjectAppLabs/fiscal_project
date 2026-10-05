@@ -40,3 +40,14 @@ class FakeSession:
         if isinstance(reply, Exception):
             raise reply
         return reply
+
+
+# The DIAN's validation answer, with the fields the AttachedDocument copies (date, time and ResponseCode 02).
+APPLICATION_RESPONSE = b'''<?xml version="1.0" encoding="UTF-8"?>
+<ApplicationResponse xmlns="urn:oasis:names:specification:ubl:schema:xsd:ApplicationResponse-2"
+ xmlns:cac="urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2"
+ xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2">
+<cbc:UBLVersionID>UBL 2.1</cbc:UBLVersionID><cbc:IssueDate>2026-10-04</cbc:IssueDate>
+<cbc:IssueTime>13:06:31-05:00</cbc:IssueTime><cac:DocumentResponse><cac:Response><cbc:ResponseCode>02</cbc:ResponseCode>
+<cbc:Description>Documento validado por la DIAN</cbc:Description></cac:Response></cac:DocumentResponse>
+</ApplicationResponse>'''
