@@ -4,9 +4,10 @@
 
 ## Foco actual
 
-Planeación técnica interna de Fiscal. sobre la plantilla Base Django React Next, rama
-`docs/04102026-technical-execution-plan`. Todavía no hay código de Fiscal. en este repositorio. Lo siguiente es el
-plan de implementación detallado de F1.
+F1 y F2 terminadas (2026-10-04). Fiscal. arma la factura y las notas en UBL 2.1, calcula CUFE y CUDE, firma con
+XAdES-EPES y las envía por SOAP con WS-Security; `DIAN_GATEWAY=soap` activa el gateway real. Todo se probó sin red:
+con los vectores del anexo, los XSD oficiales y los ejemplos firmados de la caja. La prueba real es el set de pruebas
+de F3, que necesita el certificado y el registro del software de ProjectApp.
 
 ## Decisiones activas
 
@@ -31,9 +32,8 @@ plan de implementación detallado de F1.
 
 ## Próximos pasos
 
-1. F1 cerrada y recorrida de punta a punta (2026-10-04).
-2. F2 (plan en `docs/fiscal/planes/F2-dian.md`), librería `dian/`: UBL 2.1, CUFE/CUDE con los ejemplos del anexo, XAdES-EPES y SOAP; F2 termina con el set de pruebas, que necesita el certificado y el registro del software de ProjectApp.
-3. F2: las 221 reglas Schematron de la DIAN (XPath 2.0) validan el XML armado; lxml no ejecuta XSLT 2.0, así que
-   hace falta un motor XSLT 2.0 (Saxon). Caja de herramientas y anexos en `~/.cache/fiscal-dian/`.
-3. Del dueño, sin bloquear F1: registrar Fiscal. en el portal de habilitación de ProjectApp y, hacia el final de F2,
-   el certificado.
+1. **F3 (bloqueada por el dueño):** certificado digital de ProjectApp y registro de Fiscal. en el portal de
+   habilitación (identificador del software, PIN y `TestSetId`). Con eso se corre el set de pruebas y se confirman:
+   direcciones de los servicios, autenticación mutua TLS y formato de `X509IssuerName` (lista en el plan F2).
+2. **F4 (puede avanzar sin la DIAN):** contingencias 03 y 04, `AttachedDocument` y representación gráfica (PDF).
+3. Caja de herramientas y anexos en `~/.cache/fiscal-dian/` (fuera del repositorio).

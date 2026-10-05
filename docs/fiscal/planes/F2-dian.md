@@ -102,10 +102,18 @@ La factura de restaurante (consumidor final, INC, propina y canje de puntos) y l
   - **Por confirmar en habilitación con el certificado real:** el formato de `X509IssuerName`, las direcciones y la
     autenticación mutua.
 
-### F2 PR 5 · Validación con las reglas Schematron de la DIAN (opcional, `feat/…-schematron`)
+### F2 PR 5 · Validación con las reglas Schematron de la DIAN — ❌ descartado por ahora
 
-- Las 221 reglas de `DIAN-UBL21-model.sch` están en XPath 2.0, que lxml no ejecuta. Se evalúa `saxonche` (Saxon-HE
-  para Python). Si hay rueda para Python 3.14, se valida el XML armado antes de enviarlo; si no, queda para después.
+- Hay rueda de `saxonche` 13 para Python 3.14 (Saxon-HE, MPL-2.0), pero el Schematron de la caja FE_V19_(v2026)
+  no sirve como está:
+  - es la versión 3.0 de 2019 (época del anexo 1.8);
+  - su archivo principal incluye `listacodigos/DIAN_UBL21-listacodigos_v2.0.sch`, que la caja no trae (solo v1.5 y
+    v1.6).
+- Validar con esas reglas daría rechazos falsos frente al anexo 1.9; por ejemplo, el formato anterior del `QRCode`
+  que ya se vio en los ejemplos.
+- La validación local queda en el XSD oficial, la validación previa de F1 y la verificación de la firma. La
+  validación completa la hace la DIAN en habilitación (F3).
+- Se retoma si la DIAN publica un Schematron alineado con la 1.9.
 
 ### Cierre de F2 · Set de pruebas real (requiere al dueño)
 
