@@ -49,17 +49,20 @@ describe('Header', () => {
     expect(screen.getByRole('link', { name: 'Iniciar sesión' })).toHaveAttribute('href', '/sign-in');
   });
 
-  it('hides the console link from visitors without a session', () => {
+  it.each(['Tablero', 'Documentos'])('hides the %s link from visitors without a session', (name) => {
     renderHeader({ isAuthenticated: false, signOut: jest.fn() });
 
     expect(screen.getByRole('link', { name: 'Fiscal.' })).toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: 'Consola' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name })).not.toBeInTheDocument();
   });
 
-  it('links signed-in users to the console', () => {
+  it.each([
+    ['Tablero', '/dashboard'],
+    ['Documentos', '/documents'],
+  ])('links signed-in users to the %s page at %s', (name, href) => {
     renderHeader({ isAuthenticated: true, signOut: jest.fn() });
 
-    expect(screen.getByRole('link', { name: 'Consola' })).toHaveAttribute('href', '/dashboard');
+    expect(screen.getByRole('link', { name })).toHaveAttribute('href', href);
   });
 
   it('signs the user out from the header button', async () => {

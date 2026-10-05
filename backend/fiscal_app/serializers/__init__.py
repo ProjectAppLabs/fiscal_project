@@ -11,3 +11,4 @@ from .numbering_range_create_update import NumberingRangeCreateUpdateSerializer
 from .software_registration_create_update import SoftwareRegistrationCreateUpdateSerializer
 from .document_create import DocumentCreateSerializer
 from .document_detail import ArtifactListSerializer, DocumentDetailSerializer, DocumentEventDetailSerializer
+from .console_document import ConsoleDocumentDetailSerializer, ConsoleDocumentListSerializer

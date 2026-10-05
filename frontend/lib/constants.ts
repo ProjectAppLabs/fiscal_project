@@ -3,7 +3,12 @@ export const ROUTES = {
   SIGN_IN: '/sign-in',
   FORGOT_PASSWORD: '/forgot-password',
   DASHBOARD: '/dashboard',
+  DOCUMENTS: '/documents',
 } as const;
+
+export function documentDetailRoute(id: number | string): string {
+  return `${ROUTES.DOCUMENTS}/${id}`;
+}
 
 // Paths relative to the axios base URL (`/api`), matching the backend's routes.
 export const API_ENDPOINTS = {
@@ -16,7 +21,16 @@ export const API_ENDPOINTS = {
   HEALTH: 'health/',
   STAGING_BANNER: 'staging-banner/',
   CAPTCHA_SITE_KEY: 'google-captcha/site-key/',
+  CONSOLE_SUMMARY: 'console/summary/',
+  CONSOLE_DOCUMENTS: 'console/documents/',
 } as const;
+
+export function consoleDocumentEndpoint(id: number | string): string {
+  return `${API_ENDPOINTS.CONSOLE_DOCUMENTS}${id}/`;
+}
+
+// Fiscal documents are DIAN documents: dates are shown in Colombia's time zone.
+export const DISPLAY_TIME_ZONE = 'America/Bogota';
 
 export const COOKIE_KEYS = {
   ACCESS_TOKEN: 'access_token',

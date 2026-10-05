@@ -1,11 +1,12 @@
 import { test, expect } from '../test-with-coverage';
-import { clearSession, signInWithCookies, waitForPageLoad } from '../fixtures';
+import { clearSession, emptyConsoleSummary, signInWithCookies, stubConsoleSummary, waitForPageLoad } from '../fixtures';
 import { DASHBOARD_EMPTY_STATE, HOME_REDIRECT } from '../helpers/flow-tags';
 
 test.describe('Console', () => {
   test('shows the Fiscal. console with the empty documents state', { tag: [...DASHBOARD_EMPTY_STATE, '@outcome:display'] }, async ({ context, page, baseURL }) => {
     // quality: allow-no-interaction (the dashboard is a read-only skeleton; rendering it for a signed-in operator is the behavior)
     await signInWithCookies(context, page, baseURL ?? 'http://localhost:3000');
+    await stubConsoleSummary(page, emptyConsoleSummary);
     await page.goto('/dashboard');
     await waitForPageLoad(page);
 

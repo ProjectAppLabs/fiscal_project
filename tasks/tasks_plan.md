@@ -15,7 +15,7 @@
 | Librería `dian/`: UBL, CUFE/CUDE, XAdES, SOAP | ⏳ pendiente | F2 |
 | Habilitación de ProjectApp (set de pruebas) | ⏳ pendiente | F3 |
 | Notas, contingencias 04 y 03, entrega (AttachedDocument y PDF) | ⏳ pendiente | F4 |
-| Consola de operación (Next.js) | ⏳ pendiente | F5 |
+| Consola de operación (Next.js) | 🔄 mínima en F1 (tablero, documentos, detalle); la completa en F5 | F5 |
 | Waiter conectado (plan en su repositorio) | ⏳ pendiente | F6 |
 | Piloto con un restaurante | ⏳ pendiente | F7 |
 

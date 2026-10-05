@@ -17,6 +17,9 @@ e2e/
 │   └── auth.spec.ts
 ├── dashboard/                     # Console empty state and home redirect
 │   └── dashboard.spec.ts
+├── console/                       # Dashboard counters, document list, filters, pagination and detail
+│   ├── dashboard.spec.ts
+│   └── documents.spec.ts
 ├── navigation/                    # Locale switch and unknown routes
 │   └── navigation.spec.ts
 └── README.md
@@ -90,8 +93,9 @@ Playwright starts (or reuses) the following servers from `playwright.config.ts`:
 - Frontend: `http://localhost:3000` (Next.js dev server)
 
 If the servers are already running, `reuseExistingServer: true` is used when not in CI.
-Auth responses (`sign_in/`, `validate_token/`, `send_passcode/`, the reCAPTCHA site key) are stubbed per
-test with `page.route` (see `fixtures.ts`), so the specs do not need seeded users.
+Auth responses (`sign_in/`, `validate_token/`, `send_passcode/`, the reCAPTCHA site key) and the console
+endpoints (`console/summary/`, `console/documents/`, `console/documents/<id>/`) are stubbed per test with
+`page.route` (see `fixtures.ts`), so the specs do not need seeded users or documents.
 `baseURL` defaults to `http://localhost:3000` and can be overridden with `PLAYWRIGHT_BASE_URL`.
 
 ## Flow Coverage System
@@ -149,11 +153,12 @@ JSON artifacts:
 | `waitForPageLoad(page)` | `fixtures.ts` | Wait for `load` + `domcontentloaded` |
 | `signInWithCookies(context, page, baseURL)` / `clearSession(context, page)` | `fixtures.ts` | Start a test with or without a session |
 | `stubSignInSuccess`, `stubSignInRejected`, `stubValidToken`, `stubSendPasscode`, `stubNoCaptcha` | `fixtures.ts` | Backend stubs for the auth endpoints |
+| `stubConsoleSummary`, `stubConsoleSummaryFailing`, `stubConsoleSummaryFailingOnce`, `stubDocumentList`, `stubDocumentDetail` | `fixtures.ts` | Backend stubs for the console endpoints (filters, pages and 404 included) |
 | `testOperator`, `testPasscode` | `fixtures.ts` | Shared fixture data |
 | `test` / `expect` | `test-with-coverage.ts` | Shared Playwright test base |
 | Flow tag constants | `helpers/flow-tags.ts` | Tag arrays per flow/module/priority |
 
-## Flow Definitions (11 flows)
+## Flow Definitions (17 flows)
 
 Source of truth: `e2e/flow-definitions.json` (update `lastUpdated` when adding flows).
 
@@ -162,6 +167,7 @@ Source of truth: `e2e/flow-definitions.json` (update `lastUpdated` when adding f
 | **home** | home-redirect | P1 |
 | **auth** | auth-sign-in-form, auth-login-invalid, auth-login-success, auth-protected-redirect, auth-sign-out, auth-forgot-password-form, auth-forgot-password-send-code | P1-P2 |
 | **dashboard** | dashboard-empty-state | P1 |
+| **console** | console-dashboard-counters, console-dashboard-retry, console-documents-filter, console-documents-pagination, console-document-detail, console-document-not-found | P1-P2 |
 | **i18n** | i18n-locale-switch | P2 |
 | **navigation** | navigation-unknown-route | P3 |
 

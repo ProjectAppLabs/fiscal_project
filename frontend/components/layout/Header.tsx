@@ -26,9 +26,14 @@ export default function Header() {
 
         <nav className="flex items-center gap-2 text-sm sm:gap-4" aria-label={t('mainNav')}>
           {isAuthenticated ? (
-            <Link className={NAV_LINK_CLASS} href={ROUTES.DASHBOARD}>
-              {t('console')}
-            </Link>
+            <>
+              <Link className={NAV_LINK_CLASS} href={ROUTES.DASHBOARD}>
+                {t('dashboard')}
+              </Link>
+              <Link className={NAV_LINK_CLASS} href={ROUTES.DOCUMENTS}>
+                {t('documents')}
+              </Link>
+            </>
           ) : null}
 
           <LocaleSwitcher />

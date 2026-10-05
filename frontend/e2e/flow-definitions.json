@@ -122,6 +122,85 @@
         "display"
       ]
     },
+    "console-dashboard-counters": {
+      "name": "Dashboard counters",
+      "module": "console",
+      "roles": [
+        "operator"
+      ],
+      "priority": "P1",
+      "description": "Signed-in operator sees the documents by state, issuers, client systems, the transmission queue and the latest rejection on /dashboard",
+      "expectedSpecs": 1,
+      "outcomes": [
+        "display"
+      ]
+    },
+    "console-dashboard-retry": {
+      "name": "Dashboard retry after a failure",
+      "module": "console",
+      "roles": [
+        "operator"
+      ],
+      "priority": "P2",
+      "description": "The summary request fails, the operator sees the error and the retry button loads the counters",
+      "expectedSpecs": 1,
+      "outcomes": [
+        "error",
+        "success"
+      ]
+    },
+    "console-documents-filter": {
+      "name": "Filter the document list",
+      "module": "console",
+      "roles": [
+        "operator"
+      ],
+      "priority": "P1",
+      "description": "Operator opens Documents from the header and filters the list by state or by issuer NIT",
+      "expectedSpecs": 1,
+      "outcomes": [
+        "success"
+      ]
+    },
+    "console-documents-pagination": {
+      "name": "Paginate the document list",
+      "module": "console",
+      "roles": [
+        "operator"
+      ],
+      "priority": "P2",
+      "description": "Operator moves to the next page of documents and back with Siguiente and Anterior",
+      "expectedSpecs": 1,
+      "outcomes": [
+        "success"
+      ]
+    },
+    "console-document-detail": {
+      "name": "Document detail",
+      "module": "console",
+      "roles": [
+        "operator"
+      ],
+      "priority": "P1",
+      "description": "Operator opens a document from the list and sees its data, CUFE, DIAN errors, artifacts and event history",
+      "expectedSpecs": 1,
+      "outcomes": [
+        "display"
+      ]
+    },
+    "console-document-not-found": {
+      "name": "Document not found",
+      "module": "console",
+      "roles": [
+        "operator"
+      ],
+      "priority": "P2",
+      "description": "Opening /documents/<id> for a document that does not exist shows the not-found message",
+      "expectedSpecs": 1,
+      "outcomes": [
+        "failure"
+      ]
+    },
     "i18n-locale-switch": {
       "name": "Switch the interface language",
       "module": "i18n",
