@@ -283,6 +283,10 @@ estados son:
 
 El número y el CUFE de un documento nunca cambian entre reintentos.
 
+Cada elemento de `errors` es `{"rule": "FAJ43b", "severity": "rechazo", "message": "…"}`, con la regla y el mensaje
+tal como los da la DIAN. Un documento `validated` también puede traer elementos con `"severity": "notificacion"`: son
+observaciones de la DIAN que no impiden la validación, pero conviene corregirlas en los siguientes documentos.
+
 ## Avisos al sistema cliente
 
 Cada vez que un documento queda `validated`, `rejected` o entra en `contingency_dian`, Fiscal. hace `POST` al

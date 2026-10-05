@@ -25,6 +25,9 @@ class Issuer(models.Model):
     email = models.EmailField()
     phone = models.CharField(max_length=30, blank=True, default='')
     environment = models.CharField(max_length=1, choices=Environment.choices, default=Environment.TESTING)
+    # Consecutive of the files sent to the DIAN (annex FE 1.9 §6.5.7): restarts at 1 every 1 January.
+    dian_file_year = models.PositiveSmallIntegerField(default=0)
+    dian_file_sequence = models.PositiveIntegerField(default=0)
     active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

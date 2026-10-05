@@ -16,10 +16,10 @@ from django.db import transaction
 from django.utils import timezone
 
 from dian.gateway import DianUnavailable, GatewayRefused, Submission
-from dian.simulated import get_gateway
 from fiscal_app.models import Document, DocumentEvent
 from fiscal_app.models.choices import ArtifactKind, DocumentKind, DocumentState
 from fiscal_app.services import artifacts, webhooks
+from fiscal_app.services.gateways import get_gateway
 
 logger = logging.getLogger(__name__)
 RETRY_POLICY = {'error': (timedelta(seconds=5), 3), 'delay': (timedelta(minutes=2), 5)}
