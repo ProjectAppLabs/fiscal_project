@@ -3,7 +3,7 @@ import {
   signInWithCookies,
   stubConsoleSummary,
   stubConsoleSummaryFailing,
-  stubConsoleSummaryFailingOnce,
+  stubConsoleSummaryFailingUntilRecovered,
   waitForPageLoad,
 } from '../fixtures';
 import { CONSOLE_DASHBOARD_COUNTERS, CONSOLE_DASHBOARD_RETRY } from '../helpers/flow-tags';
@@ -43,17 +43,18 @@ test.describe('Console dashboard', () => {
     await page.goto('/dashboard');
     await waitForPageLoad(page);
 
-    await expect(page.getByRole('alert')).toContainText('No pudimos cargar el tablero.');
+    await expect(page.getByRole('main').getByRole('alert')).toContainText('No pudimos cargar el tablero.');
     await expect(page.getByRole('button', { name: 'Reintentar' })).toBeEnabled();
   });
 
   test('loads the counters again after a failed summary', { tag: [...CONSOLE_DASHBOARD_RETRY, '@outcome:success'] }, async ({ page }) => {
     // Catches a regression where a failed summary leaves the dashboard stuck
     // on the error with no way to recover short of reloading the page.
-    await stubConsoleSummaryFailingOnce(page);
+    const recover = await stubConsoleSummaryFailingUntilRecovered(page);
     await page.goto('/dashboard');
     await waitForPageLoad(page);
-    await expect(page.getByRole('alert')).toContainText('No pudimos cargar el tablero.');
+    await expect(page.getByRole('main').getByRole('alert')).toContainText('No pudimos cargar el tablero.');
+    recover();
 
     await page.getByRole('button', { name: 'Reintentar' }).click();
 

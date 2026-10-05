@@ -153,7 +153,7 @@ JSON artifacts:
 | `waitForPageLoad(page)` | `fixtures.ts` | Wait for `load` + `domcontentloaded` |
 | `signInWithCookies(context, page, baseURL)` / `clearSession(context, page)` | `fixtures.ts` | Start a test with or without a session |
 | `stubSignInSuccess`, `stubSignInRejected`, `stubValidToken`, `stubSendPasscode`, `stubNoCaptcha` | `fixtures.ts` | Backend stubs for the auth endpoints |
-| `stubConsoleSummary`, `stubConsoleSummaryFailing`, `stubConsoleSummaryFailingOnce`, `stubDocumentList`, `stubDocumentDetail` | `fixtures.ts` | Backend stubs for the console endpoints (filters, pages and 404 included) |
+| `stubHiddenStagingBanner`, `stubConsoleSummary`, `stubConsoleSummaryFailing`, `stubConsoleSummaryFailingUntilRecovered`, `stubDocumentList`, `stubDocumentDetail` | `fixtures.ts` | Backend stubs for the console endpoints (filters, pages and 404 included) |
 | `testOperator`, `testPasscode` | `fixtures.ts` | Shared fixture data |
 | `test` / `expect` | `test-with-coverage.ts` | Shared Playwright test base |
 | Flow tag constants | `helpers/flow-tags.ts` | Tag arrays per flow/module/priority |

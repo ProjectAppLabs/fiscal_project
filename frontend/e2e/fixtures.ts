@@ -64,13 +64,35 @@ export async function stubSendPasscode(page: Page, status: number, body: unknown
   await page.route('**/api/send_passcode/', (route) => fulfillJson(route, status, body));
 }
 
-/** Start the test already signed in: token cookies plus a valid `validate_token/`. */
+/** Stub `staging-banner/` as hidden: with the fake token the real backend answers 401. */
+export async function stubHiddenStagingBanner(page: Page) {
+  await page.route('**/api/staging-banner/', (route) =>
+    fulfillJson(route, 200, {
+      is_visible: false,
+      current_phase: 'development',
+      phase_labels: { es: 'Desarrollo', en: 'Development' },
+      started_at: null,
+      expires_at: null,
+      days_remaining: null,
+      is_expired: false,
+      contact_whatsapp: '',
+      contact_email: '',
+    }),
+  );
+}
+
+/**
+ * Start the test already signed in: token cookies, a valid `validate_token/` and every other call the shell makes
+ * stubbed. An unstubbed call reaches the real backend with the fake token, gets 401, fails the token refresh and
+ * signs the operator out in the middle of the test.
+ */
 export async function signInWithCookies(context: BrowserContext, page: Page, baseURL: string) {
   await context.addCookies([
     { name: 'access_token', value: FAKE_ACCESS_TOKEN, url: baseURL },
     { name: 'refresh_token', value: FAKE_REFRESH_TOKEN, url: baseURL },
   ]);
   await stubValidToken(page);
+  await stubHiddenStagingBanner(page);
 }
 
 /** Start the test without any session or stored user. */
@@ -180,12 +202,16 @@ export async function stubConsoleSummaryFailing(page: Page) {
 }
 
 /** Stub `console/summary/` to fail once and then answer with the counters. */
-export async function stubConsoleSummaryFailingOnce(page: Page) {
-  let calls = 0;
-  await page.route('**/api/console/summary/', (route) => {
-    calls += 1;
-    return calls === 1 ? fulfillJson(route, 500, { detail: 'Error' }) : fulfillJson(route, 200, consoleSummary);
-  });
+export async function stubConsoleSummaryFailingUntilRecovered(page: Page): Promise<() => void> {
+  // Fails every call until the test recovers it: React may fetch twice on mount in development (StrictMode), so
+  // "fail only the first call" would let the second succeed before the error is ever shown.
+  let recovered = false;
+  await page.route('**/api/console/summary/', (route) =>
+    recovered ? fulfillJson(route, 200, consoleSummary) : fulfillJson(route, 500, { detail: 'Error' }),
+  );
+  return () => {
+    recovered = true;
+  };
 }
 
 /**
