@@ -116,3 +116,47 @@ def make_document(client_system, issuer, invoice_range):
         return Document.objects.create(**values)
 
     return build
+
+
+class SignedClient:
+    """Test client that signs every request exactly as a client system (Waiter) will."""
+
+    def __init__(self, key_id, secret):
+        import json
+
+        self._json = json
+        self.key_id, self.secret, self.http = key_id, secret, APIClient()
+
+    def request(self, method, path, data=None, *, sign=True, headers=None):
+        from fiscal_app.authentication.signing import signed_headers
+
+        body = self._json.dumps(data).encode() if data is not None else b''
+        all_headers = signed_headers(self.key_id, self.secret, method, path, body) if sign else {}
+        all_headers.update(headers or {})
+        call = getattr(self.http, method.lower())
+        return call(path, data=body, content_type='application/json', headers=all_headers)
+
+    def get(self, path, **kwargs):
+        return self.request('GET', path, **kwargs)
+
+    def put(self, path, data, **kwargs):
+        return self.request('PUT', path, data, **kwargs)
+
+    def post(self, path, data, **kwargs):
+        return self.request('POST', path, data, **kwargs)
+
+
+@pytest.fixture
+def signed_client(client_system):
+    """Signed test client of the `client_system` fixture."""
+    client, secret = client_system
+    return SignedClient(client.key_id, secret)
+
+
+@pytest.fixture
+def other_signed_client(db):
+    """Signed test client of a second, unrelated client system."""
+    from fiscal_app.services.client_systems import create_client_system
+
+    client, secret = create_client_system('Otra casa de software')
+    return SignedClient(client.key_id, secret)

@@ -114,6 +114,7 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
     ),
+    'EXCEPTION_HANDLER': 'fiscal_app.utils.errors.fiscal_exception_handler',
 }
 
 SIMPLE_JWT = {
@@ -381,3 +382,5 @@ FISCAL_MANUFACTURER_NAME = os.getenv('FISCAL_MANUFACTURER_NAME', 'ProjectApp')
 FISCAL_SOFTWARE_NAME = 'Fiscal.'
 # Years an artifact with legal value is kept (Ley 962 de 2005 art. 28; ET art. 632 asks for 5).
 FISCAL_RETENTION_YEARS = 10
+# Window in seconds in which a signed client request is accepted (both clocks must run NTP).
+FISCAL_SIGNATURE_MAX_AGE = int(os.getenv('FISCAL_SIGNATURE_MAX_AGE', '300'))
