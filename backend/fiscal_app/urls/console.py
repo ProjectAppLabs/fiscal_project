@@ -1,6 +1,6 @@
 from django.urls import path
 
-from fiscal_app.views import console, console_operations
+from fiscal_app.views import console, console_onboarding, console_operations
 
 urlpatterns = [
     path('summary/', console.console_summary, name='console-summary'),
@@ -17,4 +17,11 @@ urlpatterns = [
         'documents/<int:document_id>/artifacts/<str:kind>/', console_operations.console_document_artifact,
         name='console-document-artifact',
     ),
+    path('client-systems/create/', console_onboarding.console_create_client_system, name='console-create-client-system'),
+    path('issuers/create/', console_onboarding.console_create_issuer, name='console-create-issuer'),
+    path('issuers/<int:issuer_id>/certificate/', console_onboarding.console_upload_certificate, name='console-upload-certificate'),
+    path('issuers/<int:issuer_id>/software/', console_onboarding.console_register_software, name='console-register-software'),
+    path('issuers/<int:issuer_id>/ranges/', console_onboarding.console_create_range, name='console-create-range'),
+    path('issuers/<int:issuer_id>/test-set/', console_onboarding.console_test_set, name='console-test-set'),
+    path('test-sets/<int:run_id>/check/', console_onboarding.console_check_test_set, name='console-check-test-set'),
 ]

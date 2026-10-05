@@ -1,12 +1,18 @@
 """Machine API for client systems: issuers, their certificate, software registration and numbering ranges."""
 
-from django.db import transaction
 from rest_framework import status
-from rest_framework.decorators import api_view, authentication_classes, permission_classes
+from rest_framework.decorators import (
+    api_view,
+    authentication_classes,
+    permission_classes,
+)
 from rest_framework.response import Response
 
-from fiscal_app.authentication.client_system import ClientSystemAuthentication, IsClientSystem
-from fiscal_app.models import Issuer, SoftwareRegistration
+from fiscal_app.authentication.client_system import (
+    ClientSystemAuthentication,
+    IsClientSystem,
+)
+from fiscal_app.models import Issuer
 from fiscal_app.serializers import (
     CertificateCreateUpdateSerializer,
     CertificateDetailSerializer,
@@ -18,6 +24,7 @@ from fiscal_app.serializers import (
     SoftwareRegistrationDetailSerializer,
 )
 from fiscal_app.services.certificates import set_certificate
+from fiscal_app.services.software import register_software
 from fiscal_app.utils.errors import FiscalError
 
 MACHINE = (authentication_classes([ClientSystemAuthentication]), permission_classes([IsClientSystem]))
@@ -73,14 +80,7 @@ def update_software(request, nit):
     issuer = own_issuer(request.user, nit)
     serializer = SoftwareRegistrationCreateUpdateSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
-    data = serializer.validated_data
-    with transaction.atomic():
-        Issuer.objects.select_for_update().get(pk=issuer.pk)
-        issuer.software_registrations.filter(environment=data['environment']).update(active=False)
-        registration, _created = SoftwareRegistration.objects.update_or_create(
-            issuer=issuer, environment=data['environment'], software_id=data['software_id'],
-            defaults={'software_pin': data['software_pin'], 'test_set_id': data['test_set_id'], 'active': True},
-        )
+    registration = register_software(issuer, serializer.validated_data)
     return Response(SoftwareRegistrationDetailSerializer(registration).data)
 
 
