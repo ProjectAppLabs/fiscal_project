@@ -118,15 +118,17 @@ Las opciones guardan los códigos de la DIAN tal cual (`TipoAmbiente`, `TipoOrga
   - un artefacto se puede borrar antes de `retain_until`;
   - la unicidad de número o de clave no se cumple en MySQL.
 
-### PR 3 · Autenticación de sistemas cliente y emisores (`feat/…-client-api`)
+### PR 3 · Autenticación de sistemas cliente y emisores (`feat/…-client-api`) — ✅ hecho
 
-- [ ] `authentication/hmac.py`:
+La API de máquina quedó bajo `/api/v1/`: así va versionada y se distingue de la consola. Las rutas son las de la tabla con ese prefijo, y el contrato está en `docs/fiscal/contrato.md`. Los errores tienen forma estable solo bajo `/api/v1/`; el resto conserva la forma de la plantilla.
+
+- [x] `authentication/hmac.py`:
   - cabeceras `X-Fiscal-Key`, `X-Fiscal-Timestamp` y `X-Fiscal-Signature`;
   - texto canónico: timestamp, método, ruta con consulta y SHA-256 del cuerpo;
   - ventana de 5 min;
   - comparación en tiempo constante;
   - acepta cualquiera de los secretos vigentes.
-- [ ] Endpoints (HMAC):
+- [x] Endpoints (HMAC):
 
 | Acción | Método y ruta |
 |---|---|
@@ -137,7 +139,7 @@ Las opciones guardan los códigos de la DIAN tal cual (`TipoAmbiente`, `TipoOrga
 | Crear rango | `POST /api/issuers/{nit}/ranges/create/` |
 | Listar rangos | `GET /api/issuers/{nit}/ranges/` |
 
-- [ ] Errores con forma estable `{"error": {"code", "message"}}`, mensaje en español, en un exception handler de DRF.
+- [x] Errores con forma estable `{"error": {"code", "message"}}`, mensaje en español, en un exception handler de DRF.
 - **Fails if:**
   - la petición viene sin firma, vieja, con el cuerpo cambiado, con un secreto equivocado o retirado, o de un cliente
     inactivo;
