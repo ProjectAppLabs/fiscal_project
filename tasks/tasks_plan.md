@@ -1,74 +1,157 @@
-# Tasks Plan — Base Django React Next Feature
+# Tasks Plan — Fiscal.
 
-> Memory Bank · actualizado 2026-08-27 (dependency refresh integral). Conteos funcionales conservados de /qa; dependencias verificadas contra locks y auditorías.
+> Memory Bank · actualizado 2026-10-04. **Plan interno de ejecución técnica**, previo al plan de implementación
+> detallado de cada fase. Base: `docs/methodology/product_requirement_docs.md`, `architecture.md`, `technical.md` y el
+> inventario en `docs/fiscal/inventario/`.
 
-## Estado por feature (template)
+## Estado por capacidad
 
-| Feature | Estado | Nota |
+| Capacidad | Estado | Fase |
 |---|---|---|
-| Auth (JWT + Google + passcode reset) | ✅ estable | 7 rutas API |
-| Blog público + CRUD | ✅ estable | |
-| Catálogo/Producto + galería | ✅ estable | django_attachments |
-| Carrito + checkout + ventas | ✅ estable | SoldProduct snapshot |
-| Backoffice/dashboard | ✅ estable | |
-| Staging banner/overlay | ✅ estable | único uso de data-testid |
-| i18n EN/ES | ✅ estable | next-intl |
+| Inventario (DIAN, Waiter, operación, negocio y legal) | ✅ hecho 2026-10-04 | — |
+| Decisiones D1 a D7 | ✅ tomadas 2026-10-04 | — |
+| Plantilla adaptada a Fiscal. (nombres, marca, MySQL, limpieza de features demo) | ⏳ pendiente | F1 |
+| Núcleo: sistemas cliente, emisores, certificados, rangos, documentos, cola | ⏳ pendiente | F1 |
+| Librería `dian/`: UBL, CUFE/CUDE, XAdES, SOAP | ⏳ pendiente | F2 |
+| Habilitación de ProjectApp (set de pruebas) | ⏳ pendiente | F3 |
+| Notas, contingencias 04 y 03, entrega (AttachedDocument y PDF) | ⏳ pendiente | F4 |
+| Consola de operación (Next.js) | ⏳ pendiente | F5 |
+| Waiter conectado (plan en su repositorio) | ⏳ pendiente | F6 |
+| Piloto con un restaurante | ⏳ pendiente | F7 |
 
-## Estado de testing (cierre de la corrida /qa 2026-08-13, rama qa/13082026)
+## Fases
 
-| Layer | Volumen | Estado |
-|---|---|---|
-| Backend (pytest, sqlite) | 26 archivos / 197 tests | gate 0 errores (clock congelado con freezegun; contrato del banner pinneado a 9 claves) |
-| Frontend unit (Jest 30) | 29 archivos / 179 tests | gate 0 errores; 6 tests no-subject borrados; excepciones documentadas con markers |
-| E2E (Playwright) | 8 specs / 48 tests | gate 0 errores; cero condicionales en bodies (Regla 7); 48/48 verdes en vivo |
-| Flow map | 36 flows | **36 covered · 0 partial · 0 missing · 0 junk-only** |
+Cada fase se ejecuta con su propio plan de implementación, en su rama y su PR (protocolo de la plantilla).
 
-`.junk-baseline.json`: **0 entradas** (era 15; 14 sanadas + 1 convertida en excepción documentada `allow-mock-only`).
+### F0 · Prerrequisitos
 
-Gaps cerrados por la corrida 2026-08-13: los 6 partial (auth-sign-up-form, catalog-browse, catalog-product-detail, blog-list-view, home-product-carousel, purchase-loading-state), los 3 módulos sin clases negativas (flows nuevos: checkout-submit-failure P1, cart-quantity-zero-removes-item P2, navigation-unknown-route P3), y 12 false-greens e2e cuyas aserciones vivían tras guards condicionales.
+**Del entorno** (bloquean F1):
 
-## Known issues (residuos y drift detectados 2026-08-13)
+- [ ] Python 3.14.7 en el equipo (uv o pyenv) y rueda de `mysqlclient` 2.2.8 para 3.14, compilada en Docker.
+- [ ] Contenedores locales: `fiscal-mysql` (3308, ya existe) y `fiscal-redis`.
+- [ ] Descargar la caja de herramientas de la DIAN (`FE_V19_(v2026)`): XSD, ejemplos firmados, tablas y política de
+  firma. Guardarla en `backend/dian/resources/` con su versión.
 
-1. `backend/base_feature_app/urls.py` (271 B) quedó **shadowed** por el paquete `urls/` — código muerto, candidato a repo-cleanup.
-2. `docs/USER_FLOW_MAP.md` stale (2026-02-24, anterior al staging banner); `flow-definitions.json` sí está fresco (2026-07-27).
-3. `.junk-baseline.json`: 15 findings frontend grandfathered — deuda de calidad declarada (no re-freezear sin veredicto del auditor).
-4. Scripts `e2e:mobile` / `e2e:tablet` huérfanos: los projects Mobile/Tablet están comentados en `playwright.config.ts`.
-5. `CLAUDE.md` (raíz) describe una app `content/` que no existe — la app real es `base_feature_app` (drift del template).
-6. pytest instalado a nivel usuario (8.3.2) difiere del pin (9.0.3); usar SIEMPRE `backend/venv`.
-7. **BlogDetailPage sin rama not-found** (bug de producto): con un blogId inválido el usuario queda en "Loading..." para siempre — a diferencia de ProductDetailPage. El test unit correspondiente quedó KEEP con marker `allow-mock-only` hasta ese fix.
-8. **Footer.tsx huérfano**: `components/layout/Footer.tsx` no se monta en ningún lado (`app/layout.tsx` inlinea su propio footer). Decisión de producto pendiente: cablearlo o borrarlo (su test `layout.test.tsx::renders footer copy` testea código muerto).
-9. **Selectores muertos**: `selectBlogs*`/`selectProducts*` (blogStore.ts:44-46, productStore.ts:44-46) no tienen consumidores — candidatos a remoción de producto.
-10. **Deuda pydocstyle latente**: ~153 findings D (ruff select curado del gate toolkit) en 24 archivos de test backend. El CI está verde sólo porque su job de gate no instala ruff; si se agrega `pip install`, master pasa a rojo. Burn-down antes de tocar ese workflow.
-11. **~19 selectores posicionales e2e bounded**: seleccionar cards de listas seedeadas requiere un hook estable (`data-testid` per-card en ProductCard/BlogCard) — cambio de producto que destrabaría los warnings fragile_locator restantes.
-12. **Django 7 compatibility**: Django 6.1 emite `RemovedInDjango70Warning` por
-    los settings legacy `EMAIL_*`; migrar la configuración a `MAILERS` antes del
-    próximo major.
-13. **Puentes frontend upstream**: ESLint 10 necesita `@eslint/compat` hasta que
-    los plugins Next amplíen sus peers; TypeScript 7 necesita la API compatible
-    6 hasta que Next/typescript-eslint soporten la nueva API programática.
+**Del dueño** (no bloquean F1; se necesitan al final de F2):
 
-## Backlog
+- [ ] Registrar Fiscal. en el portal de facturación de la DIAN de ProjectApp, en el modo «software propio»:
+  - nombre Fiscal., NIT de ProjectApp como fabricante y un PIN;
+  - anotar el identificador del software y el `TestSetId`.
 
-- [x] Documentar `allow-negation-only` en el estándar canónico para mantenerlo
-  alineado con el quality gate compartido.
-- [x] Corrida /qa --apply 2026-08-13: partial flows + clases negativas + purga de junk (25 rewrites, 6 deletes, 2 merges) + baseline a 0 — COMPLETADA (rama qa/13082026).
-- [x] Corrida vuln-audit 2026-08-27: frontend 10→0 vulnerabilidades; backend
-  40→11 en la primera fase patch/minor.
-- [x] Dependency refresh integral 2026-08-27 (PR #20): Python/Node/npm/pip,
-  Actions, locks, majors y fronteras 0.x; backend 11→0 vulnerabilidades,
-  frontend permanece en 0, cero pins backend atrasados.
-- [x] Actualizar sqlparse 0.6, Gunicorn 26, Ruff 0.16, jest-dom 7, ESLint 10 y
-  TypeScript 7 en commits secuenciales con CI verde.
-- [ ] Producto: rama not-found en BlogDetailPage (issue 7) → habilita rewrite del test marcado.
-- [ ] Producto: decidir destino de Footer.tsx (issue 8) y remover selectores muertos (issue 9).
-- [ ] Producto: `data-testid` per-card en ProductCard/BlogCard (issue 11).
-- [ ] Burn-down de docstrings backend (issue 10) — patrón D212: summary en la línea de apertura.
-- [ ] Refrescar `docs/USER_FLOW_MAP.md` desde el código real (qa-analyst) cuando el flow map se toque.
-- [ ] repo-cleanup: eliminar `base_feature_app/urls.py` shadowed y scripts e2e huérfanos.
-- [ ] Corregir la sección Directory Structure de `CLAUDE.md` (content/ → base_feature_app/).
-- [ ] Registrar `db:` y `branch:` de este proyecto en `projects.yml` del toolkit.
-- [ ] Migrar settings de email a `MAILERS` antes de Django 7.
-- [ ] Retirar `@eslint/compat` y el alias TypeScript 6 cuando el soporte upstream
-  permita mantener lint, Next build y typecheck sin puentes.
-- [ ] Adoptar Node 26 + npm 12 + `@types/node` 26 juntos en la próxima decisión
-  explícita de runtime; Node 24.20.0 sigue siendo el LTS fijado actual.
+  No hace falta tener el software hecho: el registro solo lo declara.
+- [ ] Confirmar con el contador si ProjectApp ya factura con otro software (entonces Fiscal. se agrega como otro
+  software, sin tocar la fecha de inicio).
+- [ ] Certificado digital de persona natural de ProjectApp, una o dos semanas antes de terminar F2. Solo sirve para el
+  set de pruebas; cada cliente tendrá el suyo (D7).
+- [ ] Antes del piloto (F7): que el abogado redacte la licencia de uso del software (ProjectApp como fabricante, el
+  comercio como facturador) y el contrato de transmisión de datos (Ley 1581).
+
+### F1 · Plantilla adaptada y núcleo (sin DIAN real)
+
+Plan de implementación: `docs/fiscal/planes/F1-nucleo.md` (seis PRs).
+
+
+- [ ] **Renombre** del proyecto y de la app de la plantilla (`base_feature_project` y `base_feature_app` a nombres de
+  Fiscal.), `api/health/` con `project=fiscal`, identidad en `CLAUDE.md` y README.
+- [ ] **Retirar las features demo** (blog, productos, ventas, carrito, captcha). Conservar autenticación JWT de
+  operadores, usuarios, staging banner si aplica y el CI.
+- [ ] Settings con MySQL (`fiscal-mysql`), `FISCAL_ENCRYPTION_KEY`, `DIAN_GATEWAY` y zona horaria de negocio
+  `America/Bogota`.
+- [ ] **Modelos:** `ClientSystem` y `ClientSecret` (dos vigentes para rotar), `Issuer`, `Certificate`,
+  `SoftwareRegistration`, `NumberingRange` (normal y contingencia, clave técnica cifrada), `Document`,
+  `DocumentEvent`, `Artifact` y `WebhookDelivery`.
+- [ ] **Autenticación HMAC** para sistemas cliente. JWT de la plantilla para operadores.
+- [ ] **Contrato v1** (`docs/fiscal/contrato.md`, rehecho desde el borrador): emisores, certificados, rangos y
+  documentos.
+  - Forma exacta del documento comercial, sacada del inventario: requisitos mínimos (sección 1.3 de los requisitos de
+    la DIAN) y datos que faltan en Waiter (sección 2 del inventario de Waiter).
+- [ ] **Validación previa** con mensajes en español: cuadres, catálogos DIAN, consumidor final, propina, líneas sin
+  valores negativos, dirección de entrega en domicilios y número dentro del rango vigente.
+- [ ] **Cola:** Huey periódico sobre la base (`select_for_update(skip_locked)`), con reintentos y rescate de los que
+  quedan a medias. `DianGateway` simulado.
+- [ ] **Avisos firmados** al sistema cliente, con reintentos.
+- [ ] **Almacén de artefactos** con hash, sin borrado antes de 10 años.
+- [ ] Reutilizable del prototipo (`fiscal_project_borrador`, rama `prototipo/z1-base`): firma HMAC, cifrado Fernet,
+  validación del `.p12`, dígito de verificación del NIT, idempotencia y sus 27 pruebas. Hay que portarlo a las
+  convenciones de la plantilla (inglés, FBV y serializers).
+
+### F2 · Librería `dian/` (sin red primero)
+
+- [ ] Catálogos DIAN (impuestos, tipos de documento, medios de pago, unidades, responsabilidades, municipios DANE)
+  desde la caja de herramientas.
+- [ ] UBL 2.1 de la factura, la nota crédito y la nota débito. Validación contra los XSD.
+- [ ] CUFE y CUDE con los ejemplos del anexo como pruebas.
+- [ ] XAdES-EPES con la política v2. Verificación propia y prueba de manipulación.
+- [ ] Cliente SOAP: `SendBillSync`, `SendTestSetAsync`, `GetStatus`, `GetStatusZip` y `GetNumberingRange`, con TLS
+  mutuo y WS-Security.
+- [ ] Intérprete del `ApplicationResponse`, con las reglas en español para los rechazos frecuentes.
+- [ ] **Corte de riesgo:** si en dos semanas de F2 no hay una factura aceptada en habilitación, se reevalúa antes de
+  seguir.
+
+### F3 · Habilitación de ProjectApp
+
+- [ ] Correr el set de pruebas con el certificado y el `TestSetId` de ProjectApp hasta quedar aceptado.
+- [ ] `GetNumberingRange` con datos reales.
+- [ ] Resolver los puntos «sin confirmar» del inventario: direcciones de los servicios y tamaño del set de pruebas.
+- [ ] Documentar el paso a paso para que cada restaurante repita la habilitación (base del asistente de Waiter).
+
+### F4 · Contingencias y entrega
+
+- [ ] Contingencia DIAN (04), con la máquina de estados del anexo, sondeo cada 30 min, transmisión dentro de las
+  48 h y avisos a las 24 h y 40 h.
+- [ ] Contingencia del emisor (03) para las facturas de papel o del modo de emergencia de Waiter, y para Fiscal.
+  caído (D5). Borrador de la carta a la DIAN.
+- [ ] `AttachedDocument` firmado.
+- [ ] Representación gráfica en PDF, con el QR en todas las páginas y solo con datos del XML.
+- [ ] Alertas: certificado (30, 15 y 7 días), rango por debajo del 10 %, resolución por vencer, rechazos.
+- [ ] Disponibilidad: `api/health/` con la salud de la DIAN, de la cola y de los trabajadores.
+
+### F5 · Consola de operación
+
+- [ ] Tablero, emisores, documento, contingencias y sistemas cliente (ver `architecture.md`), con E2E en Playwright y
+  el gateway simulado.
+
+### F6 · Waiter se conecta (plan en `waiter_project`)
+
+- [ ] Adaptador `billing/providers/fiscal.py`.
+- [ ] Emitir al cobrar, fuera del bloqueo de la organización y con clave estable.
+- [ ] Datos y catálogos DIAN: impuestos con código, comprador, emisor y sede.
+- [ ] Canje de puntos como descuento.
+- [ ] Nota crédito tardía y reemisión de rechazados.
+- [ ] Ruta de avisos firmada.
+- [ ] Recibo con número, CUFE y QR.
+- [ ] Modo de emergencia con factura de contingencia y rango de contingencia (D5).
+- [ ] Detección de Fiscal. caído.
+- [ ] Medición del plan W.
+- [ ] Asistente de habilitación en la consola del dueño.
+
+### F7 · Piloto
+
+- [ ] Un restaurante real: habilitación con su NIT, su certificado y la licencia de uso firmada. Una semana en
+  producción, con su contador revisando lo emitido.
+- [ ] Actualizar el documento 233 con los costos y tiempos reales.
+
+### Después
+
+- Documento equivalente POS.
+- Documento soporte.
+- Eventos RADIAN.
+- API abierta a otras casas de software: revisar antes la postura de D1.
+- Servidor propio y despliegue.
+
+## Riesgos
+
+| Riesgo | Mitigación |
+|---|---|
+| Modalidad legal en zona gris (D1) | Licencia por comercio, certificado del comercio, aislamiento, revisión antes de abrir la API a terceros |
+| La firma XAdES o el SOAP no se logran a tiempo | F2 empieza por lo difícil, con un corte a las dos semanas |
+| Contingencia del emisor mal manejada (multas del ET 651 y 652) | Avisos de 48 h, evidencia guardada, pruebas con reloj congelado |
+| Pérdida de la clave Fernet | Respaldo de la clave fuera del servidor y separado de los respaldos de la base |
+| Una sola persona conoce Fiscal. | Memory Bank al día y una segunda persona antes de 20 comercios |
+
+## Known issues
+
+1. La plantilla trae features demo (blog, productos, ventas) y nombres `base_feature_*` que hay que retirar o
+   renombrar en F1.
+2. Python 3.14.7 no está instalado en el equipo de desarrollo.
+3. El contrato es un borrador anterior al inventario (`docs/fiscal/contrato-borrador.md`).

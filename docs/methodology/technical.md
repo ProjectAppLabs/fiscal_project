@@ -1,91 +1,102 @@
-# Technical — Base Django React Next Feature
+# Technical — Fiscal.
 
-> Memory Bank · actualizado 2026-08-27 (dependency refresh integral). Versiones verificadas contra los locks y los escaneos finales.
+> Memory Bank · actualizado 2026-10-04 (planeación técnica). Stack heredado de la plantilla Base Django React Next;
+> lo propio de Fiscal. está marcado como **(Fiscal.)**.
 
 ## Stack
 
-| Capa | Tecnología | Versión pineada |
+| Capa | Tecnología | Versión |
 |---|---|---|
-| Runtime backend | Python / pip | 3.14.7 / 26.2.1 |
-| Backend | Django / DRF / simplejwt | 6.1 / 3.18.0 / 5.5.1 |
-| Tareas | Huey + Redis | 3.3.4 / 8.1.0 |
-| DB dev/test | sqlite3 (default `DJANGO_DB_ENGINE`) | — |
-| DB prod | MySQL (mysqlclient 2.2.8, settings_prod) | — |
-| Runtime frontend | Node.js / npm | 24.20.0 LTS / 11.19.0 |
-| Frontend | Next.js (App Router) / React | 16.3.3 / 19.2.8 |
-| Estado | Zustand | 5.0.15 |
-| i18n | next-intl | 4.14.0 |
-| HTTP | axios | 1.20.0 |
-| Tipado | TypeScript nativo / API compatible | 7.0.2 / 6.0.2 |
-| Lint frontend | ESLint / @eslint/compat | 10.9.1 / 2.1.0 |
-| Testing backend | pytest / pytest-django / freezegun / factory-boy | 9.1.1 / 4.14.0 / 1.5.5 / 3.3.3 |
-| Testing unit | Jest 30 + Testing Library (jsdom) | 30.4.2 / jest-dom 7.0.1 |
-| Testing E2E | Playwright | 1.62.1 |
-| Estilos | Tailwind CSS | 4.3.3 |
+| Runtime backend | Python | 3.14.7 (`.python-version`). **No está instalado en el equipo local** (hay 3.12.3): instalarlo con `uv` o `pyenv` antes de implementar |
+| Backend | Django / DRF / simplejwt | 6.1 / 3.18.0 / 5.5.1 (plantilla) |
+| Tareas | Huey + Redis | 3.3.4 / 8.1.0 (plantilla) |
+| Base de datos | **MySQL 8.4** en dev, test de concurrencia y prod **(Fiscal.)** | Estándar de ProjectApp; contenedor `fiscal-mysql` en 127.0.0.1:3308 |
+| XML **(Fiscal.)** | lxml | UBL 2.1, validación contra los XSD de la DIAN, canonicalización C14N |
+| Criptografía **(Fiscal.)** | cryptography | `.p12`, firma RSA-SHA256, Fernet para secretos en reposo |
+| Firma XAdES **(Fiscal.)** | Propia sobre lxml y cryptography; `signxml` solo si produce exactamente lo que la DIAN valida | Se decide en la fase F2 con la caja de herramientas de la DIAN |
+| SOAP **(Fiscal.)** | Cliente propio (requests + WS-Security firmado) o `zeep` | Se decide en F2; TLS mutuo con el certificado del comercio |
+| PDF **(Fiscal.)** | Por decidir (WeasyPrint o ReportLab) | Representación gráfica con QR de al menos 2 cm |
+| Runtime frontend | Node.js / npm | 24.20.0 / 11.19.0 (plantilla) |
+| Frontend | Next.js / React / TypeScript / Tailwind | 16 / 19 / 7 / 4 (plantilla) |
+| Testing | pytest, freezegun, factory-boy; Jest; Playwright | Plantilla |
 
-## Selección de settings (¡no es DJANGO_ENV!)
+Cada dependencia nueva entra por `backend/requirements.in`, se compila con hashes y pasa `pip-audit`, como exige la
+plantilla.
 
-- **`DJANGO_SETTINGS_MODULE` elige el módulo**: `manage.py` → default `base_feature_project.settings_dev` (sqlite hardcoded); `wsgi.py`/`asgi.py` → default `settings_prod` (mysql); `pytest.ini` fija `base_feature_project.settings`.
-- `DJANGO_ENV` es una variable LEÍDA POR settings (default `development`) que sólo controla `IS_PRODUCTION` y lo que reporta `api/health/`.
-- `settings.py` toma la DB de `DJANGO_DB_ENGINE` (default sqlite3) — sin `backend/.env`, los tests corren en sqlite.
+## Convenciones
 
-## Setup dev local
+- **Plantilla:** código e identificadores en inglés; **commits en inglés** (Conventional Commits); documentación en
+  español; mensajes al usuario final en español.
+- **Plantilla:** FBV delgadas, serializers por operación, URLs como paquete y lógica en `services/`.
+- **Git (plantilla):** nunca commit en `master`; una sesión = una rama = un PR.
+- **Fiscal.:** mensajes de error de la API con forma estable `{"error": {"code", "message"}}`. El `message` va en
+  español y listo para mostrar.
+- **Fiscal.:** nunca escribir en registros, errores ni respuestas certificados, contraseñas, PIN, claves técnicas ni
+  secretos de clientes.
+- **Fiscal. (MySQL):** «solo uno a la vez» sin `UniqueConstraint(condition=…)`, que MySQL ignora. Claves y tokens con
+  colación binaria (`utf8mb4_bin`).
+
+## Reglas técnicas de la DIAN que el código debe respetar
+
+Detalle y fuentes en `docs/fiscal/inventario/01-requisitos-dian.md`:
+
+1. **Hora:** `IssueDate` y `SigningTime` en `America/Bogota` (−05:00) y sincronizados por NTP. La fecha de emisión es
+   igual a la de firma.
+2. **CUFE:** SHA-384 de número, fecha, hora, subtotal, 01 e IVA, 04 e INC, 03 e ICA, total, NIT del emisor, documento
+   del comprador, **clave técnica** y ambiente. **CUDE** (notas, tipo 03 y POS): lo mismo con el **PIN del software**.
+   Los montos se **truncan** a 2 decimales en la cadena; en el XML se redondea half-even.
+3. **Un número se transmite una vez.** Antes de reenviar tras una respuesta perdida, consultar `GetStatus` con el CUFE.
+4. **Firma:** XAdES-EPES con la política de firma v2 de la DIAN y RSA-SHA256 o superior. No se reformatea el XML
+   después de firmar. El `AttachedDocument` se firma aparte.
+5. **Transporte:** SOAP 1.2, TLS mutuo y WS-Security X.509. ZIP con exactamente un XML para `SendBillSync`. Las
+   direcciones de los servicios se toman del catálogo de la DIAN (inventario: «sin confirmar»).
+6. **Ambiente coherente** en `ProfileExecutionID`, el `schemeID` del UUID y la URL del QR (1 = producción,
+   2 = habilitación).
+7. **Contingencia 04:** reintentos de 5 s ×3 ante error y de 2 min ×5 ante una demora de más de 1 min. Se vuelve a
+   firmar el mismo número como tipo 04 y se conservan los dos XML. Las notas no tienen contingencia.
+8. **Notas:** `BillingReference` con prefijo, número, CUFE y fecha del original. La anulación es una nota crédito con
+   concepto 2. No hay notas sobre notas.
+9. **Restaurantes:** propina como cargo, nunca en la base ni en `TaxTotal`. Sin líneas negativas. Dirección de entrega
+   en domicilios con consumidor final o cédula. Consumidor final `222222222222` con tipo 13.
+10. **Conservación:** 10 años del XML original, la respuesta, el contenedor y las evidencias.
+
+## Setup dev local (objetivo)
 
 ```bash
-# Backend
+# Backend (requiere Python 3.14.7)
 cd backend && python3.14 -m venv venv
-venv/bin/python -m pip install --upgrade pip==26.2.1
 venv/bin/python -m pip install --require-hashes -r requirements.txt
+cp .env.example .env    # DJANGO_DB_ENGINE=mysql contra fiscal-mysql, FISCAL_ENCRYPTION_KEY, DIAN_GATEWAY=simulated
 venv/bin/python manage.py migrate
-venv/bin/python manage.py create_fake_data 5
+venv/bin/python manage.py runserver 127.0.0.1:8002
+venv/bin/python manage.py run_huey
 
 # Frontend
-cd frontend && npm ci
-npm run dev            # Next en :3000
-
-# E2E (Playwright levanta ambos webServers solo; requiere backend/venv)
-cd frontend && npx playwright test
+cd frontend && npm ci && npm run dev -- -p 3002
 ```
 
-## Patrones de diseño
+`mysqlclient` 2.2.8 no tiene rueda en PyPI y sin `libmysqlclient-dev` no compila: hay que construir la rueda en
+Docker, como se hizo en Waiter (`~/.cache/waiter-wheels/`), ahora para Python 3.14.
 
-- **Vistas FBV delgadas** (`@api_view`) por módulo en `base_feature_app/views/` (10 módulos); lógica de negocio en `services/` (hoy: `email_service.py`) y modelos.
-- **Serializers por operación**: `*_list`, `*_detail`, `*_create_update` separados (16 archivos) — nunca `fields = '__all__'`.
-- **URLs como paquete**: `base_feature_app/urls/` con un módulo por dominio (auth 7, blog 3, captcha 2, product 3, sale 3, staging_phase_banner 1, user 2 = 21 rutas API + 5 de proyecto). ⚠️ existe un `urls.py` legacy shadowed por el paquete (residuo, ver tasks_plan).
-- **Stores Zustand por dominio**: `frontend/lib/stores/` (auth, blog, cart, locale, product, stagingBanner).
-- **Custom User** (`AbstractBaseUser` + manager propio); galería de imágenes vía app vendorizada `django_attachments`.
+## Estrategia de testing
 
-## Estrategia de testing (medida 2026-08-13)
+| Capa | Qué se prueba | Dónde |
+|---|---|---|
+| `dian/` (pura) | CUFE y CUDE contra los ejemplos del anexo; XML contra los XSD; firma que verifica y se rompe con un byte cambiado; truncado frente a redondeo; hora −05:00 | pytest, sin red ni base |
+| Servicios | Idempotencia, numeración, máquina de estados, contingencias 03 y 04, plazos de 48 h, alertas, aislamiento entre clientes y comercios, secretos que no salen | pytest con freezegun; concurrencia en MySQL |
+| API | Firma HMAC (ausente, vieja, cuerpo cambiado, cliente inactivo, secreto rotado), errores en español, contrato | pytest |
+| Integración DIAN | Set de pruebas real en habilitación con el certificado de ProjectApp | Manual y repetible; fuera de CI |
+| Consola | Flujos del operador | Jest y Playwright con el gateway simulado |
 
-| Layer | Runner | Ubicación | Volumen |
-|---|---|---|---|
-| Backend | pytest (sqlite, `pytest.ini`) | `backend/base_feature_app/tests/` + `django_attachments` | 26 archivos / 197 tests |
-| Frontend unit | Jest 30 (`**/__tests__/**/*.test.ts(x)`, threshold 50%) | colocalizados en `app/`, `components/`, `lib/` | 29 archivos / 184 tests |
-| E2E | Playwright (project "Desktop Chrome") | `frontend/e2e/` (8 specs / 40 tests) | flow map: `e2e/flow-definitions.json` (33 flows) |
-
-- Quality gate: `scripts/test_quality_gate.py` + `.testquality.yml` (≤50 líneas/test, ≤7 asserts, timeout ≤100ms) con baseline `.junk-baseline.json` (15 findings frontend grandfathered, keyed `file::rule::test_name`).
-- CI (`.github/workflows/`): `ci.yml` valida drift del lock Python, instalación
-  con hashes, `pip-audit`, `pip check`, WSGI/Gunicorn, `npm audit`, ESLint,
-  allowlist de scripts npm, TypeScript 7 + compatibilidad TypeScript 6, build,
-  backend sqlite, unit y e2e con fake data + coverage summary;
-  `test-quality-gate.yml` ejecuta
-  `--junk-severity=error`.
-- Reglas de ejecución: ≤20 tests por batch, ≤3 comandos por ciclo, e2e ≤2 archivos por invocación, `E2E_REUSE_SERVER=1` si el dev server ya corre.
+Cada prueba dice en un comentario qué falla atrapa, y se respeta el quality gate de la plantilla (`.testquality.yml`).
 
 ## Constraints técnicos
 
-- Django 6.1 todavía acepta los settings `EMAIL_*`, pero emite
-  `RemovedInDjango70Warning`; migrar a `MAILERS` antes de Django 7.
-- `backend/requirements.in` es la fuente humana; `requirements.txt` se genera
-  con `pip-compile`, hashes y versiones exactas. `requirements-tools.txt` fija
-  pip/pip-tools/pip-audit y CI rechaza drift.
-- TypeScript 7 es el typecheck principal. Next y typescript-eslint usan la API
-  TypeScript 6 mediante el alias oficial hasta que la API nativa esté soportada.
-- ESLint 10 necesita `@eslint/compat` para los plugins legacy anidados por
-  `eslint-config-next`; sus peers todavía declaran ESLint ≤9 pese a pasar lint.
-- npm `allowScripts` autoriza por versión sólo `@parcel/watcher`, `@swc/core` y
-  `unrs-resolver`; cualquier bump exige una revisión nueva y
-  `check:install-scripts` hace fallar CI si queda alguno pendiente.
-- Los tags E2E viven como constantes en `e2e/helpers/flow-tags.ts` (`@flow:`/`@module:`/`@priority:`; `@outcome:` inline) — specs nuevos reutilizan ese idioma.
-- Sin `data-testid` en el source de producción (salvo `components/staging/`): selectores por rol/label; el copy es bilingüe, evitar `getByText` con strings hardcodeados.
-- Playwright projects Mobile/Tablet están comentados; los scripts `e2e:mobile`/`e2e:tablet` de package.json fallan si se invocan.
+- La plantilla corre las pruebas en SQLite por omisión; **Fiscal. necesita MySQL** para `select_for_update(skip_locked)`
+  y la concurrencia de la numeración. Las pruebas puras pueden seguir en SQLite; las de concurrencia van en MySQL con un
+  marcador.
+- Puntos «sin confirmar» del inventario que el código debe tolerar hasta verificarlos en habilitación:
+  - direcciones de los servicios web;
+  - tamaño del set de pruebas;
+  - campo del código de contingencia del POS;
+  - tope de 5 UVT del POS (no aplica en la etapa 1, que solo emite factura).

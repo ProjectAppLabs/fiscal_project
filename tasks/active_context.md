@@ -1,49 +1,37 @@
-# Active Context — Base Django React Next Feature
+# Active Context — Fiscal.
 
-> Memory Bank · actualizado 2026-08-27. Refrescar al cerrar cada sesión significativa.
+> Memory Bank · actualizado 2026-10-04. Refrescar al cerrar cada sesión significativa.
 
 ## Foco actual
 
-Cerrar la actualización integral de dependencias en el PR #20. La rama activa
-es `chore/27082026-dependency-refresh`: ya actualizó runtimes, GitHub Actions,
-backend, frontend, locks y gates; resta únicamente entregar el reporte y la
-memoria con CI verde.
+Planeación técnica interna de Fiscal. sobre la plantilla Base Django React Next, rama
+`docs/04102026-technical-execution-plan`. Todavía no hay código de Fiscal. en este repositorio. Lo siguiente es el
+plan de implementación detallado de F1.
 
 ## Decisiones activas
 
-- Tests backend SIEMPRE con `backend/venv` y sqlite (`db=mysql` del registry es fallback, no dato).
-- Autochequeo de gate SIEMPRE con `--junk-severity=error --external-lint run` (paridad con hook/CI).
-- Jest: paths con corchetes vía `--runTestsByPath` (los args posicionales son regex).
-- Sin condicionales en bodies de tests (Regla 7): la fake data seedeada es contrato del entorno; un test sin data debe fallar, no saltearse.
-- Excepciones de calidad SOLO con markers documentados (`// quality: allow-...` con razón).
-- Dependencias: nunca usar `npm audit fix --force`; aplicar majors de forma
-  secuencial, en commits aislados, esperando CI verde entre fronteras.
-- Backend: `requirements.in` es fuente y `requirements.txt` lock con hashes;
-  CI recompila, compara, instala con hashes y audita.
-- Frontend: pins exactos, Node 24/npm 11, TypeScript 7 + API compatible 6,
-  ESLint 10 vía `@eslint/compat` y `allowScripts` pineado por versión.
-- Backend auditado en `.venv` aislado dentro del worktree; no modificar el venv
-  ni el checkout del clon principal.
+- **D1:** cada comercio factura en la modalidad «software propio o adquirido» con su NIT. ProjectApp renta el
+  software; no es proveedor tecnológico.
+- **D2:** factura electrónica para todo. Meta: API para otras casas de software.
+- **D3:** el facturador de pruebas es ProjectApp (persona natural con NIT).
+- **D5:** sin internet en Waiter o con Fiscal. caído → contingencia del emisor (tipo 03).
+- **D6:** desarrollo y pruebas en local.
+- **D7:** cada comercio paga su certificado.
+- Stack y convenciones de la plantilla: código y commits en inglés, documentación en español, FBV, serializers por
+  operación, Huey y Redis, rama y PR por sesión.
+- MySQL 8.4 en desarrollo (estándar de ProjectApp; contenedor `fiscal-mysql`, 127.0.0.1:3308).
+- La base es la fuente de verdad del estado de los documentos; Huey solo ejecuta.
 
-## Cambios recientes (git, rama chore/27082026-dependency-refresh)
+## Antecedentes
 
-- Actions actualizadas y fijadas por SHA; CI incorpora drift del lock,
-  `pip-audit`, `npm audit`, lint, TypeScript 7/6 y build.
-- Python 3.14.7, pip 26.2.1, Node 24.20.0 LTS y npm 11.19.0 alineados.
-- Backend completamente pineado y auditado: sqlparse 0.6, Gunicorn 26.2 y Ruff
-  0.16 incluidos; `pip-audit` 40→0 y `pip list --outdated` devuelve `[]`.
-- Frontend completamente pineado: jest-dom 7, ESLint 10 y TypeScript 7 incluidos;
-  `npm audit` 10→0 y ncu sólo propone el runtime Node 26 fuera de alcance.
-- Cada uno de los 13 commits funcionales esperó los cinco checks verdes antes
-  del siguiente.
+- **Inventario:** `docs/fiscal/inventario/` (DIAN, Waiter, operación, negocio y legal), levantado el 2026-10-04.
+- **Prototipo previo** fuera de la plantilla: `~/work/fiscal_project_borrador`, rama `prototipo/z1-base`. Tiene firma
+  HMAC, emisores, certificados, cola y 27 pruebas; sirve para portar a F1.
+- **Estudio de viabilidad y beneficio:** documento 233 del gestor documental de ProjectApp.
 
 ## Próximos pasos
 
-1. El operador puede integrar el PR #20 cuando su último commit quede verde.
-2. Vigilar soporte upstream de ESLint 10 en los plugins Next y de la API
-   TypeScript 7 en Next/typescript-eslint para retirar los puentes.
-3. Adoptar Node 26/npm 12/@types 26 como una sola frontera de runtime futura.
-4. Migrar `EMAIL_*` a `MAILERS` antes de Django 7.
-5. Bugs de producto detectados por QA: BlogDetailPage not-found, Footer
-   huérfano, selectores muertos y data-testid per-card (tasks_plan issues 7-11).
-6. Registrar `db:`/`branch:` en projects.yml del toolkit.
+1. F0 técnico: Python 3.14 y rueda de `mysqlclient`, `fiscal-redis` y la caja de herramientas de la DIAN.
+2. F1, PR 1: adaptar la plantilla (renombre, retiro de demos, MySQL y marca). Plan en `docs/fiscal/planes/F1-nucleo.md`.
+3. Del dueño, sin bloquear F1: registrar Fiscal. en el portal de habilitación de ProjectApp y, hacia el final de F2,
+   el certificado.
