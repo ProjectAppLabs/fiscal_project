@@ -11,8 +11,8 @@
 | Inventario (DIAN, Waiter, operación, negocio y legal) | ✅ hecho 2026-10-04 | — |
 | Decisiones D1 a D7 | ✅ tomadas 2026-10-04 | — |
 | Plantilla adaptada a Fiscal. (nombres, marca, MySQL, limpieza de features demo) | ✅ PR #2, 2026-10-04 | F1 |
-| Núcleo: sistemas cliente, emisores, certificados, rangos, documentos, cola | 🔄 modelos y cifrado (PR 2), API de emisores con firma HMAC (PR 3) y documentos con validación previa por reglas DIAN (PR 4) y cola de transmisión, artefactos y avisos firmados (PR 5) hechos; falta la consola (PR 6) | F1 |
-| Librería `dian/`: UBL, CUFE/CUDE, XAdES, SOAP | ⏳ pendiente | F2 |
+| Núcleo: sistemas cliente, emisores, certificados, rangos, documentos, cola | ✅ hecho y recorrido de punta a punta, 2026-10-04 | F1 |
+| Librería `dian/`: UBL, CUFE/CUDE, XAdES, SOAP | ✅ hecha sin red (PRs #8 a #11, 2026-10-04); la prueba real es el set de pruebas de F3 | F2 |
 | Habilitación de ProjectApp (set de pruebas) | ⏳ pendiente | F3 |
 | Notas, contingencias 04 y 03, entrega (AttachedDocument y PDF) | ⏳ pendiente | F4 |
 | Consola de operación (Next.js) | 🔄 mínima en F1 (tablero, documentos, detalle); la completa en F5 | F5 |
@@ -77,14 +77,18 @@ Plan de implementación: `docs/fiscal/planes/F1-nucleo.md` (seis PRs).
 
 ### F2 · Librería `dian/` (sin red primero)
 
-- [ ] Catálogos DIAN (impuestos, tipos de documento, medios de pago, unidades, responsabilidades, municipios DANE)
+Plan de implementación: `docs/fiscal/planes/F2-dian.md`.
+
+- [x] Catálogos DIAN (impuestos, tipos de documento, medios de pago, unidades, responsabilidades, municipios DANE)
   desde la caja de herramientas.
-- [ ] UBL 2.1 de la factura, la nota crédito y la nota débito. Validación contra los XSD.
-- [ ] CUFE y CUDE con los ejemplos del anexo como pruebas.
-- [ ] XAdES-EPES con la política v2. Verificación propia y prueba de manipulación.
-- [ ] Cliente SOAP: `SendBillSync`, `SendTestSetAsync`, `GetStatus`, `GetStatusZip` y `GetNumberingRange`, con TLS
-  mutuo y WS-Security.
-- [ ] Intérprete del `ApplicationResponse`, con las reglas en español para los rechazos frecuentes.
+- [x] UBL 2.1 de la factura, la nota crédito y la nota débito. Validación contra los XSD.
+- [x] CUFE y CUDE con los ejemplos del anexo como pruebas.
+- [x] XAdES-EPES con la política v2. Verificación propia, prueba de manipulación y verificación de cuatro ejemplos
+  oficiales firmados.
+- [x] Cliente SOAP: `SendBillSync`, `SendTestSetAsync`, `GetStatus`, `GetStatusZip` y `GetNumberingRange`, con
+  WS-Security. La autenticación mutua en TLS se confirma en habilitación.
+- [x] Lectura de la respuesta: cada regla con su código, si es rechazo o notificación, y el `ApplicationResponse`.
+- [ ] Schematron de la DIAN: descartado por ahora (el de la caja es de 2019 y le falta un archivo; ver el plan F2).
 - [ ] **Corte de riesgo:** si en dos semanas de F2 no hay una factura aceptada en habilitación, se reevalúa antes de
   seguir.
 
