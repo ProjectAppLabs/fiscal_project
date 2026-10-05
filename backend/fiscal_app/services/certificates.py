@@ -10,6 +10,7 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils import timezone
 
+from dian import signing
 from fiscal_app.models import Certificate, Issuer
 
 
@@ -32,6 +33,10 @@ def inspect_p12(raw: bytes, password: str) -> CertificateInfo:
         ) from exc
     if key is None or cert is None:
         raise ValidationError('El archivo no trae la llave privada y el certificado.', code='invalid_certificate')
+    try:
+        signing.check_certificate(signing.SigningCredentials(key, cert, ()))
+    except signing.SigningError as exc:
+        raise ValidationError(str(exc), code='invalid_certificate') from exc
     return CertificateInfo(
         subject=cert.subject.rfc4514_string()[:500],
         issued_by=cert.issuer.rfc4514_string()[:500],
@@ -72,3 +77,8 @@ def set_certificate(issuer: Issuer, p12_base64: str, password: str) -> Certifica
 
 def active_certificate(issuer: Issuer) -> Certificate | None:
     return issuer.certificates.filter(active=True).order_by('-created_at').first()
+
+
+def credentials_of(certificate: Certificate) -> signing.SigningCredentials:
+    """Key, certificate and chain to sign with, decrypted only in memory."""
+    return signing.load_pkcs12(base64.b64decode(certificate.p12), certificate.password)

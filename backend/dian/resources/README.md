@@ -33,3 +33,21 @@ del documento junto con `DIAN_UBL_Structures.xsd`, para que `sts:DianExtensions`
 anexo FE 1.9 (FAB22) y todos los ejemplos oficiales ponen ahí el dígito de verificación del NIT, así que todos los
 ejemplos de factura fallan en ese atributo. `dian/xsd.py` ignora solo ese error exacto. Algunos ejemplos antiguos
 también traen un `QRCode` con el formato anterior a la 1.9; el vigente es la URL de consulta (FAB36).
+
+## Ejemplos firmados (`examples/`)
+
+Cuatro XML de la carpeta «Ejemplificaciones/XMLs de ejemplo» de la misma caja, sin cambios, cuya firma XAdES-EPES
+verifica completa (las tres referencias y el `SignatureValue`). Los demás ejemplos fueron editados después de firmarse
+y su primera referencia ya no coincide. Las pruebas de `dian/signing.py` los verifican: son la prueba de que el C14N y
+los resúmenes de Fiscal. son los mismos que usan los firmantes reales.
+
+| Archivo | Original | SHA-256 |
+|---|---|---|
+| `ConsumidorFinal.xml` | `Consumidor Final.xml` | `3843e998516f1034573d1b2df6954ff3467a0f1883e3f7ee03e4c1687ca514b5` |
+| `CreditNote.xml` | `CreditNote.xml` | `479374b5f626453480fbf5fde226cabeb3d88e6ccb0f1c133ce7b90ac6111b06` |
+| `DebitNote.xml` | `DebitNote.xml` | `e8617ce3964d497d8aae47f68fd9ece5ccc6187c1ea558da0f2a21542276de04` |
+| `GenericaPagoAnticipado.xml` | `GenericaPagoAnticipado.xml` | `909585ddc86268927457acea0f5c9a3543b01b586a3422088de588aa7c7dafb0` |
+
+**Política de firma:** el anexo (§10.10) da la URL `…/politicadefirma/v2/politicadefirmav2.pdf`; 21 ejemplos usan
+`…/v1/…`, que ya no responde (404). El SHA-256 del PDF publicado en `v2`, descargado el 2026-10-04, es
+`dMoMvtcG5aIzgYo0tIsSQeVJBDnUnfSOfBpxXrmor0Y=` (en base64), igual al que traen los ejemplos.

@@ -1,7 +1,8 @@
 """Validation against the official UBL 2.1 XSD of the DIAN toolkit (resources/xsd), including DianExtensions.
 
-UBLExtensions accept any content with processContents="lax": the DIAN structures schema is loaded together with the
-document schema so sts:DianExtensions is validated too, not skipped.
+UBLExtensions accept any content with processContents="lax": the DIAN structures and XAdES 1.3.2 schemas (the latter
+imports xmldsig) are loaded together with the document schema so sts:DianExtensions and ds:Signature are validated too,
+not skipped.
 """
 
 from functools import cache
@@ -24,11 +25,13 @@ NAMESPACES = {
 
 @cache
 def schema(document: str) -> etree.XMLSchema:
-    """Schema of a document type that imports both the UBL document and the DIAN structures."""
+    """Schema of a document type that imports the UBL document, the DIAN structures and XAdES."""
     wrapper = f'''<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">
   <xsd:import namespace="{NAMESPACES[document]}" schemaLocation="{(XSD_DIR / DOCUMENT_SCHEMAS[document]).as_uri()}"/>
   <xsd:import namespace="dian:gov:co:facturaelectronica:Structures-2-1"
               schemaLocation="{(XSD_DIR / 'maindoc' / 'DIAN_UBL_Structures.xsd').as_uri()}"/>
+  <xsd:import namespace="http://uri.etsi.org/01903/v1.3.2#"
+              schemaLocation="{(XSD_DIR / 'common' / 'UBL-XAdESv132-2.1.xsd').as_uri()}"/>
 </xsd:schema>'''
     return etree.XMLSchema(etree.fromstring(wrapper.encode()))
 
@@ -39,8 +42,10 @@ def schema(document: str) -> etree.XMLSchema:
 # examples also carry a pre-1.9 QRCode text and fail on it; the current QRCode is the lookup URL, FAB36.)
 KNOWN_TOOLKIT_INCONSISTENCIES = (
     "Element '{dian:gov:co:facturaelectronica:Structures-2-1}ProviderID', attribute 'schemeID': [facet 'enumeration']",
-    "Element '{dian:gov:co:facturaelectronica:Structures-2-1}AuthorizationProviderID', attribute 'schemeID': "
-    "[facet 'enumeration']",
+    (
+        "Element '{dian:gov:co:facturaelectronica:Structures-2-1}AuthorizationProviderID', attribute 'schemeID': "
+        "[facet 'enumeration']"
+    ),
 )
 
 
