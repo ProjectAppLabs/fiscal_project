@@ -381,6 +381,8 @@ FISCAL_ENCRYPTION_KEY = require_fernet_key(
 )
 # 'simulated' never transmits and refuses production issuers; 'soap' talks to the DIAN (F2).
 DIAN_GATEWAY = require_dian_gateway(os.getenv('DIAN_GATEWAY'))
+# Addresses of the DIAN web service, as the participants catalog publishes them; empty uses the defaults of dian/soap.py.
+DIAN_WS_URLS = {'1': os.getenv('DIAN_WS_URL_PRODUCTION', ''), '2': os.getenv('DIAN_WS_URL_TESTING', '')}
 # Legal time of Colombia: the DIAN requires issue and signing times in -05:00. Storage stays in UTC.
 BUSINESS_TIME_ZONE = 'America/Bogota'
 # Manufacturer of the software, written in every document and in each issuer's DIAN registration (D1).

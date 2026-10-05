@@ -33,9 +33,3 @@ class SimulatedGateway(DianGateway):
             dian_response=json.dumps({'simulated': True, 'IsValid': True, 'StatusCode': '00'}).encode(),
         )
 
-
-def get_gateway(name: str) -> DianGateway:
-    """Gateway configured with DIAN_GATEWAY ('simulated' now; 'soap' arrives in F2)."""
-    if name == 'simulated':
-        return SimulatedGateway()
-    raise NotImplementedError('El gateway SOAP de la DIAN llega en F2.')

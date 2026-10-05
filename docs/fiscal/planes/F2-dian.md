@@ -72,7 +72,7 @@ La factura de restaurante (consumidor final, INC, propina y canje de puntos) y l
 - Al cargar un certificado, Fiscal. ya exige las reglas del §10.14 (llave RSA, firma SHA-2, firma digital y no
   repudio). Los certificados autofirmados de desarrollo declaran ese uso de llave.
 
-### F2 PR 4 · Cliente SOAP y gateway real (`feat/…-soap-gateway`)
+### F2 PR 4 · Cliente SOAP y gateway real (`feat/…-soap-gateway`) — ✅ hecho
 
 - `dian/soap.py`:
   - SOAP 1.2 con WS-Security (BinarySecurityToken, Timestamp y firma de `wsa:To`) y TLS con el certificado del emisor;
@@ -85,6 +85,22 @@ La factura de restaurante (consumidor final, INC, propina y canje de puntos) y l
 - `SoapGateway` implementa `DianGateway`: arma el UBL, lo firma, lo envía y guarda el XML firmado y la respuesta.
   `DIAN_GATEWAY=soap` lo activa.
 - **Pruebas:** con un transporte HTTP simulado que devuelve respuestas grabadas con la forma de la guía (sin red real).
+- **Resultado:**
+  - `dian/soap.py` (cliente sin Django) y `fiscal_app/services/gateways.py` (`SoapGateway` y `get_gateway`).
+  - El XML firmado se arma, firma y guarda una sola vez; los reintentos reenvían los mismos bytes. Si la DIAN responde
+    la regla 90 (ya procesado), se lee el estado real con `GetStatus`.
+  - Un *SOAP fault* o un HTTP distinto de los del §12.4 es un defecto de la petición, no una caída de la DIAN: el
+    documento vuelve a la cola cada hora (`GatewayRefused`) y no entra en contingencia.
+  - Nombres de XML y ZIP del §6.5.7 con un consecutivo por emisor que se reinicia cada 1 de enero. El texto del anexo
+    dice hexadecimal, aunque su ejemplo de la «décima primera» factura muestra `11`; se sigue el texto.
+  - La guía de web services de la DIAN solo trae la consulta de adquirientes (`GetAcquirer`) con SoapUI; de ella se
+    toman la acción en el `Content-Type`, WS-Security con firma y Timestamp, y WS-Addressing con `wsa:To`. Las
+    direcciones no están en el anexo (se publican en el catálogo de participantes): quedan por omisión las publicadas y
+    se pueden cambiar con `DIAN_WS_URL_TESTING` y `DIAN_WS_URL_PRODUCTION`.
+  - La autenticación es WS-Security con el certificado del emisor. El §7.5 habla de TLS 1.2 «con autenticación mutua»;
+    si en habilitación la DIAN exige además el certificado cliente en TLS, se agrega al `requests.Session`.
+  - **Por confirmar en habilitación con el certificado real:** el formato de `X509IssuerName`, las direcciones y la
+    autenticación mutua.
 
 ### F2 PR 5 · Validación con las reglas Schematron de la DIAN (opcional, `feat/…-schematron`)
 
