@@ -5,7 +5,7 @@ import { useTranslations } from 'next-intl';
 import { FormEvent, useEffect, useState } from 'react';
 
 import { ConsoleLoadError, ConsoleLoading } from '@/components/console/ConsoleStatus';
-import { issuerDetailRoute } from '@/lib/constants';
+import { ROUTES, issuerDetailRoute } from '@/lib/constants';
 import { useRequireAuth } from '@/lib/hooks/useRequireAuth';
 import { daysUntil, type IssuerListItem } from '@/lib/services/operations';
 import { useOperationsStore } from '@/lib/stores/operationsStore';
@@ -29,7 +29,15 @@ export default function IssuersPage() {
 
   return (
     <main className="mx-auto max-w-6xl px-6 py-10">
-      <h1 className="text-3xl font-semibold tracking-tight">{t('title')}</h1>
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <h1 className="text-3xl font-semibold tracking-tight">{t('title')}</h1>
+        <Link
+          className="rounded-full bg-primary px-5 py-2 text-sm text-primary-foreground hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          href={ROUTES.ONBOARDING}
+        >
+          {t('enrol')}
+        </Link>
+      </div>
       <IssuerSearch />
       <IssuerResults />
     </main>

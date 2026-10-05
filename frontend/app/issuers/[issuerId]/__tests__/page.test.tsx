@@ -27,6 +27,10 @@ jest.mock('../../../../lib/services/http', () => ({
 const mockUseRequireAuth = useRequireAuth as unknown as jest.Mock;
 const mockGet = api.get as unknown as jest.Mock;
 const initialState = useOperationsStore.getState();
+const NO_TEST_SET = {
+  readiness: { environment: true, certificate: true, software: true, test_set_id: false, range: true },
+  run: null,
+};
 
 function renderSignedIn() {
   mockUseRequireAuth.mockReturnValue({ isAuthenticated: true });
@@ -37,7 +41,9 @@ describe('IssuerDetailPage', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     useOperationsStore.setState(initialState, true);
-    mockGet.mockResolvedValue({ data: buildIssuerDetail() });
+    mockGet.mockImplementation((url: string) =>
+      Promise.resolve({ data: url.endsWith('/test-set/') ? NO_TEST_SET : buildIssuerDetail() }),
+    );
     Object.assign(URL, { createObjectURL: jest.fn(() => 'blob:fiscal'), revokeObjectURL: jest.fn() });
   });
 

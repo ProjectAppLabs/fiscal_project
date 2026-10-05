@@ -38,12 +38,14 @@
 - El tamaño por omisión es el que muestra hoy el micrositio de la DIAN (8 facturas, 1 nota crédito y 1 nota débito);
   manda el catálogo de cada `TestSetId`, así que se puede subir.
 
-### F3 PR 2 · Asistente en la consola (`feat/…-onboarding-wizard`)
+### F3 PR 2 · Asistente en la consola (`feat/…-onboarding-wizard`) — ✅ hecho
 
 - Página «Inscribir emisor» por pasos: sistema cliente, datos del emisor, certificado, software y numeración.
   El rango de habilitación SETP 990000000–995000000 viene precargado.
 - En el detalle del emisor: lista de lo que falta y el panel del set de pruebas (iniciar, consultar y el resultado
-  de cada documento con sus reglas).
+  de cada documento con sus reglas). Mientras un set está en proceso no se puede iniciar otro.
+- La contraseña del certificado y el PIN van en campos de contraseña y no quedan en el estado de la página después
+  de guardarse.
 
 ### F3 PR 3 · Corrida real (requiere el certificado y el registro)
 

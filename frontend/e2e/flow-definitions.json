@@ -333,6 +333,32 @@
       "outcomes": [
         "display"
       ]
+    },
+    "console-onboarding": {
+      "name": "Enrol an issuer",
+      "module": "console",
+      "roles": [
+        "operator"
+      ],
+      "priority": "P1",
+      "description": "Operator enrols a new business step by step: client system (secret shown once), issuer data, certificate upload, DIAN software and habilitación range",
+      "expectedSpecs": 1,
+      "outcomes": [
+        "success"
+      ]
+    },
+    "console-test-set": {
+      "name": "Run the DIAN test set",
+      "module": "console",
+      "roles": [
+        "operator"
+      ],
+      "priority": "P1",
+      "description": "Operator starts the issuer's DIAN test set and asks the DIAN for its result",
+      "expectedSpecs": 1,
+      "outcomes": [
+        "success"
+      ]
     }
   }
 }

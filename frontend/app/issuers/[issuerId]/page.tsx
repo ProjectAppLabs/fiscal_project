@@ -6,6 +6,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { FormEvent, useEffect, useState, type ReactNode } from 'react';
 
 import { ConsoleLoadError, ConsoleLoading } from '@/components/console/ConsoleStatus';
+import { TestSetPanel } from '@/components/console/TestSetPanel';
 import { ROUTES, documentDetailRoute } from '@/lib/constants';
 import { formatDateTime } from '@/lib/format';
 import { useRequireAuth } from '@/lib/hooks/useRequireAuth';
@@ -63,6 +64,7 @@ function IssuerBody({ issuer, status, onRetry }: { issuer: IssuerDetail | null; 
       <Certificates issuer={issuer} />
       <Software issuer={issuer} />
       <Ranges issuer={issuer} />
+      <TestSetPanel issuerId={issuer.id} />
       <ContingencyLetter issuerId={issuer.id} />
     </div>
   );

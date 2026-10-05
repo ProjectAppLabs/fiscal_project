@@ -11,7 +11,8 @@
     "issuers": "Issuers",
     "contingencies": "Contingencies",
     "alerts": "Alerts",
-    "clientSystems": "Client systems"
+    "clientSystems": "Client systems",
+    "onboarding": "Enrol issuer"
   },
   "footer": {
     "tagline": "ProjectApp's internal electronic invoicing console."
@@ -267,7 +268,8 @@
     "pageInfo": "Page {page} · {count} issuers",
     "previous": "Previous",
     "next": "Next",
-    "pagination": "Issuer pagination"
+    "pagination": "Issuer pagination",
+    "enrol": "Enrol issuer"
   },
   "issuerDetail": {
     "back": "Back to issuers",
@@ -393,5 +395,125 @@
     "noWebhook": "No notice URL",
     "inactive": "Inactive",
     "noticesState": "{pending} pending · {failed} failed"
+  },
+  "onboarding": {
+    "title": "Enrol an issuer",
+    "subtitle": "Five steps so a business can run the DIAN test set. It stays in the habilitación environment.",
+    "steps": {
+      "client": "Client system",
+      "issuer": "Issuer",
+      "certificate": "Certificate",
+      "software": "Software",
+      "range": "Numbering"
+    },
+    "stepOf": "Step {current} of {total}",
+    "next": "Continue",
+    "saving": "Saving…",
+    "error": "This step could not be saved.",
+    "client": {
+      "title": "Which system does the issuer come through?",
+      "existing": "Existing client system",
+      "choose": "Choose a system",
+      "orNew": "or create a new one",
+      "name": "Name of the new system",
+      "webhook": "Notice URL (optional)",
+      "create": "Create client system",
+      "secretTitle": "Save this secret now",
+      "secretBody": "This is the only time it is shown. The system uses it to sign its calls to Fiscal.",
+      "keyId": "Key identifier",
+      "secret": "Secret",
+      "secretSaved": "I saved it",
+      "useClient": "Use this system"
+    },
+    "issuer": {
+      "title": "Issuer data as it appears in the RUT",
+      "nit": "NIT (without check digit)",
+      "dv": "Check digit",
+      "personType": "Person type",
+      "personTypes": {
+        "1": "Legal entity",
+        "2": "Natural person"
+      },
+      "legalName": "Legal name",
+      "tradeName": "Trade name (optional)",
+      "responsibilities": "Tax responsibilities",
+      "taxScheme": "Tax",
+      "taxSchemes": {
+        "01": "01 · VAT",
+        "04": "04 · INC",
+        "ZZ": "ZZ · Not applicable"
+      },
+      "address": "Address",
+      "municipality": "Municipality (5-digit DANE code)",
+      "email": "Invoicing email",
+      "phone": "Phone (optional)"
+    },
+    "certificate": {
+      "title": "Issuer's digital certificate",
+      "body": "A .p12 or .pfx file with its password, from an ONAC-accredited entity, with digital signature and non-repudiation. It is validated on upload and stored encrypted.",
+      "file": "Certificate file",
+      "password": "Certificate password",
+      "loaded": "Certificate of {subject}, expires on {date}."
+    },
+    "software": {
+      "title": "Software registered with the DIAN",
+      "body": "The data the habilitación portal gives when registering Fiscal. in the «Software propio» mode.",
+      "softwareId": "Software identifier",
+      "pin": "Software PIN",
+      "testSetId": "TestSetId"
+    },
+    "range": {
+      "title": "Habilitación numbering range",
+      "body": "Prefilled with the DIAN's official example range. Compare it with the participants catalog and paste the technical key.",
+      "resolution": "Resolution number",
+      "prefix": "Prefix",
+      "from": "From",
+      "to": "To",
+      "validFrom": "Valid from",
+      "validTo": "Valid to",
+      "technicalKey": "Technical key"
+    },
+    "done": {
+      "title": "Issuer enrolled",
+      "body": "It can now run the test set from its page.",
+      "open": "Go to the issuer's page"
+    }
+  },
+  "testSet": {
+    "title": "DIAN test set",
+    "readinessTitle": "What it needs",
+    "readiness": {
+      "environment": "Habilitación environment",
+      "certificate": "Active certificate",
+      "software": "Registered software",
+      "test_set_id": "TestSetId",
+      "range": "Valid range"
+    },
+    "invoices": "Invoices in the set",
+    "start": "Start test set",
+    "starting": "Sending…",
+    "check": "Ask the DIAN",
+    "checking": "Asking…",
+    "error": "The action could not be completed.",
+    "states": {
+      "processing": "Being processed by the DIAN",
+      "accepted": "Accepted",
+      "rejected": "With rejections",
+      "failed": "Could not be sent"
+    },
+    "docStatus": {
+      "pending": "Pending",
+      "accepted": "Accepted",
+      "rejected": "Rejected"
+    },
+    "tableCaption": "Test set documents",
+    "columns": {
+      "document": "Document",
+      "kind": "Kind",
+      "status": "Status",
+      "messages": "DIAN rules"
+    },
+    "noRun": "The set has not been run yet.",
+    "body": "Invoices go first; once the DIAN accepts them, a credit note and a debit note follow. Fiscal. checks the result every 2 minutes."
   }
 }
