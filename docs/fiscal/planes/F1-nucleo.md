@@ -59,27 +59,27 @@ Endpoints: `/api/<entidad>/…` según la convención de la plantilla. Las rutas
 Cada PR sale de `master`, en su rama, con CI verde (pytest, Jest, Playwright, quality gate y coverage). Se integra en
 orden.
 
-### PR 1 · Adaptar la plantilla (`chore/…-fiscal-bootstrap`)
+### PR 1 · Adaptar la plantilla (`chore/…-fiscal-bootstrap`) — ✅ PR #2
 
-- [ ] **Renombrar** `base_feature_project` a `fiscal_project` y `base_feature_app` a `fiscal_app`: módulos, settings,
+- [x] **Renombrar** `base_feature_project` a `fiscal_project` y `base_feature_app` a `fiscal_app`: módulos, settings,
   `AUTH_USER_MODEL`, pytest.ini, CI, scripts y `manage.py`. Migraciones nuevas desde cero (no hay datos que conservar).
-- [ ] **Retirar las demos:**
+- [x] **Retirar las demos:**
   - backend: blog, producto, venta, captcha, galería (`django_attachments`, `easy_thumbnails`, `django-cleanup`) con
     sus modelos, vistas, serializers, URLs, forms, comandos y pruebas;
   - frontend: catálogo, productos, blogs, checkout y carrito, con sus stores, componentes, e2e y flujos de
     `flow-definitions.json`.
-- [ ] **Conservar:** usuario personalizado (operadores), JWT, reseteo de contraseña, staging banner, i18n (ES por
+- [x] **Conservar:** usuario personalizado (operadores), JWT, reseteo de contraseña, staging banner, i18n (ES por
   omisión), CI, quality gate y `api/health/`.
-- [ ] **Settings:**
+- [x] **Settings:**
   - MySQL por omisión en dev, apuntando a `fiscal-mysql`;
   - `FISCAL_ENCRYPTION_KEY` (Fernet; falla al arrancar si falta);
   - `DIAN_GATEWAY=simulated`;
   - `BUSINESS_TIME_ZONE=America/Bogota`;
   - Huey contra `fiscal-redis`;
   - CORS solo para la consola.
-- [ ] **Pruebas:** SQLite para las rápidas y marcador `mysql` para concurrencia, con `DJANGO_TEST_DB_ENGINE` en CI.
+- [x] **Pruebas:** SQLite para las rápidas y marcador `mysql` para concurrencia, con `DJANGO_TEST_DB_ENGINE` en CI.
   Documentarlo en `technical.md`.
-- [ ] **Marca:**
+- [x] **Marca:**
   - identidad en `CLAUDE.md` (bloque project-specific) y regenerar `AGENTS.md`;
   - README de Fiscal.;
   - fuente Ubuntu Bold para el logotipo «Fiscal.» en el frontend;
@@ -87,7 +87,9 @@ orden.
 - **Fails if** (pruebas): `api/health/` no responde `project` y `environment`; el arranque no falla sin
   `FISCAL_ENCRYPTION_KEY`; queda alguna ruta de las demos.
 
-### PR 2 · Modelos, cifrado y administración (`feat/…-core-models`)
+### PR 2 · Modelos, cifrado y administración (`feat/…-core-models`) — ✅ hecho
+
+Las opciones guardan los códigos de la DIAN tal cual (`TipoAmbiente`, `TipoOrganizacion` de la caja de herramientas FE 1.9). `ExactCharField` aplica `utf8mb4_bin` solo en MySQL. La retención de artefactos la cuida una señal `pre_delete`, que también se dispara en los borrados masivos. El CI tiene un job `backend-mysql-tests` para las pruebas marcadas `mysql`.
 
 | Modelo | Campos clave | Reglas |
 |---|---|---|
@@ -102,9 +104,9 @@ orden.
 | `Artifact` | document, kind (`signed_xml`, `dian_response`, `attached_document`, `pdf`, `evidence`), sha256, size, storage_path, created_at, retain_until | Sin borrado antes de `retain_until` (10 años) |
 | `WebhookDelivery` | client, document, payload, attempts, next_attempt_at, delivered_at, last_status | |
 
-- [ ] `services/crypto.py`: `EncryptedTextField` con Fernet. Errores sin contenido.
-- [ ] Admin propio: listas y filtros sin mostrar campos cifrados; solo lectura sobre documentos y artefactos.
-- [ ] Comandos:
+- [x] `services/crypto.py`: `EncryptedTextField` con Fernet. Errores sin contenido.
+- [x] Admin propio: listas y filtros sin mostrar campos cifrados; solo lectura sobre documentos y artefactos.
+- [x] Comandos:
   - `create_client_system` (muestra el secreto una vez);
   - `rotate_client_secret`;
   - `create_fake_data` y `delete_fake_data` (emisor de prueba con certificado autofirmado, rangos y documentos en

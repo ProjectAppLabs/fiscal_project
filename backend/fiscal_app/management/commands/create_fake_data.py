@@ -10,7 +10,7 @@ class Command(BaseCommand):
         python3 manage.py create_fake_data [number_of_records]
         python3 manage.py create_fake_data --users 10
 
-    Fiscal data (issuers, ranges and documents) is added in F1 PR 2.
+    Also creates the Fiscal. data: a client system, a testing issuer and one document per state.
     """
 
     help = 'Create fake data in the database for all models'
@@ -26,4 +26,6 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS('==== Creating Fake Data ===='))
         self.stdout.write(self.style.SUCCESS('\n--- Creating Users ---'))
         call_command('create_users', number_of_users=users)
+        self.stdout.write(self.style.SUCCESS('\n--- Creating Fiscal data ---'))
+        call_command('create_fiscal_fake_data')
         self.stdout.write(self.style.SUCCESS('\n==== Fake Data Creation Complete ===='))

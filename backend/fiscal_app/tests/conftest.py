@@ -1,4 +1,7 @@
+from datetime import date
+
 import pytest
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from rest_framework.test import APIClient
 
@@ -48,3 +51,68 @@ def admin_client(api_client, admin_user):
     """APIClient pre-authenticated as a staff/admin user."""
     api_client.force_authenticate(user=admin_user)
     return api_client
+
+
+def pytest_collection_modifyitems(config, items):
+    """Skip MySQL-only tests when the suite runs on SQLite (the template default)."""
+    if 'mysql' in settings.DATABASES['default']['ENGINE']:
+        return
+    skip = pytest.mark.skip(reason='needs MySQL: set DJANGO_TEST_DB_ENGINE=django.db.backends.mysql')
+    for item in items:
+        if 'mysql' in item.keywords:
+            item.add_marker(skip)
+
+
+@pytest.fixture
+def client_system(db):
+    """A client system with its first secret, returned as (client, secret)."""
+    from fiscal_app.services.client_systems import create_client_system
+
+    return create_client_system('Waiter')
+
+
+@pytest.fixture
+def issuer(client_system):
+    """A testing issuer of the client system, with a valid NIT and check digit."""
+    from fiscal_app.models import Issuer
+    from fiscal_app.services.nit import check_digit
+
+    client, _secret = client_system
+    return Issuer.objects.create(
+        client=client, nit='900373115', dv=check_digit('900373115'), person_type='1',
+        legal_name='Restaurante de Prueba SAS', address_line='Calle 10 # 43-12', municipality_code='05001',
+        department_code='05', email='facturacion@restaurante.test',
+    )
+
+
+@pytest.fixture
+def invoice_range(issuer):
+    """The DIAN testing range (SETP 990000000-995000000) for the issuer."""
+    from fiscal_app.models import NumberingRange
+
+    return NumberingRange.objects.create(
+        issuer=issuer, resolution_number='18760000001', prefix='SETP', number_from=990_000_000,
+        number_to=995_000_000, valid_from=date(2019, 1, 19), valid_to=date(2030, 1, 19),
+        technical_key='fc8eac422eba16e22ffd8c6f94b3f40a6e38162c',
+    )
+
+
+@pytest.fixture
+def make_document(client_system, issuer, invoice_range):
+    """Build documents of the issuer; keyword arguments override the defaults."""
+    from django.utils import timezone
+
+    from fiscal_app.models import Document
+
+    client, _secret = client_system
+
+    def build(**overrides):
+        values = {
+            'client': client, 'issuer': issuer, 'numbering_range': invoice_range, 'idempotency_key': 'waiter:1',
+            'kind': 'invoice', 'prefix': 'SETP', 'number': 990_000_001, 'issue_datetime': timezone.now(),
+            'payload': {'total': '1000.00'}, 'payload_hash': '0' * 64,
+        }
+        values.update(overrides)
+        return Document.objects.create(**values)
+
+    return build
