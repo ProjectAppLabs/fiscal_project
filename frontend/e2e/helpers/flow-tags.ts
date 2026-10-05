@@ -30,6 +30,11 @@ export const CONSOLE_DOCUMENTS_FILTER = ['@flow:console-documents-filter', '@mod
 export const CONSOLE_DOCUMENTS_PAGINATION = ['@flow:console-documents-pagination', '@module:console', '@priority:P2'];
 export const CONSOLE_DOCUMENT_DETAIL = ['@flow:console-document-detail', '@module:console', '@priority:P1'];
 export const CONSOLE_DOCUMENT_NOT_FOUND = ['@flow:console-document-not-found', '@module:console', '@priority:P2'];
+export const CONSOLE_DOCUMENT_DOWNLOAD = ['@flow:console-document-download', '@module:console', '@priority:P1'];
+export const CONSOLE_DASHBOARD_HEALTH = ['@flow:console-dashboard-health', '@module:console', '@priority:P1'];
+export const CONSOLE_ISSUERS_LIST = ['@flow:console-issuers-list', '@module:console', '@priority:P1'];
+export const CONSOLE_ISSUER_DETAIL = ['@flow:console-issuer-detail', '@module:console', '@priority:P1'];
+export const CONSOLE_CONTINGENCY_LETTER = ['@flow:console-contingency-letter', '@module:console', '@priority:P2'];
 
 // ── i18n ──
 export const I18N_LOCALE_SWITCH = ['@flow:i18n-locale-switch', '@module:i18n', '@priority:P2'];

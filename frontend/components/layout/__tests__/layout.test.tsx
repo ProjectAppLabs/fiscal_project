@@ -49,7 +49,7 @@ describe('Header', () => {
     expect(screen.getByRole('link', { name: 'Iniciar sesión' })).toHaveAttribute('href', '/sign-in');
   });
 
-  it.each(['Tablero', 'Documentos'])('hides the %s link from visitors without a session', (name) => {
+  it.each(['Tablero', 'Documentos', 'Emisores', 'Contingencias', 'Alertas', 'Sistemas cliente'])('hides the %s link from visitors without a session', (name) => {
     renderHeader({ isAuthenticated: false, signOut: jest.fn() });
 
     expect(screen.getByRole('link', { name: 'Fiscal.' })).toBeInTheDocument();
@@ -59,6 +59,10 @@ describe('Header', () => {
   it.each([
     ['Tablero', '/dashboard'],
     ['Documentos', '/documents'],
+    ['Emisores', '/issuers'],
+    ['Contingencias', '/contingencies'],
+    ['Alertas', '/alerts'],
+    ['Sistemas cliente', '/client-systems'],
   ])('links signed-in users to the %s page at %s', (name, href) => {
     renderHeader({ isAuthenticated: true, signOut: jest.fn() });
 

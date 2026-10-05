@@ -6,7 +6,7 @@ import {
   stubConsoleSummaryFailingUntilRecovered,
   waitForPageLoad,
 } from '../fixtures';
-import { CONSOLE_DASHBOARD_COUNTERS, CONSOLE_DASHBOARD_RETRY } from '../helpers/flow-tags';
+import { CONSOLE_DASHBOARD_COUNTERS, CONSOLE_DASHBOARD_HEALTH, CONSOLE_DASHBOARD_RETRY } from '../helpers/flow-tags';
 
 test.describe('Console dashboard', () => {
   test.beforeEach(async ({ context, page, baseURL }) => {
@@ -33,6 +33,18 @@ test.describe('Console dashboard', () => {
     const rejection = page.getByRole('region', { name: 'Último rechazo' });
     await expect(rejection).toContainText('SETP990000007');
     await expect(rejection).toContainText('FAD06: El CUFE no corresponde.');
+  });
+
+  test('shows the open alerts and the service health', { tag: [...CONSOLE_DASHBOARD_HEALTH, '@outcome:display'] }, async ({ page }) => {
+    // quality: allow-no-interaction (the dashboard is the operator's landing page; reading alerts and health on arrival is the behavior)
+    await stubConsoleSummary(page);
+    await page.goto('/dashboard');
+    await waitForPageLoad(page);
+
+    const alerts = page.getByRole('region', { name: 'Alertas abiertas' });
+    await expect(alerts.getByRole('group', { name: 'Alertas abiertas' })).toContainText('2');
+    await expect(alerts).toContainText('1 crítica');
+    await expect(page.getByRole('region', { name: 'Salud del servicio' })).toContainText('Todo en orden');
   });
 
   test('shows an error when the summary cannot be loaded', { tag: [...CONSOLE_DASHBOARD_RETRY, '@outcome:error'] }, async ({ page }) => {

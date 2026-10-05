@@ -25,6 +25,8 @@ export interface IssuerRef {
 export interface DianRuleError {
   rule: string;
   message: string;
+  /** 'rechazo' rejects the document; 'notificacion' is an observation on a valid one. */
+  severity?: 'rechazo' | 'notificacion';
 }
 
 export type DianError = DianRuleError | string;
@@ -47,6 +49,18 @@ export interface ConsoleSummary {
     errors: DianError[];
     at: string;
   } | null;
+  alerts: { total: number; critical: number };
+  /** Share of the DIAN's answers of the last 24 hours that were rejections; null without answers. */
+  rejection_rate_24h: number | null;
+  health: ServiceHealth;
+}
+
+export interface ServiceHealth {
+  status: 'ok' | 'degraded' | 'down';
+  database: 'ok' | 'down';
+  queue: { due: number; oldest_due_seconds: number; ok: boolean };
+  worker: { last_beat_at: string | null; ok: boolean };
+  dian: { in_contingency: number; last_answer_at: string | null };
 }
 
 export interface DocumentListItem {
@@ -70,14 +84,20 @@ export interface DocumentArtifact {
   created_at: string;
 }
 
+/** What the backend records with each state change (a JSON object); older stubs and notes may send text. */
+export type DocumentEventDetail = Record<string, unknown> | string;
+
 export interface DocumentEvent {
   state: DocumentState;
-  detail: string;
+  detail: DocumentEventDetail;
   created_at: string;
 }
 
 export interface DocumentDetail extends DocumentListItem {
   idempotency_key: string;
+  /** InvoiceTypeCode of the current XML: 01 sale, 03 paper transcription, 04 DIAN contingency; empty for notes. */
+  invoice_type: string;
+  contingency_started_at: string | null;
   cufe: string | null;
   qr_url: string | null;
   errors: DianError[];
@@ -145,6 +165,45 @@ export function isDianRuleError(error: DianError): error is DianRuleError {
 export function describeDianError(error: DianError): string {
   if (!isDianRuleError(error)) return String(error);
   return error.rule ? `${error.rule}: ${error.message}` : error.message;
+}
+
+/** The parts of an event detail an operator reads, in a stable order; unknown keys are left out. */
+export function eventDetailParts(detail: DocumentEventDetail): EventDetailPart[] {
+  if (typeof detail === 'string') return detail ? [{ key: 'text', value: detail }] : [];
+  if (!detail || typeof detail !== 'object') return [];
+
+  const parts: EventDetailPart[] = [];
+  for (const key of EVENT_DETAIL_KEYS) {
+    const value = detail[key];
+    if (value === undefined || value === null || value === '') continue;
+    if (key === 'errors') {
+      const errors = Array.isArray(value) ? (value as DianError[]) : [];
+      if (errors.length) parts.push({ key, value: errors.map(describeDianError).join(' · ') });
+      continue;
+    }
+    parts.push({ key, value: String(value) });
+  }
+  return parts;
+}
+
+export interface EventDetailPart {
+  key: (typeof EVENT_DETAIL_KEYS)[number] | 'text';
+  value: string;
+}
+
+const EVENT_DETAIL_KEYS = [
+  'errors',
+  'dian_unavailable',
+  'gateway_refused',
+  'contingency_refused',
+  'invoice_type',
+  'waiting_for',
+  'delivery_failed',
+] as const;
+
+/** A DIAN notification does not reject the document; everything else (or an unknown severity) does. */
+export function isDianNotification(error: DianError): boolean {
+  return isDianRuleError(error) && error.severity === 'notificacion';
 }
 
 export function isNotFoundError(error: unknown): boolean {

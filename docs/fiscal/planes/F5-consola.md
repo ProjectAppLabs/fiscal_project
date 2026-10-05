@@ -30,11 +30,16 @@
 - Nunca salen secretos: ni el `.p12` ni su contraseña, ni el PIN, ni las claves técnicas, ni los secretos de los
   clientes.
 
-### F5 PR 2 · Tablero, documento y emisores (`feat/…-console-issuers`)
+### F5 PR 2 · Tablero, documento y emisores (`feat/…-console-issuers`) — ✅ hecho
 
 - Navegación nueva, tablero ampliado, descargas en el detalle del documento, lista y detalle de emisores con la carta
   de contingencia.
 - Pruebas unitarias (Jest) y E2E (Playwright) con respuestas simuladas.
+- **Errores de F1 corregidos:**
+  - la historia del documento pintaba el `detail` de cada evento como texto, pero el backend lo envía como objeto,
+    así que con datos reales la página fallaba. Ahora cada clave se muestra legible;
+  - la sesión vive en cookies que el render del servidor no lee, así que las páginas y la navegación no coincidían
+    al hidratar y React regeneraba el árbol. `useHydrated` hace esperar a la hidratación.
 
 ### F5 PR 3 · Contingencias, alertas y sistemas cliente (`feat/…-console-operations`)
 

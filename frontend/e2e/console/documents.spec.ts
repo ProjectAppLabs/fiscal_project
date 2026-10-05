@@ -6,6 +6,7 @@ import {
   signInWithCookies,
   stubConsoleSummary,
   stubDocumentDetail,
+  stubArtifactDownload,
   stubDocumentList,
   unknownIssuerNit,
   validatedDocument,
@@ -13,6 +14,7 @@ import {
 } from '../fixtures';
 import {
   CONSOLE_DOCUMENT_DETAIL,
+  CONSOLE_DOCUMENT_DOWNLOAD,
   CONSOLE_DOCUMENT_NOT_FOUND,
   CONSOLE_DOCUMENTS_FILTER,
   CONSOLE_DOCUMENTS_PAGINATION,
@@ -86,8 +88,21 @@ test.describe('Console documents', () => {
     await page.getByRole('link', { name: rejectedDocument.full_number }).click();
 
     const artifacts = page.getByRole('table', { name: 'Artefactos guardados' });
-    await expect(artifacts).toContainText('signed_xml');
+    await expect(artifacts).toContainText('XML firmado');
     await expect(artifacts).toContainText('0123456789ab…');
+  });
+
+  test('downloads the signed XML of the opened document', { tag: [...CONSOLE_DOCUMENT_DOWNLOAD, '@outcome:success'] }, async ({ page }) => {
+    await stubArtifactDownload(page);
+    await page.getByRole('link', { name: rejectedDocument.full_number }).click();
+    const artifacts = page.getByRole('table', { name: 'Artefactos guardados' });
+
+    const [download] = await Promise.all([
+      page.waitForEvent('download'),
+      artifacts.getByRole('button', { name: 'Descargar' }).click(),
+    ]);
+
+    expect(download.suggestedFilename()).toBe(`${rejectedDocument.full_number}-signed_xml.xml`);
   });
 
   test('shows the event history of the opened document', { tag: [...CONSOLE_DOCUMENT_DETAIL, '@outcome:display'] }, async ({ page }) => {

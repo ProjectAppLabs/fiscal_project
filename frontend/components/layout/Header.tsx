@@ -6,6 +6,7 @@ import { useTranslations } from 'next-intl';
 import { FiscalLogo } from '@/components/brand/FiscalLogo';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { ROUTES } from '@/lib/constants';
+import { useHydrated } from '@/lib/hooks/useHydrated';
 import { useAuthStore } from '@/lib/stores/authStore';
 import { LocaleSwitcher } from './LocaleSwitcher';
 
@@ -14,7 +15,9 @@ const NAV_LINK_CLASS =
 
 export default function Header() {
   const t = useTranslations('header');
-  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const hydrated = useHydrated();
+  // The session comes from cookies the server render cannot read: show it once hydrated.
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated) && hydrated;
   const signOut = useAuthStore((s) => s.signOut);
 
   return (
@@ -24,7 +27,7 @@ export default function Header() {
           <FiscalLogo />
         </Link>
 
-        <nav className="flex items-center gap-2 text-sm sm:gap-4" aria-label={t('mainNav')}>
+        <nav className="flex flex-wrap items-center justify-end gap-2 text-sm sm:gap-4" aria-label={t('mainNav')}>
           {isAuthenticated ? (
             <>
               <Link className={NAV_LINK_CLASS} href={ROUTES.DASHBOARD}>
@@ -32,6 +35,18 @@ export default function Header() {
               </Link>
               <Link className={NAV_LINK_CLASS} href={ROUTES.DOCUMENTS}>
                 {t('documents')}
+              </Link>
+              <Link className={NAV_LINK_CLASS} href={ROUTES.ISSUERS}>
+                {t('issuers')}
+              </Link>
+              <Link className={NAV_LINK_CLASS} href={ROUTES.CONTINGENCIES}>
+                {t('contingencies')}
+              </Link>
+              <Link className={NAV_LINK_CLASS} href={ROUTES.ALERTS}>
+                {t('alerts')}
+              </Link>
+              <Link className={NAV_LINK_CLASS} href={ROUTES.CLIENT_SYSTEMS}>
+                {t('clientSystems')}
               </Link>
             </>
           ) : null}

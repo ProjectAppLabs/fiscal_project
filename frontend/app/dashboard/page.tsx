@@ -71,6 +71,11 @@ function DashboardBody({
         <QueueCard queue={summary.queue} />
       </div>
 
+      <div className="grid gap-6 md:grid-cols-2">
+        <AlertsCard summary={summary} />
+        <HealthCard summary={summary} />
+      </div>
+
       {summary.last_rejection ? <LastRejection rejection={summary.last_rejection} /> : null}
     </div>
   );
@@ -127,6 +132,62 @@ function QueueCard({ queue }: { queue: ConsoleSummary['queue'] }) {
         <Counter label={t('queueDue')} value={queue.due} />
         <Counter label={t('queueOldest')} value={formatDateTime(queue.oldest_queued_at, locale)} />
       </dl>
+    </section>
+  );
+}
+
+function AlertsCard({ summary }: { summary: ConsoleSummary }) {
+  const t = useTranslations('dashboard');
+  const locale = useLocale();
+  const rate = summary.rejection_rate_24h;
+
+  return (
+    <section className={CARD_CLASS} aria-labelledby="dashboard-alerts">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h2 className="text-lg font-semibold" id="dashboard-alerts">
+          {t('alertsTitle')}
+        </h2>
+        <Link className="text-sm hover:underline" href={ROUTES.ALERTS}>
+          {t('viewAlerts')}
+        </Link>
+      </div>
+      <dl className="mt-4 grid grid-cols-2 gap-4">
+        <Counter label={t('alertsTitle')} value={summary.alerts.total} />
+        <Counter
+          label={t('rejectionRate')}
+          value={rate === null ? '—' : new Intl.NumberFormat(locale, { style: 'percent', maximumFractionDigits: 1 }).format(rate)}
+        />
+      </dl>
+      <p className={`mt-3 text-sm ${summary.alerts.critical ? 'text-destructive' : 'text-muted-foreground'}`}>
+        {t('alertsCritical', { count: summary.alerts.critical })}
+      </p>
+      {rate === null ? <p className="mt-1 text-xs text-muted-foreground">{t('rejectionRateNone')}</p> : null}
+    </section>
+  );
+}
+
+function HealthCard({ summary }: { summary: ConsoleSummary }) {
+  const t = useTranslations('dashboard');
+  const { health } = summary;
+  const tone = health.status === 'ok' ? 'text-success' : 'text-destructive';
+
+  return (
+    <section className={CARD_CLASS} aria-labelledby="dashboard-health">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h2 className="text-lg font-semibold" id="dashboard-health">
+          {t('healthTitle')}
+        </h2>
+        <Link className="text-sm hover:underline" href={ROUTES.CONTINGENCIES}>
+          {t('viewContingencies')}
+        </Link>
+      </div>
+      <p className={`mt-3 text-base font-semibold ${tone}`}>{t(`healthStatus.${health.status}`)}</p>
+      <ul className="mt-2 space-y-1 text-sm">
+        <li className={health.worker.ok ? '' : 'text-destructive'}>{health.worker.ok ? t('workerOk') : t('workerSilent')}</li>
+        <li className={health.dian.in_contingency ? 'text-destructive' : ''}>
+          {t('dianContingency', { count: health.dian.in_contingency })}
+        </li>
+      </ul>
     </section>
   );
 }
