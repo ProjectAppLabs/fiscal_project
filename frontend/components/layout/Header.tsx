@@ -22,35 +22,17 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-card/80 backdrop-blur">
-      <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-4">
-        <Link className="text-xl" href={ROUTES.HOME}>
+      {/* One nav for every width: below lg it drops to its own row (order-3, full width) and scrolls sideways. */}
+      <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-4 gap-y-2 px-6 py-4">
+        <Link className="order-1 text-xl" href={ROUTES.HOME}>
           <FiscalLogo />
         </Link>
 
-        <nav className="flex flex-wrap items-center justify-end gap-2 text-sm sm:gap-4" aria-label={t('mainNav')}>
-          {isAuthenticated ? (
-            <>
-              <Link className={NAV_LINK_CLASS} href={ROUTES.DASHBOARD}>
-                {t('dashboard')}
-              </Link>
-              <Link className={NAV_LINK_CLASS} href={ROUTES.DOCUMENTS}>
-                {t('documents')}
-              </Link>
-              <Link className={NAV_LINK_CLASS} href={ROUTES.ISSUERS}>
-                {t('issuers')}
-              </Link>
-              <Link className={NAV_LINK_CLASS} href={ROUTES.CONTINGENCIES}>
-                {t('contingencies')}
-              </Link>
-              <Link className={NAV_LINK_CLASS} href={ROUTES.ALERTS}>
-                {t('alerts')}
-              </Link>
-              <Link className={NAV_LINK_CLASS} href={ROUTES.CLIENT_SYSTEMS}>
-                {t('clientSystems')}
-              </Link>
-            </>
-          ) : null}
+        {isAuthenticated ? (
+          <SessionLinks className="order-3 -mx-2 w-full overflow-x-auto lg:order-2 lg:mx-0 lg:w-auto" label={t('mainNav')} />
+        ) : null}
 
+        <div className="order-2 flex items-center gap-2 text-sm sm:gap-4 lg:order-3">
           <LocaleSwitcher />
           <ThemeToggle />
 
@@ -70,8 +52,32 @@ export default function Header() {
               {t('signIn')}
             </Link>
           )}
-        </nav>
+        </div>
       </div>
+
     </header>
   );
 }
+
+function SessionLinks({ className, label }: { className: string; label: string }) {
+  const t = useTranslations('header');
+
+  return (
+    <nav aria-label={label} className={`flex items-center gap-1 text-sm whitespace-nowrap ${className}`}>
+      {SESSION_LINKS.map(({ href, key }) => (
+        <Link className={NAV_LINK_CLASS} href={href} key={href}>
+          {t(key)}
+        </Link>
+      ))}
+    </nav>
+  );
+}
+
+const SESSION_LINKS = [
+  { href: ROUTES.DASHBOARD, key: 'dashboard' },
+  { href: ROUTES.DOCUMENTS, key: 'documents' },
+  { href: ROUTES.ISSUERS, key: 'issuers' },
+  { href: ROUTES.CONTINGENCIES, key: 'contingencies' },
+  { href: ROUTES.ALERTS, key: 'alerts' },
+  { href: ROUTES.CLIENT_SYSTEMS, key: 'clientSystems' },
+] as const;

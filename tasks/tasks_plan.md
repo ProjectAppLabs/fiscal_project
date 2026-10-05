@@ -13,9 +13,9 @@
 | Plantilla adaptada a Fiscal. (nombres, marca, MySQL, limpieza de features demo) | ✅ PR #2, 2026-10-04 | F1 |
 | Núcleo: sistemas cliente, emisores, certificados, rangos, documentos, cola | ✅ hecho y recorrido de punta a punta, 2026-10-04 | F1 |
 | Librería `dian/`: UBL, CUFE/CUDE, XAdES, SOAP | ✅ hecha sin red (PRs #8 a #11, 2026-10-04); la prueba real es el set de pruebas de F3 | F2 |
-| Habilitación de ProjectApp (set de pruebas) | ⏳ pendiente | F3 |
-| Notas, contingencias 04 y 03, entrega (AttachedDocument y PDF) | ⏳ pendiente | F4 |
-| Consola de operación (Next.js) | 🔄 mínima en F1 (tablero, documentos, detalle); la completa en F5 | F5 |
+| Habilitación de ProjectApp (set de pruebas) | ⏳ espera el certificado y el registro del software de ProjectApp | F3 |
+| Notas, contingencias 04 y 03, entrega (AttachedDocument y PDF), alertas y salud | ✅ hecho (PRs #13 a #16, 2026-10-05) | F4 |
+| Consola de operación (Next.js) | ✅ completa (PRs #17 a #19, 2026-10-05) | F5 |
 | Waiter conectado (plan en su repositorio) | ⏳ pendiente | F6 |
 | Piloto con un restaurante | ⏳ pendiente | F7 |
 

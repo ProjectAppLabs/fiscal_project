@@ -35,6 +35,9 @@ export const CONSOLE_DASHBOARD_HEALTH = ['@flow:console-dashboard-health', '@mod
 export const CONSOLE_ISSUERS_LIST = ['@flow:console-issuers-list', '@module:console', '@priority:P1'];
 export const CONSOLE_ISSUER_DETAIL = ['@flow:console-issuer-detail', '@module:console', '@priority:P1'];
 export const CONSOLE_CONTINGENCY_LETTER = ['@flow:console-contingency-letter', '@module:console', '@priority:P2'];
+export const CONSOLE_CONTINGENCIES = ['@flow:console-contingencies', '@module:console', '@priority:P1'];
+export const CONSOLE_ALERTS_RESOLVE = ['@flow:console-alerts-resolve', '@module:console', '@priority:P1'];
+export const CONSOLE_CLIENT_SYSTEMS = ['@flow:console-client-systems', '@module:console', '@priority:P2'];
 
 // ── i18n ──
 export const I18N_LOCALE_SWITCH = ['@flow:i18n-locale-switch', '@module:i18n', '@priority:P2'];

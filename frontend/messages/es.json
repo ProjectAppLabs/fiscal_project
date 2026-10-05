@@ -329,5 +329,69 @@
     "letterTo": "Hasta",
     "letterSubmit": "Descargar borrador",
     "letterError": "No se pudo generar la carta. Revisa las fechas."
+  },
+  "contingencies": {
+    "title": "Contingencias",
+    "subtitle": "Facturas que esperan a la DIAN. El plazo para transmitirlas es de 48 horas.",
+    "tableCaption": "Facturas en contingencia",
+    "empty": "No hay facturas en contingencia.",
+    "error": "No pudimos cargar las contingencias.",
+    "columns": {
+      "invoice": "Factura",
+      "issuer": "Emisor",
+      "kind": "Contingencia",
+      "started": "Desde",
+      "deadline": "Plazo",
+      "left": "Tiempo restante",
+      "attempts": "Intentos"
+    },
+    "kinds": {
+      "dian": "DIAN (tipo 04)",
+      "issuer": "Del emisor (tipo 03)"
+    },
+    "hoursLeft": "{hours} h",
+    "overdue": "Vencido hace {hours} h"
+  },
+  "alerts": {
+    "title": "Alertas",
+    "showResolved": "Mostrar también las resueltas",
+    "tableCaption": "Alertas",
+    "empty": "No hay alertas abiertas.",
+    "emptyAll": "No hay alertas.",
+    "error": "No pudimos cargar las alertas.",
+    "columns": {
+      "severity": "Severidad",
+      "kind": "Tipo",
+      "message": "Mensaje",
+      "issuer": "Emisor",
+      "created": "Creada",
+      "actions": "Acción"
+    },
+    "resolve": "Resolver",
+    "resolved": "Resuelta el {date}",
+    "resolveError": "No se pudo resolver la alerta.",
+    "service": "Todo el servicio",
+    "pageInfo": "Página {page} · {count} alertas",
+    "previous": "Anterior",
+    "next": "Siguiente",
+    "pagination": "Paginación de alertas"
+  },
+  "clientSystems": {
+    "title": "Sistemas cliente",
+    "tableCaption": "Sistemas cliente",
+    "empty": "No hay sistemas cliente.",
+    "error": "No pudimos cargar los sistemas cliente.",
+    "columns": {
+      "name": "Sistema",
+      "key": "Identificador de llave",
+      "webhook": "URL de avisos",
+      "secrets": "Secretos vigentes",
+      "issuers": "Emisores",
+      "notices": "Avisos",
+      "lastDelivered": "Último aviso entregado"
+    },
+    "noWebhook": "Sin URL de avisos",
+    "inactive": "Inactivo",
+    "noticesState": "{pending} pendientes · {failed} fallidos"
   }
 }
