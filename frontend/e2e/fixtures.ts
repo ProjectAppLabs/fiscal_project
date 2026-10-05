@@ -454,3 +454,46 @@ export const waiterClient = {
 export async function stubClientSystems(page: Page) {
   await page.route('**/api/console/client-systems/', (route) => fulfillJson(route, 200, { count: 1, results: [waiterClient] }));
 }
+
+// ── Console (onboarding and test set) ──
+
+/** Stub the onboarding steps; each POST answers like the backend for a valid step. */
+export async function stubOnboarding(page: Page) {
+  await page.route('**/api/console/client-systems/create/', (route) =>
+    fulfillJson(route, 201, { id: 7, name: 'ProjectApp', key_id: 'fk_projectapp', secret: 'secreto-que-solo-se-ve-una-vez' }),
+  );
+  await page.route('**/api/console/issuers/create/', (route) => fulfillJson(route, 201, { id: 3, nit: testIssuer.nit, legal_name: 'ProjectApp' }));
+  await page.route('**/api/console/issuers/3/certificate/', (route) =>
+    fulfillJson(route, 201, { id: 1, subject: 'CN=ProjectApp', not_after: '2027-10-05T00:00:00Z' }),
+  );
+  await page.route('**/api/console/issuers/3/software/', (route) => fulfillJson(route, 201, { environment: '2', software_id: 'sw-123', has_test_set: true }));
+  await page.route('**/api/console/issuers/3/ranges/', (route) => fulfillJson(route, 201, { id: 5, prefix: 'SETP' }));
+}
+
+const readyIssuer = { environment: true, certificate: true, software: true, test_set_id: true, range: true };
+
+export const runningTestSet = {
+  id: 9,
+  state: 'processing',
+  error: '',
+  created_at: '2026-10-05T12:00:00Z',
+  updated_at: '2026-10-05T12:00:00Z',
+  documents: [{ kind: 'invoice', full_number: 'SETP990000000', code: 'cufe-1', status: 'pending', messages: [], file_name: 'fv.xml' }],
+  phases: [{ name: 'invoices', zip_key: 'zip-1', errors: [] }],
+};
+
+/** Stub the test set of the test issuer: no run yet, starting creates one and checking accepts it. */
+export async function stubTestSet(page: Page) {
+  await page.route('**/api/console/issuers/3/test-set/', (route) =>
+    route.request().method() === 'POST'
+      ? fulfillJson(route, 201, runningTestSet)
+      : fulfillJson(route, 200, { readiness: readyIssuer, run: null }),
+  );
+  await page.route('**/api/console/test-sets/9/check/', (route) =>
+    fulfillJson(route, 200, {
+      ...runningTestSet,
+      state: 'accepted',
+      documents: runningTestSet.documents.map((document) => ({ ...document, status: 'accepted' })),
+    }),
+  );
+}

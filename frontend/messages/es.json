@@ -11,7 +11,8 @@
     "issuers": "Emisores",
     "contingencies": "Contingencias",
     "alerts": "Alertas",
-    "clientSystems": "Sistemas cliente"
+    "clientSystems": "Sistemas cliente",
+    "onboarding": "Inscribir emisor"
   },
   "footer": {
     "tagline": "Consola interna de facturación electrónica de ProjectApp."
@@ -267,7 +268,8 @@
     "pageInfo": "Página {page} · {count} emisores",
     "previous": "Anterior",
     "next": "Siguiente",
-    "pagination": "Paginación de emisores"
+    "pagination": "Paginación de emisores",
+    "enrol": "Inscribir emisor"
   },
   "issuerDetail": {
     "back": "Volver a emisores",
@@ -393,5 +395,125 @@
     "noWebhook": "Sin URL de avisos",
     "inactive": "Inactivo",
     "noticesState": "{pending} pendientes · {failed} fallidos"
+  },
+  "onboarding": {
+    "title": "Inscribir un emisor",
+    "subtitle": "Cinco pasos para que un comercio pueda correr el set de pruebas de la DIAN. Queda en ambiente de habilitación.",
+    "steps": {
+      "client": "Sistema cliente",
+      "issuer": "Emisor",
+      "certificate": "Certificado",
+      "software": "Software",
+      "range": "Numeración"
+    },
+    "stepOf": "Paso {current} de {total}",
+    "next": "Continuar",
+    "saving": "Guardando…",
+    "error": "No se pudo guardar este paso.",
+    "client": {
+      "title": "¿Por qué sistema llega el emisor?",
+      "existing": "Sistema cliente existente",
+      "choose": "Elige un sistema",
+      "orNew": "o crea uno nuevo",
+      "name": "Nombre del sistema nuevo",
+      "webhook": "URL de avisos (opcional)",
+      "create": "Crear sistema cliente",
+      "secretTitle": "Guarda este secreto ahora",
+      "secretBody": "Es la única vez que se muestra. El sistema lo usa para firmar sus llamadas a Fiscal.",
+      "keyId": "Identificador de llave",
+      "secret": "Secreto",
+      "secretSaved": "Ya lo guardé",
+      "useClient": "Usar este sistema"
+    },
+    "issuer": {
+      "title": "Datos del emisor tal como están en el RUT",
+      "nit": "NIT (sin dígito de verificación)",
+      "dv": "Dígito de verificación",
+      "personType": "Tipo de persona",
+      "personTypes": {
+        "1": "Persona jurídica",
+        "2": "Persona natural"
+      },
+      "legalName": "Razón social o nombre",
+      "tradeName": "Nombre comercial (opcional)",
+      "responsibilities": "Responsabilidades fiscales",
+      "taxScheme": "Tributo",
+      "taxSchemes": {
+        "01": "01 · IVA",
+        "04": "04 · INC",
+        "ZZ": "ZZ · No aplica"
+      },
+      "address": "Dirección",
+      "municipality": "Municipio (código DANE de 5 dígitos)",
+      "email": "Correo para facturación",
+      "phone": "Teléfono (opcional)"
+    },
+    "certificate": {
+      "title": "Certificado digital del emisor",
+      "body": "Archivo .p12 o .pfx con contraseña, de una entidad acreditada por la ONAC, con firma digital y no repudio. Se valida al subirlo y se guarda cifrado.",
+      "file": "Archivo del certificado",
+      "password": "Contraseña del certificado",
+      "loaded": "Certificado de {subject}, vence el {date}."
+    },
+    "software": {
+      "title": "Software registrado en la DIAN",
+      "body": "Los datos que entrega el portal de habilitación al registrar Fiscal. en el modo «Software propio».",
+      "softwareId": "Identificador del software",
+      "pin": "PIN del software",
+      "testSetId": "TestSetId"
+    },
+    "range": {
+      "title": "Rango de numeración de habilitación",
+      "body": "Precargado con el rango del ejemplo oficial de la DIAN. Compáralo con el que muestra el catálogo de participantes y pega la clave técnica.",
+      "resolution": "Número de resolución",
+      "prefix": "Prefijo",
+      "from": "Desde",
+      "to": "Hasta",
+      "validFrom": "Vigente desde",
+      "validTo": "Vigente hasta",
+      "technicalKey": "Clave técnica"
+    },
+    "done": {
+      "title": "Emisor inscrito",
+      "body": "Ya puede correr el set de pruebas desde su ficha.",
+      "open": "Ir a la ficha del emisor"
+    }
+  },
+  "testSet": {
+    "title": "Set de pruebas de la DIAN",
+    "readinessTitle": "Lo que necesita",
+    "readiness": {
+      "environment": "Ambiente de habilitación",
+      "certificate": "Certificado activo",
+      "software": "Software registrado",
+      "test_set_id": "TestSetId",
+      "range": "Rango vigente"
+    },
+    "invoices": "Facturas del set",
+    "start": "Iniciar set de pruebas",
+    "starting": "Enviando…",
+    "check": "Consultar a la DIAN",
+    "checking": "Consultando…",
+    "error": "No se pudo completar la acción.",
+    "states": {
+      "processing": "En proceso en la DIAN",
+      "accepted": "Aceptado",
+      "rejected": "Con rechazos",
+      "failed": "No se pudo enviar"
+    },
+    "docStatus": {
+      "pending": "Pendiente",
+      "accepted": "Aceptado",
+      "rejected": "Rechazado"
+    },
+    "tableCaption": "Documentos del set de pruebas",
+    "columns": {
+      "document": "Documento",
+      "kind": "Tipo",
+      "status": "Estado",
+      "messages": "Reglas de la DIAN"
+    },
+    "noRun": "Todavía no se ha corrido el set.",
+    "body": "Primero van las facturas; cuando la DIAN las acepta, siguen una nota crédito y una nota débito. Fiscal. consulta el resultado cada 2 minutos."
   }
 }

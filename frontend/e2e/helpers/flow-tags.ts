@@ -38,6 +38,8 @@ export const CONSOLE_CONTINGENCY_LETTER = ['@flow:console-contingency-letter', '
 export const CONSOLE_CONTINGENCIES = ['@flow:console-contingencies', '@module:console', '@priority:P1'];
 export const CONSOLE_ALERTS_RESOLVE = ['@flow:console-alerts-resolve', '@module:console', '@priority:P1'];
 export const CONSOLE_CLIENT_SYSTEMS = ['@flow:console-client-systems', '@module:console', '@priority:P2'];
+export const CONSOLE_ONBOARDING = ['@flow:console-onboarding', '@module:console', '@priority:P1'];
+export const CONSOLE_TEST_SET = ['@flow:console-test-set', '@module:console', '@priority:P1'];
 
 // ── i18n ──
 export const I18N_LOCALE_SWITCH = ['@flow:i18n-locale-switch', '@module:i18n', '@priority:P2'];

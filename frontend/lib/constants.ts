@@ -8,6 +8,7 @@ export const ROUTES = {
   CONTINGENCIES: '/contingencies',
   ALERTS: '/alerts',
   CLIENT_SYSTEMS: '/client-systems',
+  ONBOARDING: '/onboarding',
 } as const;
 
 export function documentDetailRoute(id: number | string): string {
