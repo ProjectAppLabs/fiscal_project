@@ -29,7 +29,7 @@ def test_admin_site_custom_sections():
     object_names = {model['object_name'] for section in app_list for model in section['models']}
     assert object_names == {
         'User', 'PasswordCode', 'StagingPhaseBanner', 'ClientSystem', 'Issuer', 'SoftwareRegistration',
-        'Certificate', 'NumberingRange', 'Document', 'DocumentEvent', 'Artifact', 'WebhookDelivery',
+        'Certificate', 'NumberingRange', 'Document', 'DocumentEvent', 'Artifact', 'WebhookDelivery', 'Alert',
     }
 
 
