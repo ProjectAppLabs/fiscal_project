@@ -22,3 +22,14 @@ SHA-256 `22705b20c8478485d956cb61476b0743bb5d16e45c4e5bed11023fc1e04adfea`, desc
 
 Al salir una caja de herramientas nueva se reemplazan estos archivos, se actualiza esta tabla con su SHA-256 y se
 corren las pruebas de catálogos.
+
+## Esquemas XSD (`xsd/`)
+
+Carpeta `XSD` de la misma caja de herramientas, sin cambios (`common/` y `maindoc/`). `dian/xsd.py` carga el esquema
+del documento junto con `DIAN_UBL_Structures.xsd`, para que `sts:DianExtensions` también se valide.
+
+**Inconsistencia conocida de la caja:** `DIAN_UBL_Structures.xsd` tipa `sts:ProviderID` y
+`sts:AuthorizationProviderID` con `coID2Type`, cuyo `schemeID` enumera tipos de documento (11, 13, 31…). En cambio, el
+anexo FE 1.9 (FAB22) y todos los ejemplos oficiales ponen ahí el dígito de verificación del NIT, así que todos los
+ejemplos de factura fallan en ese atributo. `dian/xsd.py` ignora solo ese error exacto. Algunos ejemplos antiguos
+también traen un `QRCode` con el formato anterior a la 1.9; el vigente es la URL de consulta (FAB36).

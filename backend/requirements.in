@@ -7,6 +7,8 @@ djangorestframework==3.18.0
 djangorestframework-simplejwt==5.5.1
 # Fiscal.: Fernet encryption of secrets at rest, .p12 certificates and XAdES signing (F2).
 cryptography==50.0.2
+# Fiscal.: UBL 2.1 XML, XSD validation and canonicalization for the DIAN (F2).
+lxml==6.1.3
 gunicorn==26.2.0
 huey==3.3.4
 mysqlclient==2.2.8
