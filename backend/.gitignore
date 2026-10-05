@@ -102,3 +102,4 @@ build/
 dist/
 *.egg-info/
 *.egg
+artifacts/

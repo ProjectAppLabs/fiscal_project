@@ -188,3 +188,45 @@ def silk_reports_cleanup():
 
     if deleted:
         logger.info('Silk reports cleanup: deleted %d file(s) older than %s.', deleted, cutoff)
+
+
+# ---------------------------------------------------------------------------
+# Fiscal.: transmission queue and notices. The database is the source of truth; these tasks only run the work,
+# so losing Redis never loses a document (the periodic sweeps pick up whatever is due).
+# ---------------------------------------------------------------------------
+
+from huey.contrib.djhuey import db_task  # noqa: E402
+
+
+@db_task()
+def transmit_due():
+    """Transmit what is due now; queued right after a document is received."""
+    from fiscal_app.services.emission import run_once
+
+    return run_once()
+
+
+@db_periodic_task(crontab(minute='*'))
+def transmit_due_every_minute():
+    """Safety sweep for retries, DIAN contingency polls and anything a lost task left behind."""
+    from fiscal_app.services.emission import run_once
+
+    return run_once()
+
+
+@db_task()
+def deliver_webhook(delivery_id):
+    """Deliver one notice to its client system."""
+    from fiscal_app.models import WebhookDelivery
+    from fiscal_app.services.webhooks import deliver
+
+    delivery = WebhookDelivery.objects.filter(pk=delivery_id, delivered_at__isnull=True).select_related('client').first()
+    return deliver(delivery) if delivery else False
+
+
+@db_periodic_task(crontab(minute='*'))
+def deliver_pending_webhooks():
+    """Retry notices that have not been acknowledged yet."""
+    from fiscal_app.services.webhooks import deliver, pending_deliveries
+
+    return sum(1 for delivery in pending_deliveries()[:100] if deliver(delivery))

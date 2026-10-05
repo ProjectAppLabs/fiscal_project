@@ -1,7 +1,7 @@
 # Fiscal. · Contrato v1 de la API para sistemas cliente
 
-> Estado: autenticación, emisores, certificados, software y rangos (F1 PR 3) y documentos con validación previa
-> (F1 PR 4). Los avisos de vuelta y la transmisión llegan en F1 PR 5. Reemplaza al borrador previo al inventario.
+> Estado: autenticación, emisores, certificados, software y rangos (F1 PR 3); documentos con validación previa
+> (F1 PR 4); transmisión, artefactos y avisos firmados (F1 PR 5). La transmisión es contra la DIAN simulada hasta F2. Reemplaza al borrador previo al inventario.
 
 API de máquina para los sistemas que usan Fiscal. (Waiter primero; después otras casas de software). Base:
 `/api/v1/`. Cuerpos JSON en UTF-8.
@@ -84,6 +84,8 @@ por campo.
 | `invalid_document` | 400 | El documento tiene problemas que la DIAN rechazaría; ver `problems` |
 | `idempotency_conflict`, `duplicate_number` | 409 | Misma clave con otro contenido; número repetido |
 | `document_not_found` | 404 | El documento no existe en **este** sistema cliente |
+| `artifact_not_found` | 404 | El documento todavía no tiene ese archivo |
+| `artifact_unavailable` | 503 | El archivo no se pudo leer o no coincide con su huella registrada |
 
 ## Emisores
 
@@ -254,3 +256,46 @@ una vez:
 
 Estado del documento (`queued`, `transmitting`, `validated`, `rejected`, `contingency_dian` o `contingency_issuer`),
 CUFE o CUDE, URL del QR, errores de la DIAN, intentos, factura original (en las notas) y su historia de eventos.
+
+### `GET /api/v1/documents/{id}/artifacts/{kind}/`
+
+Descarga el archivo más reciente de un tipo:
+- `signed_xml`: XML firmado;
+- `dian_response`: respuesta de la DIAN;
+- `attached_document`: el contenedor que se entrega al comprador (F4);
+- `pdf`: representación gráfica (F4).
+
+La respuesta trae el contenido con su tipo y la cabecera `X-Fiscal-SHA256`. Antes de entregarlo, Fiscal. verifica que
+el archivo coincide con la huella que registró al guardarlo. Los archivos se conservan 10 años.
+
+## Transmisión
+
+Al recibir un documento, Fiscal. lo encola y lo transmite: apenas llega, y además con un barrido cada minuto. Los
+estados son:
+
+| Estado | Qué significa |
+|---|---|
+| `queued` | En cola o esperando un reintento. Una nota también espera aquí a que su factura tenga CUFE |
+| `transmitting` | Un trabajador la está enviando |
+| `validated` | La DIAN la validó: trae `cufe`, `qr_url` y los artefactos `signed_xml` y `dian_response` |
+| `rejected` | La DIAN la rechazó: `errors` trae las reglas incumplidas |
+| `contingency_dian` | La DIAN no respondió tras los reintentos del anexo (§12.4): 3 a los 5 s ante un error del servicio y 5 cada 2 minutos ante una demora. Fiscal. vuelve a intentar cada 30 minutos (el tipo 04 completo llega en F4) |
+
+El número y el CUFE de un documento nunca cambian entre reintentos.
+
+## Avisos al sistema cliente
+
+Cada vez que un documento queda `validated`, `rejected` o entra en `contingency_dian`, Fiscal. hace `POST` al
+`webhook_url` del sistema cliente:
+
+```json
+{"event": "document.state_changed", "document": { "…": "lo mismo que GET /api/v1/documents/{id}/, sin events" }}
+```
+
+- **Firma:** las mismas tres cabeceras `X-Fiscal-*`, con el secreto vigente del cliente. El texto canónico usa la ruta y
+  la consulta del `webhook_url`. **El sistema cliente debe verificar la firma y la hora antes de creer el aviso**, y
+  aceptar esa ruta solo desde la red de Fiscal.
+- **Reintentos:** un `2xx` lo da por entregado. Si no, se reintenta a los 30 s, 1 min, 5 min, 15 min y luego cada hora,
+  hasta 30 intentos.
+- **Respaldo:** el sistema cliente también puede consultar `GET /api/v1/documents/{id}/` de sus pendientes, por si un
+  aviso se pierde.

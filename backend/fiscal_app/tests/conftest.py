@@ -218,3 +218,18 @@ def document_envelope(ready_issuer):
         return envelope
 
     return build
+
+
+@pytest.fixture(autouse=True)
+def artifacts_dir(settings, tmp_path):
+    """Every test stores artifacts in its own temporary directory, never in the real store."""
+    settings.FISCAL_ARTIFACTS_DIR = str(tmp_path / 'artifacts')
+    return tmp_path / 'artifacts'
+
+
+@pytest.fixture
+def queued_document(ready_issuer, make_document):
+    """A queued invoice of the ready issuer, due now."""
+    from django.utils import timezone
+
+    return make_document(next_attempt_at=timezone.now())

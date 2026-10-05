@@ -64,6 +64,7 @@ def submit_document(client, envelope: dict) -> tuple[Document, bool]:
                 state=DocumentState.QUEUED,
             )
             DocumentEvent.objects.create(document=created, state=DocumentState.QUEUED, detail={'source': 'api'})
+            transaction.on_commit(_schedule_transmission)
     except IntegrityError as error:
         # Two concurrent submissions with the same key: one wins, the other gets the same document.
         existing = Document.objects.filter(client=client, idempotency_key=key).first()
@@ -137,3 +138,9 @@ def _check_original(client, issuer, kind, normalized, problems):
             'La factura referenciada no existe para este emisor en Fiscal.',
         ))
     return original
+
+
+def _schedule_transmission():
+    from fiscal_project.tasks import transmit_due
+
+    transmit_due()
