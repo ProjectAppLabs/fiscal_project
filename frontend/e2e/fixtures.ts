@@ -479,7 +479,7 @@ export const runningTestSet = {
   created_at: '2026-10-05T12:00:00Z',
   updated_at: '2026-10-05T12:00:00Z',
   documents: [{ kind: 'invoice', full_number: 'SETP990000000', code: 'cufe-1', status: 'pending', messages: [], file_name: 'fv.xml' }],
-  phases: [{ name: 'invoices', zip_key: 'zip-1', errors: [] }],
+  phases: [{ name: 'invoices', zip_key: 'zip-1', errors: [], dian_status: 'Batch en proceso de validación.' }],
 };
 
 /** Stub the test set of the test issuer: no run yet, starting creates one and checking accepts it. */

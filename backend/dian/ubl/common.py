@@ -6,7 +6,7 @@ from decimal import ROUND_HALF_EVEN, Decimal
 from lxml import etree
 
 from dian import codes
-from dian.catalogs import code_list
+from dian.catalogs import ALLOWANCE_CHARGE_REASONS, code_list, responsibilities
 
 NS = {
     'inv': 'urn:oasis:names:specification:ubl:schema:xsd:Invoice-2',
@@ -133,7 +133,7 @@ def party_block(parent, party: Party, *, is_issuer: bool, prefix: str = ''):
     sub(scheme, 'cbc:RegistrationName', party.legal_name)
     company_id(scheme, 'cbc:CompanyID', party)
     # Several responsibilities go together, separated by ';' (FAK26).
-    sub(scheme, 'cbc:TaxLevelCode', ';'.join(party.tax_responsibilities) or 'R-99-PN')
+    sub(scheme, 'cbc:TaxLevelCode', ';'.join(responsibilities(party.tax_responsibilities)))
     if party.address:
         address_block(scheme, 'cac:RegistrationAddress', party.address)
     tax_scheme(scheme, party.tax_scheme)
@@ -178,7 +178,8 @@ def allowance_charge_block(parent, index: int, item: AllowanceCharge):
     sub(node, 'cbc:ID', index)
     sub(node, 'cbc:ChargeIndicator', 'true' if item.is_charge else 'false')
     sub(node, 'cbc:AllowanceChargeReasonCode', item.code)
-    sub(node, 'cbc:AllowanceChargeReason', item.reason or ('Recargo' if item.is_charge else 'Descuento'))
+    # FAQ04a: the reason is the official name of the code; the business's own wording lives in the client system.
+    sub(node, 'cbc:AllowanceChargeReason', ALLOWANCE_CHARGE_REASONS.get(item.code, item.reason))
     if item.base_amount:
         sub(node, 'cbc:MultiplierFactorNumeric', money(item.amount * 100 / item.base_amount))
     amount(node, 'cbc:Amount', item.amount)

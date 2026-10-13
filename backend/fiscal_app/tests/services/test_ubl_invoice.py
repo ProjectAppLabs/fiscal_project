@@ -4,12 +4,12 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 
 import pytest
+
 from dian.codes import qr_url
 from dian.ubl.common import NS
 from dian.ubl.invoice import build_invoice, code_input
 from dian.xsd import errors
-
-from fiscal_app.models import SoftwareRegistration
+from fiscal_app.models import Document, SoftwareRegistration
 from fiscal_app.services.document_validation import validate_document
 from fiscal_app.services.ubl_mapping import document_spec, resolution_of
 from fiscal_app.tests.conftest import restaurant_bill
@@ -174,3 +174,29 @@ def test_delivery_address_uses_dane_names(delivery_to_company):
     address = delivery_to_company.root.find('cac:Delivery/cac:DeliveryAddress', NS)
 
     assert (text(address, 'cbc:CityName'), text(address, 'cbc:CountrySubentity')) == ('Medellín', 'Antioquia')
+
+
+@pytest.mark.django_db
+def test_issuer_without_responsibilities_is_r99pn(built, ready_issuer):
+    """Fails if an issuer stored with the genericode «ZZ» is sent as ZZ: the DIAN rejects it (FAJ26, table 13.2.6.1)."""
+    _spec, _invoice = built
+    ready_issuer.tax_responsibilities = ['ZZ']
+    ready_issuer.save()
+
+    invoice = build_invoice(document_spec(Document.objects.first(), SoftwareRegistration.objects.get(issuer=ready_issuer)),
+                            resolution_of(ready_issuer.numbering_ranges.first()))
+
+    assert text(invoice.root, 'cac:AccountingSupplierParty/cac:Party/cac:PartyTaxScheme/cbc:TaxLevelCode') == 'R-99-PN'
+
+
+@pytest.mark.django_db
+def test_charge_reasons_are_the_official_names(built):
+    """Fails if a discount or the tip carries free text instead of the name of its code (FAQ04a, table 13.3.8)."""
+    _spec, invoice = built
+
+    reasons = {
+        node.findtext('cbc:AllowanceChargeReasonCode', namespaces=NS): node.findtext('cbc:AllowanceChargeReason', namespaces=NS)
+        for node in invoice.root.findall('cac:AllowanceCharge', NS)
+    }
+
+    assert reasons == {'00': 'Descuento no condicionado', '03': 'Recargo condicionado'}

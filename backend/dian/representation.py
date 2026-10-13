@@ -185,7 +185,9 @@ def _totals_table(data, style):
     rows = [['Subtotal (valor bruto)', _money(data.text('cbc:LineExtensionAmount', data.totals))]]
     for adjustment in data.root.findall('cac:AllowanceCharge', NS):
         is_charge = data.text('cbc:ChargeIndicator', adjustment) == 'true'
-        reason = data.text('cbc:AllowanceChargeReason', adjustment) or ('Recargo' if is_charge else 'Descuento')
+        # Code 03 is the tip (table 13.3.8): print «Propina», not «Recargo condicionado».
+        code = data.text('cbc:AllowanceChargeReasonCode', adjustment)
+        reason = 'Propina' if code == '03' else data.text('cbc:AllowanceChargeReason', adjustment) or ('Recargo' if is_charge else 'Descuento')
         sign = '' if is_charge else '-'
         rows.append([reason, sign + _money(data.text('cbc:Amount', adjustment))])
     for subtotal in data.root.findall('cac:TaxTotal/cac:TaxSubtotal', NS):

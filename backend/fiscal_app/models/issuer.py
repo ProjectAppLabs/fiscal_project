@@ -13,7 +13,7 @@ class Issuer(models.Model):
     person_type = models.CharField(max_length=1, choices=PersonType.choices)
     legal_name = models.CharField(max_length=450)
     trade_name = models.CharField(max_length=450, blank=True, default='')
-    # TipoResponsabilidad-2.1 codes (e.g. O-13, O-15, O-23, O-47, ZZ); validated against the DIAN list in PR 4.
+    # Responsibilities of table 13.2.6.1 (O-13, O-15, O-23, O-47 or R-99-PN), see dian.catalogs.RESPONSIBILITIES.
     tax_responsibilities = models.JSONField(default=list, blank=True)
     # TipoImpuesto-2.1 code of the issuer's tax scheme (01 IVA, 04 INC, ZZ not applicable).
     tax_scheme = models.CharField(max_length=2, default='01')
