@@ -1,6 +1,7 @@
 """Tests for the real DIAN gateway inside the emission queue, against recorded answers (no network)."""
 
 import io
+import re
 import zipfile
 from datetime import datetime
 from zoneinfo import ZoneInfo
@@ -71,7 +72,6 @@ def test_accepted_invoice_is_validated_with_its_cufe(invoice):
 
 
 @pytest.mark.django_db
-@freeze_time('2026-10-04 18:00:00')
 def test_sent_zip_holds_the_signed_invoice(invoice):
     """Fails if the DIAN receives anything but one signed XML named as the annex says (§6.5.7)."""
     dian, session = gateway(Reply(200, ACCEPTED))
@@ -80,7 +80,8 @@ def test_sent_zip_holds_the_signed_invoice(invoice):
 
     with sent_zip(session.requests[0]) as archive:
         (name,) = archive.namelist()
-        assert name == f'fv{int(invoice.issuer.nit):010d}0002600000001.xml'
+        # No frozen clock: the test certificate is issued for the real date, so signing in the past would fail.
+        assert re.fullmatch(rf'fv{int(invoice.issuer.nit):010d}000\d{{2}}00000001\.xml', name)
         assert signing.verify(etree.fromstring(archive.read(name))).subject.rfc4514_string() == 'CN=Restaurante de Prueba SAS'
 
 
