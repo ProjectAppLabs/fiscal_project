@@ -21,6 +21,9 @@ class TestSetRun(models.Model):
     issuer = models.ForeignKey(Issuer, on_delete=models.CASCADE, related_name='test_set_runs')
     test_set_id = models.CharField(max_length=80)
     state = models.CharField(max_length=10, choices=State.choices, default=State.PROCESSING)
+    # Notes requested for this run; they are sent once the invoices are accepted.
+    credit_notes = models.PositiveSmallIntegerField(default=0)
+    debit_notes = models.PositiveSmallIntegerField(default=0)
     entries = models.JSONField(default=list)
     phases = models.JSONField(default=list)
     error = models.CharField(max_length=500, blank=True, default='')

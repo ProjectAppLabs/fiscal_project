@@ -71,7 +71,7 @@ def test_invoices_go_first_signed_in_one_zip_with_the_test_set_id(habilitation_i
     """Fails if the invoices of the set are not signed, named as §6.5.7 and sent with the issuer's TestSetId."""
     factory, session = client_with(receipt())
 
-    run = test_set.start(habilitation_issuer, invoices=3, client_factory=factory)
+    run = test_set.start(habilitation_issuer, credit_notes=1, debit_notes=1, invoices=3, client_factory=factory)
 
     files = sent_files(session.requests[0])
     assert run.state == TestSetRun.State.PROCESSING
@@ -85,7 +85,7 @@ def test_invoices_go_first_signed_in_one_zip_with_the_test_set_id(habilitation_i
 def test_notes_follow_once_the_invoices_are_accepted(habilitation_issuer):
     """Fails if the notes are not sent after the invoices, referencing the first invoice's CUFE."""
     factory, session = client_with(receipt(), Reply(200, b''))
-    run = test_set.start(habilitation_issuer, invoices=2, client_factory=factory)
+    run = test_set.start(habilitation_issuer, credit_notes=1, debit_notes=1, invoices=2, client_factory=factory)
     codes = [entry['code'] for entry in run.entries]
     factory, session = client_with(zip_status([(code, True, []) for code in codes]), receipt('zip-notas'))
 
@@ -102,7 +102,7 @@ def test_notes_follow_once_the_invoices_are_accepted(habilitation_issuer):
 def test_set_is_accepted_when_every_document_is(habilitation_issuer):
     """Fails if a set whose invoices and notes were all accepted is not reported as accepted."""
     factory, _session = client_with(receipt())
-    run = test_set.start(habilitation_issuer, invoices=1, client_factory=factory)
+    run = test_set.start(habilitation_issuer, credit_notes=1, debit_notes=1, invoices=1, client_factory=factory)
     factory, _session = client_with(zip_status([(run.entries[0]['code'], True, [])]), receipt('zip-notas'))
     run = test_set.check(run, client_factory=factory)
     notes = [entry['code'] for entry in run.entries if entry['kind'] != 'invoice']
@@ -118,7 +118,7 @@ def test_set_is_accepted_when_every_document_is(habilitation_issuer):
 def test_rejected_document_shows_its_rules(habilitation_issuer):
     """Fails if a rejection in the set loses the DIAN rule the operator must fix."""
     factory, _session = client_with(receipt())
-    run = test_set.start(habilitation_issuer, invoices=1, client_factory=factory)
+    run = test_set.start(habilitation_issuer, credit_notes=1, debit_notes=1, invoices=1, client_factory=factory)
     rule = 'Regla: FAJ43b, Rechazo: Nombre informado No corresponde al registrado en el RUT.'
     factory, _session = client_with(zip_status([(run.entries[0]['code'], False, [rule])]))
 
@@ -133,8 +133,8 @@ def test_numbers_never_repeat_across_runs(habilitation_issuer):
     """Fails if a second run reuses the numbers of the first, which the DIAN rejects (rule 90)."""
     factory, _session = client_with(receipt(), receipt('otro'))
 
-    first = test_set.start(habilitation_issuer, invoices=2, client_factory=factory)
-    second = test_set.start(habilitation_issuer, invoices=2, client_factory=factory)
+    first = test_set.start(habilitation_issuer, credit_notes=1, debit_notes=1, invoices=2, client_factory=factory)
+    second = test_set.start(habilitation_issuer, credit_notes=1, debit_notes=1, invoices=2, client_factory=factory)
 
     assert [entry['number'] for entry in first.entries] == [990000000, 990000001]
     assert [entry['number'] for entry in second.entries] == [990000002, 990000003]
@@ -146,7 +146,7 @@ def test_failed_upload_is_recorded(habilitation_issuer):
     fault = b'<s:Envelope xmlns:s="http://www.w3.org/2003/05/soap-envelope"><s:Body><s:Fault><s:Reason><s:Text>Sin permiso</s:Text></s:Reason></s:Fault></s:Body></s:Envelope>'
     factory, _session = client_with(Reply(400, fault))
 
-    run = test_set.start(habilitation_issuer, invoices=1, client_factory=factory)
+    run = test_set.start(habilitation_issuer, credit_notes=1, debit_notes=1, invoices=1, client_factory=factory)
 
     assert run.state == TestSetRun.State.FAILED
     assert 'Sin permiso' in run.error
@@ -159,7 +159,7 @@ def test_short_range_fails_without_sending(habilitation_issuer, invoice_range):
     invoice_range.save()
     factory, session = client_with()
 
-    run = test_set.start(habilitation_issuer, invoices=5, client_factory=factory)
+    run = test_set.start(habilitation_issuer, credit_notes=1, debit_notes=1, invoices=5, client_factory=factory)
 
     assert run.state == TestSetRun.State.FAILED
     assert session.requests == []
@@ -169,10 +169,41 @@ def test_short_range_fails_without_sending(habilitation_issuer, invoice_range):
 def test_pending_answers_keep_the_run_open(habilitation_issuer):
     """Fails if a ZIP the DIAN is still processing (no answers yet) closes the run."""
     factory, _session = client_with(receipt())
-    run = test_set.start(habilitation_issuer, invoices=1, client_factory=factory)
+    run = test_set.start(habilitation_issuer, credit_notes=1, debit_notes=1, invoices=1, client_factory=factory)
     factory, _session = client_with(zip_status([]))
 
     run = test_set.check(run, client_factory=factory)
 
     assert run.state == TestSetRun.State.PROCESSING
     assert run.entries[0]['status'] == 'pending'
+
+
+@pytest.mark.django_db
+def test_notes_follow_the_size_the_dian_asks_for(habilitation_issuer):
+    """Fails if the set sends a different number of notes than its TestSetId requires (e.g. 10 and 10)."""
+    factory, _session = client_with(receipt())
+    run = test_set.start(habilitation_issuer, invoices=2, credit_notes=3, debit_notes=2, client_factory=factory)
+    codes = [entry['code'] for entry in run.entries]
+    factory, session = client_with(zip_status([(code, True, []) for code in codes]), receipt('zip-notas'))
+
+    test_set.check(run, client_factory=factory)
+
+    notes = sent_files(session.requests[1])
+    assert sorted(name[:2] for name in notes) == ['nc', 'nc', 'nc', 'nd', 'nd']
+    referenced = {root.findtext('cac:BillingReference/cac:InvoiceDocumentReference/cbc:UUID', namespaces=NS) for root in notes.values()}
+    assert referenced == set(codes)
+    numbers = sorted(root.findtext('cbc:ID', namespaces=NS) for root in notes.values())
+    assert numbers == ['NC1', 'NC2', 'NC3', 'ND1', 'ND2']
+
+
+@pytest.mark.django_db
+def test_set_without_notes_is_accepted_with_its_invoices(habilitation_issuer):
+    """Fails if a set that asks for no notes waits forever for a notes phase that never comes."""
+    factory, _session = client_with(receipt())
+    run = test_set.start(habilitation_issuer, invoices=1, credit_notes=0, debit_notes=0, client_factory=factory)
+    factory, session = client_with(zip_status([(run.entries[0]['code'], True, [])]))
+
+    run = test_set.check(run, client_factory=factory)
+
+    assert run.state == TestSetRun.State.ACCEPTED
+    assert len(session.requests) == 1

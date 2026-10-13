@@ -139,11 +139,21 @@ def console_test_set(request, issuer_id):
     if request.method == 'GET':
         run = issuer.test_set_runs.first()
         return Response({'readiness': test_set.readiness(issuer), 'run': _run(run) if run else None})
-    invoices = request.data.get('invoices', test_set.SET_INVOICES)
-    if not isinstance(invoices, int) or not 1 <= invoices <= 100:
-        return Response({'invoices': ['Indica entre 1 y 100 facturas.']}, status=status.HTTP_400_BAD_REQUEST)
+    sizes = {
+        'invoices': request.data.get('invoices', test_set.SET_INVOICES),
+        'credit_notes': request.data.get('credit_notes', test_set.SET_CREDIT_NOTES),
+        'debit_notes': request.data.get('debit_notes', test_set.SET_DEBIT_NOTES),
+    }
+    # At most 50 documents per ZIP (annex §7.8); the invoices go in one ZIP and the notes in another.
+    errors = {name: ['Indica entre 0 y 50.'] for name, value in sizes.items() if not isinstance(value, int) or not 0 <= value <= 50}
+    if sizes['invoices'] == 0:
+        errors['invoices'] = ['El set necesita al menos una factura.']
+    if sizes['credit_notes'] + sizes['debit_notes'] > 50:
+        errors['notes'] = ['Las notas crédito y débito no pueden pasar de 50 en total.']
+    if errors:
+        return Response(errors, status=status.HTTP_400_BAD_REQUEST)
     try:
-        run = test_set.start(issuer, invoices=invoices)
+        run = test_set.start(issuer, **sizes)
     except test_set.TestSetError as error:
         return Response({'code': 'not_ready', 'detail': str(error)}, status=status.HTTP_409_CONFLICT)
     logger.info('Set de pruebas %s iniciado para el emisor %s (operador %s)', run.pk, issuer.pk, request.user.pk)

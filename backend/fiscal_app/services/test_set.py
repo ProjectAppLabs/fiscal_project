@@ -1,9 +1,9 @@
 """The DIAN test set of an issuer in habilitación (annex FE 1.9 §7.9 SendTestSetAsync and §7.12 GetStatusZip).
 
-The set is sent in two phases. First the invoices; once the DIAN accepts them, a credit note and a debit note that
-reference the first invoice, so their BillingReference points to a CUFE the DIAN already knows. The default size is
-what the DIAN micrositio shows today (8 invoices, 1 credit note, 1 debit note); the catalog of each TestSetId
-decides, so the number of invoices can be raised.
+The set is sent in two phases. First the invoices; once the DIAN accepts them, the credit and debit notes, each one
+referencing an accepted invoice, so their BillingReference points to a CUFE the DIAN already knows. The size comes
+from the catalog of each TestSetId: the defaults are those of ProjectApp's first TestSetId (2026-10-13: 30 invoices,
+10 credit notes, 10 debit notes; the micrositio still says 8, 1 and 1).
 
 Numbers come from the issuer's habilitación range and never repeat across runs (rule 90).
 """
@@ -40,7 +40,9 @@ from fiscal_app.services.ubl_mapping import (
 )
 
 logger = logging.getLogger(__name__)
-SET_INVOICES = 8
+SET_INVOICES = 30
+SET_CREDIT_NOTES = 10
+SET_DEBIT_NOTES = 10
 NOTE_PREFIXES = {DocumentKind.CREDIT_NOTE: 'NC', DocumentKind.DEBIT_NOTE: 'ND'}
 NOTE_CONCEPTS = {DocumentKind.CREDIT_NOTE: '2', DocumentKind.DEBIT_NOTE: '4'}
 # A restaurant bill (contract v1): two lines with INC 8 %, points redemption and a 10 % tip; payable 45.622.
@@ -90,14 +92,16 @@ def readiness(issuer: Issuer) -> dict:
     }
 
 
-def start(issuer: Issuer, invoices: int = SET_INVOICES, client_factory=default_client) -> TestSetRun:
+def start(issuer: Issuer, invoices: int = SET_INVOICES, credit_notes: int = SET_CREDIT_NOTES,
+          debit_notes: int = SET_DEBIT_NOTES, client_factory=default_client) -> TestSetRun:
     """Build, sign and send the invoices of the set; the notes follow when the DIAN accepts them."""
     missing = [name for name, ready in readiness(issuer).items() if not ready]
     if missing:
         raise TestSetError(f'Al emisor le falta: {", ".join(MISSING_LABELS[name] for name in missing)}.')
     software, numbering = _software(issuer), _range(issuer)
     credentials = credentials_of(active_certificate(issuer))
-    run = TestSetRun.objects.create(issuer=issuer, test_set_id=software.test_set_id)
+    run = TestSetRun.objects.create(issuer=issuer, test_set_id=software.test_set_id, credit_notes=credit_notes,
+                                    debit_notes=debit_notes)
     first = _next_number(issuer, numbering)
     if first + invoices - 1 > numbering.number_to:
         run.state, run.error = TestSetRun.State.FAILED, 'El rango de habilitación no tiene números suficientes.'
@@ -138,7 +142,8 @@ def check(run: TestSetRun, client_factory=default_client) -> TestSetRun:
             entry['messages'] = [message.as_dict() for message in response.messages]
         phase['done'] = all(by_code[code]['status'] != 'pending' for code in phase['codes'])
     run.error = ''
-    if _phase_accepted(run, 'invoices') and not any(phase['name'] == 'notes' for phase in run.phases):
+    if (_phase_accepted(run, 'invoices') and _notes_planned(run)
+            and not any(phase['name'] == 'notes' for phase in run.phases)):
         _send_notes(run, credentials, client_factory)
     run.state = _state(run)
     run.save()
@@ -146,20 +151,29 @@ def check(run: TestSetRun, client_factory=default_client) -> TestSetRun:
 
 
 def _send_notes(run, credentials, client_factory):
+    """The credit and debit notes of the set, each one correcting an accepted invoice (in turn)."""
     issuer = run.issuer
     software = _software(issuer)
-    invoice_entry = next(entry for entry in run.entries if entry['kind'] == DocumentKind.INVOICE)
     numbering = _range(issuer)
-    original = _document(issuer, DocumentKind.INVOICE, numbering.prefix, invoice_entry['number'], timezone.now(),
-                         numbering=numbering)
-    original.cufe = invoice_entry['code']
-    original.issue_datetime = datetime.fromisoformat(invoice_entry['issued_at'])
+    invoices = [entry for entry in run.entries if entry['kind'] == DocumentKind.INVOICE]
     built = []
-    for kind, prefix in NOTE_PREFIXES.items():
-        number = _next_note_number(issuer, prefix)
-        note = _document(issuer, kind, prefix, number, timezone.now(), original=original)
-        built.append(_signed(note, software, credentials))
+    for kind, count in ((DocumentKind.CREDIT_NOTE, run.credit_notes), (DocumentKind.DEBIT_NOTE, run.debit_notes)):
+        prefix = NOTE_PREFIXES[kind]
+        first = _next_note_number(issuer, prefix)
+        for index in range(count):
+            original = _original(issuer, numbering, invoices[index % len(invoices)])
+            note = _document(issuer, kind, prefix, first + index, timezone.now(), original=original)
+            built.append(_signed(note, software, credentials))
     _send(run, 'notes', built, credentials, client_factory)
+
+
+def _original(issuer, numbering, entry):
+    """An accepted invoice of the set, rebuilt with its CUFE and issue time, for a note to reference."""
+    original = _document(issuer, DocumentKind.INVOICE, numbering.prefix, entry['number'], timezone.now(),
+                         numbering=numbering)
+    original.cufe = entry['code']
+    original.issue_datetime = datetime.fromisoformat(entry['issued_at'])
+    return original
 
 
 def _send(run, name, built, credentials, client_factory):
@@ -248,6 +262,10 @@ def _next_note_number(issuer, prefix):
     return _used_numbers(issuer, prefix) + 1
 
 
+def _notes_planned(run):
+    return run.credit_notes + run.debit_notes > 0
+
+
 def _phase_accepted(run, name):
     phase = next((phase for phase in run.phases if phase['name'] == name), None)
     if phase is None:
@@ -260,8 +278,8 @@ def _state(run):
     statuses = [entry['status'] for entry in run.entries]
     if 'rejected' in statuses:
         return TestSetRun.State.REJECTED
-    notes_sent = any(phase['name'] == 'notes' for phase in run.phases)
-    if notes_sent and statuses and all(status == 'accepted' for status in statuses):
+    notes_done = not _notes_planned(run) or any(phase['name'] == 'notes' for phase in run.phases)
+    if notes_done and statuses and all(status == 'accepted' for status in statuses):
         return TestSetRun.State.ACCEPTED
     return TestSetRun.State.PROCESSING
 

@@ -66,11 +66,11 @@ describe('onboarding service', () => {
 
   it('reads, starts and checks the test set', async () => {
     await fetchTestSet(3);
-    await startTestSet(3, 8);
+    await startTestSet(3, { invoices: 30, credit_notes: 10, debit_notes: 10 });
     await checkTestSet(9);
 
     expect(mockGet).toHaveBeenCalledWith('console/issuers/3/test-set/');
-    expect(mockPost).toHaveBeenNthCalledWith(1, 'console/issuers/3/test-set/', { invoices: 8 });
+    expect(mockPost).toHaveBeenNthCalledWith(1, 'console/issuers/3/test-set/', { invoices: 30, credit_notes: 10, debit_notes: 10 });
     expect(mockPost).toHaveBeenNthCalledWith(2, 'console/test-sets/9/check/');
   });
 

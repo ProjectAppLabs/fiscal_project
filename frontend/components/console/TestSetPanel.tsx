@@ -5,19 +5,21 @@ import { FormEvent, useEffect, useState } from 'react';
 
 import { formatDateTime } from '@/lib/format';
 import {
-  DEFAULT_TEST_SET_INVOICES,
+  DEFAULT_TEST_SET_SIZE,
   checkTestSet,
   fetchTestSet,
   startTestSet,
   stepErrors,
   type TestSetReadiness,
   type TestSetRun,
+  type TestSetSize,
 } from '@/lib/services/onboarding';
 
 const CARD_CLASS = 'rounded-2xl border border-border bg-card p-6';
 const BUTTON_CLASS =
   'rounded-full border border-border px-4 py-2 text-sm hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50';
 const READINESS_KEYS = ['environment', 'certificate', 'software', 'test_set_id', 'range'] as const;
+const SIZE_FIELDS = ['invoices', 'credit_notes', 'debit_notes'] as const;
 const STATE_TONE: Record<TestSetRun['state'], string> = {
   processing: 'text-foreground',
   accepted: 'text-success',
@@ -31,7 +33,7 @@ export function TestSetPanel({ issuerId }: { issuerId: number }) {
   const locale = useLocale();
   const [readiness, setReadiness] = useState<TestSetReadiness | null>(null);
   const [run, setRun] = useState<TestSetRun | null>(null);
-  const [invoices, setInvoices] = useState(DEFAULT_TEST_SET_INVOICES);
+  const [size, setSize] = useState<TestSetSize>({ ...DEFAULT_TEST_SET_SIZE });
   const [busy, setBusy] = useState<'start' | 'check' | null>(null);
   const [errors, setErrors] = useState<string[] | null>(null);
 
@@ -89,23 +91,25 @@ export function TestSetPanel({ issuerId }: { issuerId: number }) {
         className="mt-4 flex flex-wrap items-end gap-3"
         onSubmit={(e: FormEvent) => {
           e.preventDefault();
-          void act('start', () => startTestSet(issuerId, invoices));
+          void act('start', () => startTestSet(issuerId, size));
         }}
       >
-        <div>
-          <label className="mb-1 block text-sm" htmlFor="test-set-invoices">
-            {t('invoices')}
-          </label>
-          <input
-            id="test-set-invoices"
-            className="w-24 rounded-xl border border-border bg-card px-3 py-2 text-sm"
-            max={100}
-            min={1}
-            type="number"
-            value={invoices}
-            onChange={(e) => setInvoices(Number(e.target.value))}
-          />
-        </div>
+        {SIZE_FIELDS.map((field) => (
+          <div key={field}>
+            <label className="mb-1 block text-sm" htmlFor={`test-set-${field}`}>
+              {t(`size.${field}`)}
+            </label>
+            <input
+              id={`test-set-${field}`}
+              className="w-24 rounded-xl border border-border bg-card px-3 py-2 text-sm"
+              max={50}
+              min={field === 'invoices' ? 1 : 0}
+              type="number"
+              value={size[field]}
+              onChange={(e) => setSize((current) => ({ ...current, [field]: Number(e.target.value) }))}
+            />
+          </div>
+        ))}
         <button className={BUTTON_CLASS} disabled={!ready || busy !== null || run?.state === 'processing'} type="submit">
           {busy === 'start' ? t('starting') : t('start')}
         </button>
