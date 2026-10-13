@@ -132,3 +132,12 @@ test-results/test-quality-report.json
 
 # Rotated logs (RotatingFileHandler: django.log.1, .2, ...)
 *.log.[0-9]*
+
+# Certificates and private keys never enter the repository: they are loaded through the console and stored encrypted.
+*.p12
+*.pfx
+*.pem
+*.key
+*.cer
+*.crt
+*.csr
