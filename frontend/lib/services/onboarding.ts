@@ -18,7 +18,10 @@ export const HABILITATION_RANGE = {
   valid_to: '2030-01-19',
 } as const;
 
-export const DEFAULT_TEST_SET_INVOICES = 8;
+/** Size of ProjectApp's first TestSetId (2026-10-13); each TestSetId shows its own in the habilitación catalog. */
+export const DEFAULT_TEST_SET_SIZE = { invoices: 30, credit_notes: 10, debit_notes: 10 } as const;
+
+export type TestSetSize = { invoices: number; credit_notes: number; debit_notes: number };
 
 export interface CreatedClientSystem {
   id: number;
@@ -115,8 +118,8 @@ export async function fetchTestSet(issuerId: number): Promise<{ readiness: TestS
   return (await api.get(`${API_ENDPOINTS.CONSOLE_ISSUERS}${issuerId}/test-set/`)).data;
 }
 
-export async function startTestSet(issuerId: number, invoices: number): Promise<TestSetRun> {
-  return (await api.post<TestSetRun>(`${API_ENDPOINTS.CONSOLE_ISSUERS}${issuerId}/test-set/`, { invoices })).data;
+export async function startTestSet(issuerId: number, size: TestSetSize): Promise<TestSetRun> {
+  return (await api.post<TestSetRun>(`${API_ENDPOINTS.CONSOLE_ISSUERS}${issuerId}/test-set/`, size)).data;
 }
 
 export async function checkTestSet(runId: number): Promise<TestSetRun> {

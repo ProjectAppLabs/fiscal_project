@@ -148,18 +148,29 @@ def test_operator_starts_and_checks_the_test_set(authenticated_client, ready_iss
 
     with mock.patch('fiscal_app.services.test_set.start', return_value=run) as start, \
             mock.patch('fiscal_app.services.test_set.check', return_value=run) as check:
-        started = authenticated_client.post(f'/api/console/issuers/{ready_issuer.pk}/test-set/', {'invoices': 8}, format='json')
+        started = authenticated_client.post(f'/api/console/issuers/{ready_issuer.pk}/test-set/', {'invoices': 30, 'credit_notes': 10, 'debit_notes': 10}, format='json')
         checked = authenticated_client.post(f'/api/console/test-sets/{run.pk}/check/')
 
     assert (started.status_code, checked.status_code) == (201, 200)
-    assert start.call_args.kwargs == {'invoices': 8}
+    assert start.call_args.kwargs == {'invoices': 30, 'credit_notes': 10, 'debit_notes': 10}
     assert check.call_count == 1
 
 
 @pytest.mark.django_db
 def test_test_set_size_is_bounded(authenticated_client, ready_issuer):
     """Fails if an operator can ask for an absurd number of invoices in one set."""
-    response = authenticated_client.post(f'/api/console/issuers/{ready_issuer.pk}/test-set/', {'invoices': 1000}, format='json')
+    response = authenticated_client.post(f'/api/console/issuers/{ready_issuer.pk}/test-set/', {'invoices': 51}, format='json')
 
     assert response.status_code == 400
     assert ClientSystem.objects.count() == 1
+
+
+@pytest.mark.django_db
+def test_test_set_notes_are_bounded_by_one_zip(authenticated_client, ready_issuer):
+    """Fails if more notes are accepted than fit in the single ZIP the DIAN takes (50 documents, annex §7.8)."""
+    response = authenticated_client.post(
+        f'/api/console/issuers/{ready_issuer.pk}/test-set/', {'invoices': 30, 'credit_notes': 30, 'debit_notes': 30}, format='json'
+    )
+
+    assert response.status_code == 400
+    assert 'notes' in response.json()

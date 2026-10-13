@@ -489,7 +489,6 @@
       "test_set_id": "TestSetId",
       "range": "Valid range"
     },
-    "invoices": "Invoices in the set",
     "start": "Start test set",
     "starting": "Sending…",
     "check": "Ask the DIAN",
@@ -514,6 +513,11 @@
       "messages": "DIAN rules"
     },
     "noRun": "The set has not been run yet.",
-    "body": "Invoices go first; once the DIAN accepts them, a credit note and a debit note follow. Fiscal. checks the result every 2 minutes."
+    "body": "Use the counts the habilitación catalog shows for your TestSetId. Invoices go first; once the DIAN accepts them, the notes follow, each one on an accepted invoice. Fiscal. checks the result every 2 minutes.",
+    "size": {
+      "invoices": "Invoices",
+      "credit_notes": "Credit notes",
+      "debit_notes": "Debit notes"
+    }
   }
 }

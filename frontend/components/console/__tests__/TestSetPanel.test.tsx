@@ -42,16 +42,16 @@ describe('TestSetPanel', () => {
     expect(screen.getByRole('button', { name: 'Iniciar set de pruebas' })).toBeDisabled();
   });
 
-  it('starts the set with the chosen number of invoices', async () => {
+  it('starts the set with the size of the TestSetId', async () => {
     renderWithIntl(<TestSetPanel issuerId={3} />);
     await screen.findByText(/✓ TestSetId/);
     mockPost.mockResolvedValueOnce({ data: RUN });
 
-    await userEvent.clear(screen.getByLabelText('Facturas del set'));
-    await userEvent.type(screen.getByLabelText('Facturas del set'), '10');
+    await userEvent.clear(screen.getByLabelText('Notas débito'));
+    await userEvent.type(screen.getByLabelText('Notas débito'), '5');
     await userEvent.click(screen.getByRole('button', { name: 'Iniciar set de pruebas' }));
 
-    expect(mockPost).toHaveBeenCalledWith('console/issuers/3/test-set/', { invoices: 10 });
+    expect(mockPost).toHaveBeenCalledWith('console/issuers/3/test-set/', { invoices: 30, credit_notes: 10, debit_notes: 5 });
     expect(await screen.findByText('En proceso en la DIAN', { exact: false })).toBeInTheDocument();
   });
 

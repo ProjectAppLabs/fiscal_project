@@ -47,7 +47,15 @@
 - La contraseña del certificado y el PIN van en campos de contraseña y no quedan en el estado de la página después
   de guardarse.
 
-### F3 PR 3 · Corrida real (requiere el certificado y el registro)
+### F3 PR 3 · Tamaño del set según el TestSetId (`feat/…-test-set-sizes`) — ✅ hecho
+
+- El catálogo de habilitación de ProjectApp (2026-10-13) pide **50 documentos: 30 facturas, 10 notas crédito y 10
+  notas débito**, no los 8, 1 y 1 del micrositio. La consola pide las tres cantidades (por omisión 30, 10 y 10); las
+  notas van en un segundo ZIP, cada una sobre una factura aceptada, y no pasan de 50 por ZIP (§7.8).
+- **Confirmado con el portal:** la dirección del servicio de habilitación es
+  `https://vpfe-hab.dian.gov.co/WcfDianCustomerServices.svc`, la que Fiscal. ya usa por omisión.
+
+### F3 PR 4 · Corrida real (requiere el certificado y el registro)
 
 - Cargar ProjectApp en el asistente, correr el set y resolver lo que diga la DIAN.
 - Confirmar los puntos pendientes de F2 y F4:
