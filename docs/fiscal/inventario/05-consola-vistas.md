@@ -2,7 +2,8 @@
 
 Base para rediseñar la consola de Fiscal. (`frontend/`, Next.js). Para cada vista se lista para qué sirve, qué
 datos usa, sus elementos en orden, las acciones, los estados (carga, vacío, error) y cómo se ve en el celular. Al
-final van los componentes que se repiten y los problemas de diseño, ordenados por impacto.
+final van los componentes que se repiten, los problemas de diseño ordenados por impacto y, con el mismo detalle,
+los [**38 huecos por diseñar**](#huecos-por-diseñar): lo que la consola no tiene y necesita.
 
 - **Capturas:** en [`05-consola-vistas/`](05-consola-vistas/), a 1440 px (escritorio) y 390 px (celular), página
   completa y tema claro. Se tomaron con Playwright sobre `next dev` y **solo con datos de ejemplo** (los de
@@ -28,6 +29,7 @@ final van los componentes que se repiten y los problemas de diseño, ordenados p
 | 11 | [Alertas](#11-alertas) | `/alerts` | Sí |
 | 12 | [Sistemas cliente](#12-sistemas-cliente) | `/client-systems` | Sí |
 | — | [Marco común](#marco-común) | todas | — |
+| — | [Huecos por diseñar](#huecos-por-diseñar) (H-01 a H-38) | varias, y vistas nuevas: usuarios, cuenta, ficha del sistema cliente, salud, 404 y error | — |
 
 Una vista con sesión, abierta sin sesión, manda a `/sign-in` (`useRequireAuth`). Una ruta que no existe muestra la
 página 404 por defecto de Next.js, sin diseño propio.
@@ -357,6 +359,501 @@ volver componente:
     - `globals.css` tiene animaciones que no se usan (`bounce-slow`, `delay-*`).
 
     *Marco común.*
+
+## Huecos por diseñar
+
+Lo que la consola **no tiene hoy** y hace falta diseñar, con el detalle suficiente para hacerlo sin volver al código.
+Cada hueco dice qué falta, dónde va, qué muestra, qué acciones tiene, sus estados, las reglas que debe respetar, qué
+tiene el backend y su prioridad.
+
+**Backend:**
+- ✅ El endpoint ya existe y solo falta la pantalla.
+- 🟡 Existe una parte, o existe solo como comando de servidor o en la API de máquina.
+- ❌ Hay que construirlo.
+
+**Prioridad:**
+- **P1:** necesario antes del piloto con un comercio real.
+- **P2:** mejora mucho la operación diaria.
+- **P3:** conveniente.
+
+### Resumen
+
+| # | Hueco | Dónde | Backend | Prioridad |
+|---|---|---|---|---|
+| H-01 | Menú: página activa, contador de alertas, acceso a inscribir y menú del celular | Marco común | ✅ | P1 |
+| H-02 | Menú de cuenta y cambio de contraseña | Marco común | 🟡 | P2 |
+| H-03 | Usuarios de la consola (administradores y operadores) | Vista nueva | ❌ | P2 |
+| H-04 | Páginas 404 y de error inesperado | Marco común | ✅ (solo frontend) | P2 |
+| H-05 | Esqueletos de carga | Todas | ✅ (solo frontend) | P3 |
+| H-06 | Avisos de confirmación (toasts) y diálogos de confirmación | Todas | ✅ (solo frontend) | P2 |
+| H-07 | Tablas que se vuelven tarjetas en el celular | Todas las tablas | ✅ (solo frontend) | P1 |
+| H-08 | Política de fechas, horas y números | Todas | ✅ (solo frontend) | P1 |
+| H-09 | Encabezado de la ficha con ambiente y línea de vida | Ficha del emisor | ✅ | P1 |
+| H-10 | Ficha del emisor en pestañas | Ficha del emisor | ✅ | P1 |
+| H-11 | Editar datos del emisor | Ficha del emisor | 🟡 | P1 |
+| H-12 | Reemplazar el certificado | Ficha del emisor | ✅ | P1 |
+| H-13 | Registrar o cambiar el software | Ficha del emisor | ✅ | P2 |
+| H-14 | Agregar un rango (facturación o contingencia) | Ficha del emisor | ✅ | P1 |
+| H-15 | Desactivar un rango | Ficha del emisor | ❌ | P2 |
+| H-16 | Desactivar o reactivar un emisor | Ficha del emisor | ❌ | P2 |
+| H-17 | Set de pruebas: resumen, mensajes agrupados e historial | Ficha del emisor | 🟡 | P2 |
+| H-18 | Paso a producción guiado | Ficha del emisor | ✅ | P1 |
+| H-19 | Documentos del emisor desde su ficha | Ficha del emisor | ✅ | P2 |
+| H-20 | Volver al paso anterior del asistente | Asistente | ✅ (solo frontend) | P1 |
+| H-21 | Retomar una inscripción a medias | Asistente y ficha | ✅ | P1 |
+| H-22 | Buscador de municipio | Asistente y edición | 🟡 | P2 |
+| H-23 | Dígito de verificación calculado y nombres de responsabilidades | Asistente y edición | ✅ (solo frontend) | P2 |
+| H-24 | Paso de revisión antes de terminar | Asistente | ✅ (solo frontend) | P3 |
+| H-25 | Más filtros y filtros en la URL | Documentos | 🟡 | P2 |
+| H-26 | Exportar a CSV | Documentos y alertas | ❌ | P3 |
+| H-27 | Detalle del documento: copiar, QR, PDF y notas relacionadas | Detalle del documento | 🟡 | P2 |
+| H-28 | Acciones de soporte sobre un documento | Detalle del documento | ❌ | P2 |
+| H-29 | Contingencias: urgencia, filtros y acciones | Contingencias | 🟡 | P2 |
+| H-30 | Alertas: filtros, resolver varias y nota al resolver | Alertas | ❌ | P3 |
+| H-31 | Ficha del sistema cliente | Vista nueva | 🟡 | P2 |
+| H-32 | Crear un sistema cliente fuera del asistente | Sistemas cliente | ✅ | P2 |
+| H-33 | Editar la URL de avisos y desactivar un sistema cliente | Ficha del sistema cliente | ❌ | P2 |
+| H-34 | Rotar el secreto desde la consola | Ficha del sistema cliente | 🟡 | P2 |
+| H-35 | Bitácora de avisos con reintento | Ficha del sistema cliente | ❌ | P2 |
+| H-36 | Salud del servicio en detalle | Vista nueva o tablero | ✅ | P3 |
+| H-37 | Identidad de marca y sistema de componentes | Todas | ✅ (solo frontend) | P1 |
+| H-38 | Guía de la DIAN dentro de la consola | Asistente y ficha | ✅ (solo frontend) | P3 |
+
+---
+
+### Marco común
+
+#### H-01 · Menú completo
+
+| | |
+|---|---|
+| **Qué falta** | El menú no marca dónde está el operador, no avisa si hay alertas, no tiene «Inscribir emisor» y en el celular esconde Alertas y Sistemas cliente |
+| **Dónde va** | Encabezado de todas las vistas con sesión |
+| **Contenido** | Enlaces: Tablero · Documentos · Emisores · Contingencias · Alertas · Sistemas cliente (y Usuarios para administradores, H-03). La página actual resaltada. Junto a «Alertas», una burbuja con el número de alertas abiertas, roja si alguna es crítica. Junto a «Contingencias», una burbuja con las facturas en contingencia. Un botón destacado «Inscribir emisor» |
+| **Celular** | Botón de menú (hamburguesa) que abre un panel lateral con todos los enlaces, el idioma, el tema y la cuenta. Hoy la fila con desplazamiento lateral esconde dos enlaces |
+| **Estados** | Las burbujas no aparecen con 0; mientras cargan, el menú se ve sin burbujas (sin saltos) |
+| **Reglas** | El número de alertas sale del resumen y se refresca al resolver una |
+| **Backend** | ✅ `GET /api/console/summary/` trae `alerts.total`, `alerts.critical` y `health.dian.in_contingency` |
+| **Prioridad** | P1 |
+
+#### H-02 · Menú de cuenta y cambio de contraseña
+
+| | |
+|---|---|
+| **Qué falta** | No se ve quién está conectado ni hay forma de cambiar la propia contraseña sin cerrar sesión y usar «¿Olvidaste tu contraseña?» |
+| **Dónde va** | Esquina derecha del encabezado: iniciales o nombre del operador que abren un menú. Cambio de contraseña en un diálogo o en una página `/account` |
+| **Contenido** | Menú: nombre, correo, rol (Administrador u Operador), «Cambiar contraseña», «Cerrar sesión». Formulario: contraseña actual, nueva, confirmación |
+| **Acciones** | Guardar; cancelar |
+| **Estados** | Guardando; éxito («Contraseña cambiada»); errores: actual incorrecta, no coinciden, muy corta (mínimo 8, como en restablecer) |
+| **Reglas** | Los tres campos ocultos, con botón para mostrar. No se guarda nada en el navegador |
+| **Backend** | 🟡 `POST /api/update_password/` (`current_password`, `new_password`) existe, pero no valida el largo mínimo y responde en inglés; hay que ajustarlo. Nombre, correo y rol vienen en `validate_token/` |
+| **Prioridad** | P2 |
+
+#### H-03 · Usuarios de la consola
+
+| | |
+|---|---|
+| **Qué falta** | Los operadores solo se crean desde el admin de Django (`/admin/`) o con el comando `create_users`. La consola no tiene gestión de usuarios. Además, los roles Administrador y Operador hoy pueden hacer exactamente lo mismo |
+| **Dónde va** | Vista nueva `/users`, visible solo para administradores |
+| **Contenido** | Tabla: nombre · correo · rol · estado (activo o inactivo) · último ingreso · creado. Formulario de alta: nombre, apellido, correo, rol |
+| **Acciones** | Crear usuario (le llega un correo para fijar su contraseña con el flujo de restablecer), cambiar rol, desactivar o reactivar. Nunca ver ni fijar la contraseña de otro |
+| **Estados** | Vacío (solo el propio administrador), cargando, error, correo repetido |
+| **Reglas** | Hay que definir qué puede solo el administrador. Propuesta: usuarios, paso a producción, rotar secretos, desactivar emisores y sistemas cliente. Un administrador no puede desactivarse a sí mismo ni quitarse el rol si es el último |
+| **Backend** | ❌ No hay endpoints de usuarios en la consola; el modelo `User` ya tiene `role` e `is_active` |
+| **Prioridad** | P2 |
+
+#### H-04 · Páginas 404 y de error inesperado
+
+| | |
+|---|---|
+| **Qué falta** | Una ruta inexistente muestra la 404 por defecto de Next.js; un error de JavaScript no tiene página propia |
+| **Dónde va** | `app/not-found.tsx` y `app/error.tsx` |
+| **Contenido** | Logo, título («Esta página no existe» / «Algo salió mal»), una línea de explicación y botones «Ir al tablero» y «Reintentar» (en la de error) |
+| **Reglas** | Debe verse bien con y sin sesión, y en los dos temas |
+| **Backend** | ✅ No necesita |
+| **Prioridad** | P2 |
+
+#### H-05 · Esqueletos de carga
+
+| | |
+|---|---|
+| **Qué falta** | Mientras llegan los datos solo sale «Cargando…» y la página salta al llenarse |
+| **Dónde va** | Cada vista con datos: tarjetas del tablero, filas de tabla, datos de las fichas |
+| **Contenido** | Bloques grises con la forma final (5 filas en las tablas, contadores en el tablero) y una animación suave, que respete «reducir movimiento» |
+| **Backend** | ✅ No necesita |
+| **Prioridad** | P3 |
+
+#### H-06 · Avisos de confirmación y diálogos
+
+| | |
+|---|---|
+| **Qué falta** | Las acciones no confirman que salieron bien (resolver una alerta, descargar, copiar, iniciar el set). Las acciones delicadas no piden confirmación con un diálogo: el paso a producción usa una casilla |
+| **Dónde va** | Componente global de avisos (esquina inferior) y componente de diálogo |
+| **Contenido** | Aviso: ícono, mensaje corto, cierre automático a los 5 s; los de error se quedan hasta cerrarlos. Diálogo: título, explicación de las consecuencias, botón de confirmar (rojo si es irreversible) y cancelar |
+| **Dónde se usa el diálogo** | Pasar a producción (H-18), rotar secreto (H-34), desactivar emisor, rango o sistema (H-15, H-16, H-33), reemplazar certificado (H-12), resolver varias alertas (H-30) |
+| **Backend** | ✅ No necesita |
+| **Prioridad** | P2 |
+
+#### H-07 · Tablas en el celular
+
+| | |
+|---|---|
+| **Qué falta** | Las tablas se desplazan de lado y esconden columnas clave: el estado en documentos y «Descargar» en los artefactos |
+| **Dónde va** | Documentos, emisores, contingencias, alertas, sistemas cliente, artefactos, certificados, software, rangos y set de pruebas |
+| **Regla de diseño** | Por debajo de 640 px cada fila es una tarjeta. Arriba, el dato principal (número o nombre) y la etiqueta de estado; debajo, 2 o 3 datos secundarios; al final, la acción. Hay que definir para cada tabla qué columnas son principales |
+| **Backend** | ✅ No necesita |
+| **Prioridad** | P1 |
+
+#### H-08 · Política de fechas, horas y números
+
+| | |
+|---|---|
+| **Qué falta** | Cada vista formatea distinto. El vencimiento del certificado sale con hora y corrido un día por la zona horaria («4 oct 2027, 19:00» para uno que vence el 5). Las vigencias de los rangos salen en ISO (`2019-01-19`). Los campos de fecha muestran `mm/dd/yyyy` |
+| **Regla propuesta** | Todo en hora de Colombia (America/Bogota), no en la del navegador. Solo fecha cuando solo importa el día (vencimientos, vigencias, resoluciones): «5 oct 2027». Fecha y hora en eventos y transmisiones: «4 oct 2026, 10:00». Tiempo relativo como complemento: «hace 5 min», «vence en 30 días». Campos de fecha en `dd/mm/aaaa`. Montos en pesos con separador de miles (`$ 45.622`). Porcentajes con una cifra decimal |
+| **Backend** | ✅ No necesita (las fechas llegan en ISO con zona) |
+| **Prioridad** | P1 |
+
+---
+
+### Emisores
+
+#### H-09 · Encabezado de la ficha con ambiente y línea de vida
+
+| | |
+|---|---|
+| **Qué falta** | Lo más importante de un emisor (en qué ambiente está y qué le falta) no se ve arriba: el ambiente va en texto plano y el avance está repartido en tres tarjetas |
+| **Dónde va** | Arriba de la ficha del emisor, bajo «Volver a emisores» |
+| **Contenido** | Nombre o razón social y nombre comercial; NIT-DV; etiqueta grande de ambiente («Habilitación» en ámbar, «Producción» en verde); sistema cliente; etiqueta «Inactivo» si aplica. Debajo, una línea de vida de 7 pasos: Inscrito → Certificado → Software → Numeración → Set aceptado → Habilitado en la DIAN → Producción |
+| **Estado de cada paso** | Hecho (verde, con fecha si se conoce), actual (azul), pendiente (gris) o con problema (rojo: certificado vencido, set rechazado). «Habilitado en la DIAN» se hace por fuera de Fiscal.: se marca al confirmar el paso a producción |
+| **Acciones** | Cada paso pendiente lleva a donde se resuelve: subir certificado (H-12), registrar software (H-13), agregar rango (H-14), correr el set, pasar a producción (H-18) |
+| **Backend** | ✅ `GET …/issuers/{id}/` (certificados, software, rangos), `GET …/test-set/` (`readiness`, última corrida) y `GET …/production/` (`readiness`, `environment`) |
+| **Prioridad** | P1 |
+
+#### H-10 · Ficha del emisor en pestañas
+
+| | |
+|---|---|
+| **Qué falta** | Las 8 tarjetas en una columna hacen una página de más de 5.500 px con un set real |
+| **Propuesta** | Encabezado fijo (H-09) y pestañas: **Resumen** (datos del emisor y alertas abiertas, con «Editar», H-11) · **Habilitación** (set de pruebas y paso a producción) · **Certificados y software** · **Numeración** (rangos, uso y «Agregar rango») · **Documentos** (H-19) · **Contingencia** (carta a la DIAN) |
+| **Reglas** | La pestaña queda en la URL (`/issuers/3?tab=numeracion`) para compartir el enlace. Al abrir la ficha, la pestaña por omisión depende del estado: Habilitación si está en habilitación y Resumen si está en producción |
+| **Backend** | ✅ No necesita nada nuevo |
+| **Prioridad** | P1 |
+
+#### H-11 · Editar datos del emisor
+
+| | |
+|---|---|
+| **Qué falta** | Después de inscribirlo, los datos del emisor no se pueden corregir desde la consola |
+| **Dónde va** | Botón «Editar» en el Resumen de la ficha; formulario en un panel lateral o en una página |
+| **Campos** | Los del paso 2 del asistente, salvo el NIT, que no se edita. Dígito de verificación, tipo de persona, tributo, razón social, nombre comercial, responsabilidades, dirección, municipio (H-22), código postal, correo y teléfono |
+| **Acciones** | Guardar; cancelar |
+| **Estados** | Guardando; éxito (aviso, H-06); errores por campo (los mismos del alta: DV que no corresponde, municipio fuera del departamento, responsabilidad inválida) |
+| **Reglas** | El ambiente no se edita aquí: solo cambia con el paso a producción. Advertir que los cambios aplican a los documentos nuevos, no a los ya emitidos |
+| **Backend** | 🟡 La API de máquina ya lo hace (`PUT /api/v1/issuers/{nit}/update/`, mismo serializador); falta el endpoint de consola `PUT /api/console/issuers/{id}/`. Hoy esa API también acepta cambiar `environment` a «1»; conviene cerrarlo al construirlo |
+| **Prioridad** | P1 |
+
+#### H-12 · Reemplazar el certificado
+
+| | |
+|---|---|
+| **Qué falta** | Cuando un certificado vence (dura 1 o 2 años), la consola no deja subir el nuevo. Hoy solo se puede por la API |
+| **Dónde va** | Pestaña «Certificados y software», botón «Reemplazar certificado». También desde la alerta «Certificado por vencer» y desde la línea de vida |
+| **Contenido** | Certificado activo arriba (titular, entidad, vence el, días que faltan, con color: rojo a 7 días o menos, ámbar a 30). Formulario igual al paso 3 del asistente: «.p12/.pfx con contraseña» o «certificado y llave por separado» |
+| **Acciones** | Subir; cancelar |
+| **Estados** | Validando; éxito con el nuevo titular y vencimiento; «cadena incompleta» (ámbar); errores: contraseña incorrecta, la llave no corresponde, certificado vencido, archivo inválido |
+| **Reglas** | Confirmar antes con un diálogo (H-06): «El certificado actual deja de usarse para firmar». El anterior queda en el historial como Inactivo. Contraseñas en campos ocultos; nunca se muestran después |
+| **Backend** | ✅ `POST /api/console/issuers/{id}/certificate/` (multipart: `p12`+`password`, o `certificate`+`private_key`+`key_password`); responde `chain_complete` |
+| **Prioridad** | P1 |
+
+#### H-13 · Registrar o cambiar el software
+
+| | |
+|---|---|
+| **Qué falta** | No se puede corregir el SoftwareID, el PIN o el TestSetId después de la inscripción (p. ej., si el comercio repite el registro en la DIAN y le sale un TestSetId nuevo) |
+| **Dónde va** | Pestaña «Certificados y software», botón «Registrar software» con la tabla de registros |
+| **Campos** | Ambiente (Habilitación o Producción), Identificador del software, PIN (oculto), TestSetId (solo en habilitación) |
+| **Reglas** | El registro nuevo reemplaza al activo de ese ambiente. El PIN nunca se muestra; la tabla dice «PIN registrado». Para producción, lo normal es «Usar el software de habilitación» (H-18) |
+| **Backend** | ✅ `POST /api/console/issuers/{id}/software/` |
+| **Prioridad** | P2 |
+
+#### H-14 · Agregar un rango
+
+| | |
+|---|---|
+| **Qué falta** | Los rangos solo se crean en el asistente, y solo el de habilitación. Falta poder agregar: (a) un **rango de facturación** nuevo cuando se agota o vence la resolución, sin pasar por «Traer la numeración de la DIAN»; y (b) un **rango de contingencia** (talonario o papel, tipo 03), que el comercio necesita para la contingencia del emisor (decisión D5) |
+| **Dónde va** | Pestaña «Numeración», botón «Agregar rango». También desde las alertas «Numeración por agotarse» y «Resolución por vencer» |
+| **Campos** | Tipo (Facturación o Contingencia) · Número de resolución · Fecha de resolución · Prefijo (hasta 4 letras o números, en mayúsculas) · Desde · Hasta · Vigente desde · Vigente hasta · Clave técnica (obligatoria en facturación, oculta) · Establecimiento o sede (opcional; el prefijo es obligatorio si hay más de una sede) |
+| **Estados** | Guardando; éxito; errores: rango invertido, vigencia invertida, falta clave técnica, resolución y prefijo ya registrados |
+| **Reglas** | Explicar la diferencia entre los dos tipos con un texto corto. La clave técnica nunca vuelve a mostrarse. La tabla de rangos debería mostrar el uso con una barra (ámbar desde 80 %, rojo desde 90 %) y los días de vigencia que quedan |
+| **Backend** | ✅ `POST /api/console/issuers/{id}/ranges/` (con `kind: "contingency"`) |
+| **Prioridad** | P1 |
+
+#### H-15 · Desactivar un rango
+
+| | |
+|---|---|
+| **Qué falta** | Un rango mal registrado o reemplazado no se puede apagar. El paso a producción apaga solo el de habilitación |
+| **Dónde va** | Menú de acciones de cada fila de la tabla de rangos |
+| **Reglas** | Diálogo de confirmación. Un rango con documentos no se borra, solo se desactiva. Avisar si es el único rango vigente de facturación |
+| **Backend** | ❌ Falta el endpoint (el modelo tiene `active`) |
+| **Prioridad** | P2 |
+
+#### H-16 · Desactivar o reactivar un emisor
+
+| | |
+|---|---|
+| **Qué falta** | Si un comercio deja de usar Fiscal., no hay cómo darlo de baja. El campo `active` existe pero no se usa desde la consola |
+| **Dónde va** | Menú «Más acciones» del encabezado de la ficha (H-09); filtro «Activos / Inactivos / Todos» en la lista de emisores |
+| **Reglas** | Diálogo con consecuencias: el sistema cliente ya no podrá emitir para ese NIT. Los documentos y archivos se conservan 10 años. Solo para administradores (H-03). Una etiqueta «Inactivo» en la lista y en la ficha |
+| **Backend** | ❌ Falta el endpoint, y que la emisión respete `active` |
+| **Prioridad** | P2 |
+
+#### H-17 · Set de pruebas: resumen, mensajes agrupados e historial
+
+| | |
+|---|---|
+| **Qué falta** | La tabla del set repite el mismo mensaje en cada fila (en el set real, FAQ04a 30 veces) y no resume. Solo se ve la última corrida |
+| **Dónde va** | Pestaña «Habilitación» |
+| **Contenido** | (1) Barra de avance por fase: Facturas (N/30 aceptadas) → Notas (N/20). (2) Contadores: aceptados, rechazados y pendientes. (3) «Reglas de la DIAN» agrupadas: regla, mensaje, gravedad (rechazo o notificación) y en cuántos documentos aparece, con despliegue para ver cuáles. (4) La tabla por documento, plegada por omisión y con filtro por estado. (5) Historial de corridas: fecha, cantidades, resultado |
+| **Estados** | Sin corrida; en proceso (con «Fiscal. consulta cada 2 minutos» y «Consultar ahora»); aceptado; con rechazos; no se pudo enviar (con el error) |
+| **Reglas** | Las notificaciones no impiden aceptar el set: se muestran en gris, distintas de los rechazos |
+| **Backend** | 🟡 La última corrida trae todo lo necesario para (1) a (4). El historial necesita un endpoint de lista de corridas (❌) |
+| **Prioridad** | P2 |
+
+#### H-18 · Paso a producción guiado
+
+| | |
+|---|---|
+| **Qué falta** | El panel actual es una lista de requisitos con botones sueltos y una casilla. No explica los pasos que el comercio hace por fuera, en el portal de la DIAN y en MUISCA, ni en qué orden |
+| **Dónde va** | Pestaña «Habilitación», después del set |
+| **Pasos** | 1. Set de pruebas aceptado (automático). 2. **El comercio marca «Habilitado» en el portal de la DIAN.** Por fuera de Fiscal.: fija la fecha de inicio, es irreversible y agrega la responsabilidad 52 al RUT; recomendar hablarlo con el contador. 3. **El comercio pide su numeración en MUISCA y la asocia al software.** Por fuera de Fiscal. 4. «Usar el software de habilitación». 5. «Traer la numeración de la DIAN», que muestra los rangos traídos. 6. Revisión y «Pasar a producción» |
+| **Confirmación** | Diálogo (no casilla) con el resumen: emisor, NIT, software, rangos de producción y la frase «Desde ahora sus documentos tienen efecto fiscal». Botón rojo «Pasar a producción» |
+| **Estados** | Cada paso: pendiente, hecho o con error (p. ej., «La DIAN no entregó la numeración: …»). En producción: «En producción desde {fecha}» en verde |
+| **Reglas** | Solo administradores (H-03). Si «Conexión real con la DIAN» falta, explicar que es una configuración del servidor (`DIAN_GATEWAY=soap`), no algo del comercio |
+| **Backend** | ✅ `GET …/production/` y `POST …/production/{copy-software,fetch-ranges,promote}/`. La fecha del paso a producción no se guarda hoy (❌ menor) |
+| **Prioridad** | P1 |
+
+#### H-19 · Documentos del emisor desde su ficha
+
+| | |
+|---|---|
+| **Qué falta** | Desde la ficha no se ven los documentos del emisor; hay que ir a Documentos y filtrar por NIT a mano |
+| **Dónde va** | Pestaña «Documentos» de la ficha |
+| **Contenido** | La misma tabla de Documentos ya filtrada por el NIT, con los contadores por estado del emisor |
+| **Backend** | ✅ `GET /api/console/documents/?issuer={nit}`. Los contadores por emisor necesitan un ajuste (🟡) |
+| **Prioridad** | P2 |
+
+---
+
+### Asistente de inscripción
+
+#### H-20 · Volver al paso anterior
+
+| | |
+|---|---|
+| **Qué falta** | No hay botón «Atrás»; un error en un paso anterior obliga a terminar y corregir después |
+| **Contenido** | Botón «Atrás» junto a «Continuar»; las píldoras de los pasos hechos se pueden pulsar |
+| **Reglas** | Volver a un paso ya guardado lo muestra con los datos guardados y permite corregirlos (emisor con H-11, certificado con H-12, software con H-13). Los secretos (contraseñas, PIN, clave técnica) no se vuelven a mostrar: «Ya registrado · Reemplazar» |
+| **Backend** | ✅ Usa los mismos endpoints |
+| **Prioridad** | P1 |
+
+#### H-21 · Retomar una inscripción a medias
+
+| | |
+|---|---|
+| **Qué falta** | Si se recarga la página o se cierra, el progreso se pierde y el emisor queda creado sin certificado, software o rango, sin forma clara de terminar |
+| **Dónde va** | En la ficha del emisor, un aviso «Inscripción incompleta: falta {lo que falta}» con «Completar inscripción», que abre el asistente en el primer paso pendiente (`/onboarding?issuer=3`). En la lista de emisores, una etiqueta «Incompleto» |
+| **Reglas** | El paso pendiente se deduce de `readiness`. El paso 1 (sistema cliente) y el 2 (emisor) ya están hechos si el emisor existe |
+| **Backend** | ✅ `GET …/test-set/` trae `readiness` (certificado, software, TestSetId, rango) |
+| **Prioridad** | P1 |
+
+#### H-22 · Buscador de municipio
+
+| | |
+|---|---|
+| **Qué falta** | El municipio se escribe como código DANE de 5 dígitos, que casi nadie sabe de memoria |
+| **Contenido** | Campo con autocompletado: se escribe «Medell» y aparece «Medellín, Antioquia · 05001». Guarda el código; el departamento se deduce |
+| **Estados** | Sin resultados; cargando; seleccionado |
+| **Backend** | 🟡 La lista oficial de la DIAN está en el backend (`dian/catalogs`, lista «Municipio»); falta un endpoint de búsqueda o publicarla como archivo estático (1.122 municipios, con nombre; los departamentos están en la lista «Departamentos») |
+| **Prioridad** | P2 |
+
+#### H-23 · Dígito de verificación y nombres de responsabilidades
+
+| | |
+|---|---|
+| **Qué falta** | El DV se escribe a mano y el error solo sale al guardar. Las responsabilidades aparecen como códigos sueltos (O-13, O-15…) |
+| **Contenido** | DV calculado al escribir el NIT (algoritmo de la DIAN), con la opción de corregirlo y un aviso si no coincide. Responsabilidades con su nombre: O-13 Gran contribuyente · O-15 Autorretenedor · O-23 Agente de retención IVA · O-47 Régimen simple de tributación · R-99-PN No aplica, otros. R-99-PN se desmarca solo al elegir otra |
+| **Backend** | ✅ No necesita (el backend valida igual) |
+| **Prioridad** | P2 |
+
+#### H-24 · Paso de revisión
+
+| | |
+|---|---|
+| **Qué falta** | El asistente termina sin mostrar un resumen de lo inscrito |
+| **Contenido** | Antes de «Emisor inscrito»: datos del emisor, certificado (titular y vencimiento), software (identificador, «PIN registrado», TestSetId) y rango, cada uno con «Editar». Botón final «Ir a la ficha y correr el set» |
+| **Backend** | ✅ No necesita |
+| **Prioridad** | P3 |
+
+---
+
+### Documentos
+
+#### H-25 · Más filtros y filtros en la URL
+
+| | |
+|---|---|
+| **Qué falta** | Solo se filtra por estado y NIT. Los filtros no quedan en la URL: al volver del detalle se pierden y no se puede compartir una búsqueda |
+| **Filtros nuevos** | Tipo (factura, nota crédito, nota débito) · Sistema cliente · Fecha de emisión (desde–hasta) · Número o prefijo · CUFE · Tipo de factura DIAN (01, 03, 04) |
+| **Reglas** | Los filtros activos se muestran como etiquetas que se quitan con un clic, y hay un «Limpiar filtros». Todo en la URL (`/documents?state=rejected&issuer=900373115`). Orden por fecha de emisión, más recientes primero |
+| **Backend** | 🟡 Hoy solo `state` e `issuer`; los demás filtros faltan |
+| **Prioridad** | P2 |
+
+#### H-26 · Exportar a CSV
+
+| | |
+|---|---|
+| **Qué falta** | No se puede sacar un listado para conciliar con el comercio o el contador |
+| **Dónde va** | Botón «Exportar» en Documentos (con los filtros aplicados) y en Alertas |
+| **Reglas** | Columnas iguales a la tabla, más el CUFE. Fechas en hora de Colombia. Un límite de filas, con aviso si se supera |
+| **Backend** | ❌ |
+| **Prioridad** | P3 |
+
+#### H-27 · Detalle del documento: copiar, QR, PDF y notas
+
+| | |
+|---|---|
+| **Qué falta** | El CUFE es una cadena de 96 caracteres sin botón de copiar. El QR es un enlace. El PDF solo se descarga. El JSON recibido sale crudo. «Errores de la DIAN» mezcla rechazos y notificaciones. Una factura no muestra sus notas |
+| **Contenido** | Botón copiar en CUFE, clave de idempotencia y número. El QR como imagen, con el enlace a la DIAN. Vista previa del PDF. «Respuesta de la DIAN» con dos grupos: Rechazos (rojo) y Notificaciones (gris). JSON con formato y plegado. En una factura, la sección «Notas» (crédito y débito que la corrigen); en una nota, «Factura original» |
+| **Reglas** | El estado sale una sola vez, en el encabezado |
+| **Backend** | 🟡 Ya llegan el QR, los artefactos, los errores con gravedad y `original`. Falta la lista inversa de notas de una factura |
+| **Prioridad** | P2 |
+
+#### H-28 · Acciones de soporte sobre un documento
+
+| | |
+|---|---|
+| **Qué falta** | Ante un problema, el operador no puede hacer nada desde la consola: ni forzar la transmisión, ni reenviar el aviso al sistema cliente, ni preguntarle a la DIAN por el estado |
+| **Dónde va** | Menú «Acciones» en el encabezado del detalle |
+| **Acciones** | «Transmitir ahora» (solo en cola o en contingencia DIAN) · «Consultar estado en la DIAN» (GetStatus por CUFE) · «Reenviar aviso al sistema cliente» |
+| **Reglas** | Nunca cambiar el número ni el CUFE. Cada acción queda en la Historia del documento con el operador que la hizo. Un rechazo no se reintenta: se corrige en el sistema cliente con un documento nuevo; explicarlo en el detalle |
+| **Backend** | ❌ Hoy existe solo el comando `transmit_pending` y la cola automática |
+| **Prioridad** | P2 |
+
+---
+
+### Contingencias y alertas
+
+#### H-29 · Contingencias: urgencia, filtros y acciones
+
+| | |
+|---|---|
+| **Qué falta** | La lista no ordena por urgencia ni muestra el plazo de forma visual, y no tiene acciones |
+| **Contenido** | Orden por tiempo restante. Barra o reloj del plazo de 48 h (verde, ámbar a menos de 24 h, rojo a menos de 8 h y vencido). Filtro por tipo (04 DIAN, 03 emisor) y por emisor. Resumen arriba: cuántas hay y cuántas vencen en menos de 8 h |
+| **Acciones** | Ir al documento. «Carta de contingencia» del emisor (abre H-10, pestaña Contingencia). «Transmitir ahora» (H-28) |
+| **Backend** | 🟡 La lista y el plazo existen; falta la acción de transmitir |
+| **Prioridad** | P2 |
+
+#### H-30 · Alertas: filtros, resolver varias y nota
+
+| | |
+|---|---|
+| **Qué falta** | No se filtra por severidad, tipo o emisor; se resuelven de una en una y sin dejar razón |
+| **Contenido** | Filtros: severidad, tipo, emisor, abiertas o resueltas. Selección múltiple con «Resolver seleccionadas». Al resolver, una nota opcional («Certificado renovado», «Rango nuevo cargado»). Quién y cuándo la resolvió |
+| **Reglas** | Cada alerta lleva a donde se arregla: certificado por vencer → H-12; numeración por agotarse o resolución por vencer → H-14; rechazo → detalle del documento; contingencia → Contingencias |
+| **Backend** | ❌ Faltan filtros, resolución múltiple, nota y autor |
+| **Prioridad** | P3 |
+
+---
+
+### Sistemas cliente
+
+#### H-31 · Ficha del sistema cliente
+
+| | |
+|---|---|
+| **Qué falta** | La lista de sistemas cliente no lleva a ninguna parte |
+| **Dónde va** | Vista nueva `/client-systems/[id]` |
+| **Contenido** | Nombre, estado, identificador de llave (con copiar), URL de avisos, secretos vigentes (creado el, vence el, para el que está en periodo de gracia), emisores del sistema (tabla), avisos (H-35) |
+| **Acciones** | Editar URL, desactivar (H-33), rotar secreto (H-34) |
+| **Backend** | 🟡 La lista trae parte de los datos; falta un endpoint de detalle |
+| **Prioridad** | P2 |
+
+#### H-32 · Crear un sistema cliente fuera del asistente
+
+| | |
+|---|---|
+| **Qué falta** | Solo se crea dentro del asistente de inscripción |
+| **Dónde va** | Botón «Nuevo sistema cliente» en Sistemas cliente |
+| **Campos** | Nombre (único), URL de avisos (opcional, https) |
+| **Reglas** | El secreto se muestra **una sola vez**, con botón copiar, el aviso en rojo y la confirmación «Ya lo guardé». Ese texto debe ser el mismo del asistente |
+| **Backend** | ✅ `POST /api/console/client-systems/create/` |
+| **Prioridad** | P2 |
+
+#### H-33 · Editar la URL de avisos y desactivar
+
+| | |
+|---|---|
+| **Qué falta** | La URL de avisos y el estado del sistema solo se cambian en la base de datos |
+| **Reglas** | URL https. Al desactivar, el sistema deja de poder llamar a la API y de recibir avisos: diálogo de confirmación, solo administradores |
+| **Backend** | ❌ |
+| **Prioridad** | P2 |
+
+#### H-34 · Rotar el secreto desde la consola
+
+| | |
+|---|---|
+| **Qué falta** | Hoy solo con el comando `rotate_client_secret` en el servidor |
+| **Flujo** | «Rotar secreto» → diálogo: periodo de gracia (por omisión 24 h, de 0 a 72), explicación de que el secreto anterior sigue sirviendo durante ese tiempo y que los avisos se firman desde ya con el nuevo → secreto nuevo mostrado una sola vez, con copiar → «Ya lo guardé» |
+| **Reglas** | Solo administradores. Nunca más de dos secretos vigentes. Mostrar cuándo deja de servir el anterior |
+| **Backend** | 🟡 El servicio `rotate_secret` existe; falta el endpoint |
+| **Prioridad** | P2 |
+
+#### H-35 · Bitácora de avisos con reintento
+
+| | |
+|---|---|
+| **Qué falta** | Solo se ve «N pendientes · M fallidos». No se sabe qué aviso falló, por qué, ni se puede reintentar |
+| **Dónde va** | Ficha del sistema cliente (H-31) |
+| **Contenido** | Tabla: evento (`document.state_changed` o `issuer.alert`) · documento o alerta · intentos · último código HTTP · último error · próximo intento · entregado el. Filtro: pendientes, fallidos, entregados |
+| **Acciones** | «Reintentar ahora» por aviso o para todos los fallidos; ver el contenido enviado |
+| **Backend** | ❌ El modelo `WebhookDelivery` tiene todos esos datos; faltan los endpoints |
+| **Prioridad** | P2 |
+
+---
+
+### Operación y marca
+
+#### H-36 · Salud del servicio en detalle
+
+| | |
+|---|---|
+| **Qué falta** | La tarjeta del tablero dice «Con problemas» sin decir cuál |
+| **Contenido** | Base de datos (ok o caída) · Cola (documentos pendientes, el más antiguo) · Trabajador (último latido, «hace N min») · DIAN (última respuesta, documentos en contingencia) · Avisos (pendientes y fallidos de todos los sistemas). Cada uno con su estado en color y qué hacer si falla |
+| **Backend** | ✅ `GET /api/health/` y el resumen ya traen esos datos |
+| **Prioridad** | P3 |
+
+#### H-37 · Identidad de marca y sistema de componentes
+
+| | |
+|---|---|
+| **Qué falta** | Paleta propia de Fiscal. (hoy es la de la plantilla) y los componentes de la sección anterior |
+| **Entregables de diseño** | Paleta clara y oscura con roles (primario, superficies, bordes, estados: éxito, aviso, error, info). Tipografía del texto (hoy la del sistema). Escala de tamaños de títulos. Componentes: botón (primario, secundario, contorno, fantasma, destructivo; tamaños; con ícono; cargando; desactivado), campos (texto, contraseña con mostrar, número, fecha, lista, autocompletar, archivo, casilla, opción), etiqueta de estado (documento, ambiente, severidad, set), tarjeta, tabla con su versión de tarjetas, pestañas, línea de vida, diálogo, aviso, menú de acciones, paginación, estados vacío, error y no encontrado, esqueleto |
+| **Reglas** | Contraste AA en los dos temas. Foco visible. Todo traducible (español e inglés) |
+| **Backend** | ✅ No necesita |
+| **Prioridad** | P1 |
+
+#### H-38 · Guía de la DIAN dentro de la consola
+
+| | |
+|---|---|
+| **Qué falta** | Los pasos que el comercio hace en el portal de la DIAN están en `docs/fiscal/guias/registro-dian.md`, no en la consola |
+| **Dónde va** | Enlaces «¿Dónde encuentro esto?» junto a los campos del asistente (SoftwareID, PIN, TestSetId, clave técnica, rango) y en el paso a producción |
+| **Contenido** | Panel lateral con el paso de la guía que corresponde: menú del portal, nombre del campo, y la nota de copiar la clave técnica con Ctrl+A (40 caracteres) |
+| **Backend** | ✅ No necesita |
+| **Prioridad** | P3 |
+
+---
 
 ## Cómo volver a tomar las capturas
 
