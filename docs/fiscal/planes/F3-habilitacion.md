@@ -12,8 +12,10 @@
 
    No hace falta tener el software registrado para pedirlo.
 2. **Registro del software** en el portal de habilitación de la DIAN, en el modo «Software propio»:
-   - nombre Fiscal., NIT del fabricante y un PIN;
+   - nombre Fiscal. y un PIN (el portal ya no pide NIT del fabricante: toma al facturador);
    - la DIAN entrega al instante el identificador del software y el `TestSetId`.
+
+   Recorrido real del portal, paso a paso: [`docs/fiscal/guias/registro-dian.md`](../guias/registro-dian.md).
 3. **Antes de terminar la habilitación**, hablar con el contador. Al terminarla se fija la fecha de inicio de la
    facturación electrónica (no se puede cambiar) y la DIAN agrega la responsabilidad 52 al RUT.
 
@@ -55,7 +57,14 @@
 - **Confirmado con el portal:** la dirección del servicio de habilitación es
   `https://vpfe-hab.dian.gov.co/WcfDianCustomerServices.svc`, la que Fiscal. ya usa por omisión.
 
-### F3 PR 4 · Corrida real (requiere el certificado y el registro)
+### F3 PR 4 · Corrida real (requiere el certificado y el registro) — ✅ set aceptado
+
+- **Resultado (2026-10-14):** la corrida 2 de ProjectApp quedó **aceptada, 50 de 50** (30 facturas, 10 notas crédito
+  y 10 notas débito). La corrida 1 se rechazó por FAJ26 (responsabilidad `ZZ`; va `R-99-PN`, tabla 13.2.6.1).
+- Hallazgos corregidos: responsabilidades y conceptos de notas salen de las tablas del anexo, no del genericode (#24,
+  #25); el set consulta documento a documento cuando el lote no responde (#24); certificado y llave por separado (#26);
+  paso a producción (#27).
+- Notificaciones que no bloquean y siguen abiertas: FAQ04a, CAK55/DAK55, DAK07 y DAJ39.
 
 - Cargar ProjectApp en el asistente, correr el set y resolver lo que diga la DIAN.
 - Confirmar los puntos pendientes de F2 y F4:
