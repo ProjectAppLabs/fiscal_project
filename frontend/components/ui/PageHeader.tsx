@@ -15,7 +15,11 @@ export function PageHeader({ emoji, title, subtitle, breadcrumb, badge, actions,
   return (
     <header className={cn('mb-8 flex flex-wrap items-center justify-between gap-x-6 gap-y-4', className)}>
       <div className="flex min-w-0 items-center gap-4">
-        {emoji ? <EmojiTile className="hidden sm:inline-grid" name={emoji} size="lg" tone="surface" /> : null}
+        {emoji ? (
+          <span className="hidden sm:block">
+            <EmojiTile name={emoji} size="lg" tone="surface" />
+          </span>
+        ) : null}
         <div className="min-w-0">
           {breadcrumb ? (
             <nav aria-label={t('breadcrumb')} className="mb-1 text-[13px] font-semibold text-ink-2">
