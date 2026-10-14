@@ -1,9 +1,11 @@
 """Operator console API (JWT): what the ProjectApp team needs to watch Fiscal. Client systems cannot use it."""
 
-from datetime import date, timedelta
+import re
+from datetime import date, datetime, time, timedelta
 from urllib.parse import quote
+from zoneinfo import ZoneInfo
 
-from django.db.models import Count
+from django.db.models import Count, Q
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
@@ -13,7 +15,9 @@ from rest_framework.permissions import BasePermission, IsAuthenticated
 from rest_framework.response import Response
 
 from fiscal_app.models import Alert, ClientSystem, Document, DocumentEvent, Issuer, User
-from fiscal_app.models.choices import DocumentState
+from fiscal_app.models.choices import DocumentKind, DocumentState
+
+COLOMBIA = ZoneInfo('America/Bogota')
 from fiscal_app.serializers import (
     ConsoleDocumentDetailSerializer,
     ConsoleDocumentListSerializer,
@@ -90,13 +94,7 @@ def _rejection_rate(now):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated, IsConsoleOperator])
 def console_documents(request):
-    documents = Document.objects.select_related('client', 'issuer').order_by('-created_at', '-id')
-    state = request.query_params.get('state')
-    if state in DocumentState.values:
-        documents = documents.filter(state=state)
-    issuer = request.query_params.get('issuer', '').strip()
-    if issuer:
-        documents = documents.filter(issuer__nit=issuer)
+    documents = filtered_documents(request.query_params)
     paginator = ConsolePagination()
     page = paginator.paginate_queryset(documents, request)
     return paginator.get_paginated_response(ConsoleDocumentListSerializer(page, many=True).data)
@@ -106,7 +104,47 @@ def console_documents(request):
 @permission_classes([IsAuthenticated, IsConsoleOperator])
 def console_document(request, document_id):
     document = get_object_or_404(Document.objects.select_related('client', 'issuer'), pk=document_id)
-    return Response(ConsoleDocumentDetailSerializer(document).data)
+    notes = [{'id': note.pk, 'full_number': note.full_number, 'kind': note.kind, 'state': note.state}
+             for note in document.notes.order_by('created_at')]
+    return Response({**ConsoleDocumentDetailSerializer(document).data, 'notes': notes})
+
+
+def filtered_documents(params):
+    """Documents by state, issuer NIT, kind, client system, issue dates (Colombia) and number or CUFE (H-25)."""
+    documents = Document.objects.select_related('client', 'issuer').order_by('-created_at', '-id')
+    state = params.get('state')
+    if state in DocumentState.values:
+        documents = documents.filter(state=state)
+    issuer = params.get('issuer', '').strip()
+    if issuer:
+        documents = documents.filter(issuer__nit=issuer)
+    kind = params.get('kind')
+    if kind in DocumentKind.values:
+        documents = documents.filter(kind=kind)
+    client = params.get('client', '')
+    if client.isdigit():
+        documents = documents.filter(client_id=int(client))
+    for name, lookup, shift in (('date_from', 'issue_datetime__gte', 0), ('date_to', 'issue_datetime__lt', 1)):
+        try:
+            day = date.fromisoformat(params.get(name, ''))
+        except ValueError:
+            continue
+        start = datetime.combine(day + timedelta(days=shift), time.min, tzinfo=COLOMBIA)
+        documents = documents.filter(**{lookup: start})
+    query = params.get('q', '').strip()
+    if query:
+        documents = documents.filter(_number_or_code(query))
+    return documents
+
+
+def _number_or_code(query):
+    """«SETP990000007», «990000007» or the start of a CUFE/CUDE."""
+    match = re.fullmatch(r'([A-Za-z0-9]{0,4}?)(\d{1,15})', query)
+    condition = Q(cufe__startswith=query.lower())
+    if match:
+        prefix, number = match.groups()
+        condition |= Q(number=int(number), prefix__iexact=prefix) if prefix else Q(number=int(number))
+    return condition
 
 
 @api_view(['GET'])

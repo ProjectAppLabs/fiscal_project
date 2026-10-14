@@ -153,7 +153,8 @@
     "criticalNoticeBody": "Check them before they stop invoicing.",
     "contingencyNotice": "{count, plural, one {# invoice in contingency.} other {# invoices in contingency.}}",
     "contingencyNoticeBody": "They must be sent within 48 hours.",
-    "viewClientSystems": "See client systems"
+    "viewClientSystems": "See client systems",
+    "viewHealth": "See health in detail"
   },
   "documents": {
     "title": "Documents",
@@ -183,7 +184,21 @@
     "subtitle": "{count} documents from every issuer",
     "issuerPlaceholder": "No dots nor check digit",
     "emptyBody": "Try another state or NIT.",
-    "attemptsValue": "{count, plural, one {# attempt} other {# attempts}}"
+    "attemptsValue": "{count, plural, one {# attempt} other {# attempts}}",
+    "export": "Export CSV",
+    "exportFailed": "Could not export. Try again.",
+    "filterSearch": "Number or CUFE",
+    "searchPlaceholder": "SETP990000001 or part of the CUFE",
+    "filterKind": "Type",
+    "allKinds": "All types",
+    "filterClient": "Client system",
+    "allClients": "All systems",
+    "filterFrom": "Issued from",
+    "filterTo": "Issued to",
+    "moreFilters": "More filters",
+    "moreFiltersCount": "More filters ({count} active)",
+    "lessFilters": "Fewer filters",
+    "clearFilters": "Clear filters"
   },
   "documentDetail": {
     "back": "Back to documents",
@@ -204,7 +219,8 @@
       "original": "Original document",
       "cufe": "CUFE",
       "invoiceType": "DIAN invoice type",
-      "contingencyStarted": "In contingency since"
+      "contingencyStarted": "In contingency since",
+      "notes": "Notes on this invoice"
     },
     "viewOriginal": "View document {id}",
     "qr": "View QR code",
@@ -246,7 +262,20 @@
     "copyCufe": "Copy the CUFE",
     "rejections": "Rejections",
     "notifications": "Notifications (they do not stop the document)",
-    "artifactsSubtitle": "Kept for 10 years; Fiscal. checks their fingerprint before handing them out."
+    "artifactsSubtitle": "Kept for 10 years; Fiscal. checks their fingerprint before handing them out.",
+    "actions": {
+      "transmit": "Transmit now",
+      "transmitted": "Done: the document moved to the front of the queue and Fiscal. is transmitting it.",
+      "checkDian": "Ask the DIAN",
+      "resendNotice": "Resend notice",
+      "noticeDelivered": "Notice delivered to the client system.",
+      "noticeFailed": "The client system did not get the notice: {error}. Fiscal. will retry on its own.",
+      "failed": "The action could not be done.",
+      "dianTitle": "What the DIAN says",
+      "dianBody": "The DIAN's answer to this query. It only informs: the document's state in Fiscal. does not change.",
+      "dianValid": "The DIAN holds the document as valid.",
+      "dianNotValid": "The DIAN does not hold it as valid."
+    }
   },
   "staging": {
     "remainsOne": "remains",
@@ -481,7 +510,8 @@
       "started": "Since",
       "deadline": "Deadline",
       "left": "Time left",
-      "attempts": "Attempts"
+      "attempts": "Attempts",
+      "actions": "Action"
     },
     "kinds": {
       "dian": "DIAN (type 04)",
@@ -491,7 +521,10 @@
     "overdue": "Overdue by {hours} h",
     "emptyBody": "When the DIAN does not answer, invoices wait here with their 48-hour deadline.",
     "urgentNotice": "{count, plural, one {# invoice is due in less than 8 hours.} other {# invoices are due in less than 8 hours.}}",
-    "urgentNoticeBody": "Fiscal. retries every 30 minutes; if the DIAN still does not answer, check the issuer's contingency letter."
+    "urgentNoticeBody": "Fiscal. retries every 30 minutes; if the DIAN still does not answer, check the issuer's contingency letter.",
+    "transmit": "Transmit now",
+    "transmitted": "{number} moved to the front of the queue.",
+    "transmitFailed": "Could not transmit. Try again."
   },
   "alerts": {
     "title": "Alerts",
@@ -521,7 +554,24 @@
     "resolvedToast": "Alert resolved",
     "fixCertificate": "Upload certificate",
     "fixRange": "See numbering",
-    "fixContingency": "See contingencies"
+    "fixContingency": "See contingencies",
+    "export": "Export CSV",
+    "exportFailed": "Could not export. Try again.",
+    "filterSeverity": "Severity",
+    "allSeverities": "All",
+    "filterKind": "Type",
+    "allKinds": "All types",
+    "select": "Select",
+    "selectAll": "Select the open ones on this page",
+    "selectedCount": "{count, plural, =0 {None selected} other {# selected}}",
+    "resolveSelected": "Resolve selected",
+    "resolveManyTitle": "{count, plural, one {Resolve # alert?} other {Resolve # alerts?}}",
+    "resolveManyBody": "They close under your name. If the problem persists, Fiscal. warns again.",
+    "resolvedMany": "{count, plural, one {# alert resolved} other {# alerts resolved}}",
+    "note": "Note (optional)",
+    "noteHint": "What was done, for whoever reads it later. For example: «The new certificate was uploaded».",
+    "resolvedBy": "By {name}",
+    "resolvedByFiscal": "Closed by Fiscal."
   },
   "clientSystems": {
     "title": "Client systems",
@@ -969,5 +1019,51 @@
     "activateBody": "They can enter again with their password.",
     "saved": "User updated",
     "failed": "The action could not be completed."
+  },
+  "health": {
+    "title": "Service health",
+    "subtitle": "Each part of Fiscal. and what is waiting. It refreshes on its own every 30 seconds.",
+    "refresh": "Refresh",
+    "error": "We could not check the service health.",
+    "checkedAt": "Checked on {when}.",
+    "status": {
+      "ok": "All good.",
+      "degraded": "Having problems.",
+      "down": "Down."
+    },
+    "statusBody": {
+      "ok": "The database, the worker and the queue respond.",
+      "degraded": "Something needs attention: see below which part is red.",
+      "down": "The database does not respond: Fiscal. cannot receive nor transmit documents."
+    },
+    "partsTitle": "Service parts",
+    "partsSubtitle": "What Fiscal. needs to receive, sign and transmit.",
+    "database": "Database",
+    "databaseOk": "Responds",
+    "databaseDown": "Not responding",
+    "worker": "Worker",
+    "workerOk": "Active",
+    "workerSilent": "Not responding",
+    "workerHint": "Without the worker, documents stay queued. Tell whoever runs the server.",
+    "lastBeat": "Last beat {when}",
+    "noBeat": "No beats yet",
+    "queue": "Transmission queue",
+    "queueDue": "{count, plural, =0 {Up to date} one {# document to transmit} other {# documents to transmit}}",
+    "oldestDue": "The oldest has waited {minutes} min",
+    "queueHint": "The queue has not moved for a long time. Check that the worker is active.",
+    "dian": "DIAN",
+    "dianContingency": "{count, plural, =0 {No contingency} one {# document in contingency} other {# documents in contingency}}",
+    "lastAnswer": "Last answer {when}",
+    "noAnswer": "No answers yet",
+    "waitingTitle": "What is waiting",
+    "waitingSubtitle": "Tap a row to see the list.",
+    "documents": {
+      "queued": "Queued documents",
+      "transmitting": "Documents being transmitted",
+      "contingency_dian": "In DIAN contingency",
+      "contingency_issuer": "In issuer contingency"
+    },
+    "noticesPending": "Notices to deliver",
+    "noticesFailed": "Failed notices"
   }
 }

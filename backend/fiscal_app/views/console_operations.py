@@ -92,9 +92,7 @@ def console_issuer(request, issuer_id):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated, IsConsoleOperator])
 def console_alerts(request):
-    alerts = Alert.objects.select_related('issuer', 'document').order_by('-created_at', '-id')
-    if request.query_params.get('state', 'open') == 'open':
-        alerts = alerts.filter(resolved_at__isnull=True)
+    alerts = filtered_alerts(request.query_params)
     paginator = ConsolePagination()
     page = paginator.paginate_queryset(alerts, request)
     return paginator.get_paginated_response([_alert_row(alert) for alert in page])
@@ -104,7 +102,7 @@ def console_alerts(request):
 @permission_classes([IsAuthenticated, IsConsoleOperator])
 def console_resolve_alert(request, alert_id):
     alert = get_object_or_404(Alert, pk=alert_id)
-    resolve(Alert.objects.filter(pk=alert.pk))
+    resolve(Alert.objects.filter(pk=alert.pk), by=request.user, note=str(request.data.get('note', '')).strip())
     alert.refresh_from_db()
     logger.info('Alerta %s resuelta por el operador %s', alert.pk, request.user.pk)
     return Response(_alert_row(alert))
@@ -198,12 +196,42 @@ def _range_row(numbering):
     }
 
 
+def filtered_alerts(params):
+    """Open (or all) alerts by severity, kind and issuer (H-30)."""
+    alerts = Alert.objects.select_related('issuer', 'document', 'resolved_by').order_by('-created_at', '-id')
+    if params.get('state', 'open') == 'open':
+        alerts = alerts.filter(resolved_at__isnull=True)
+    if params.get('severity') in Alert.Severity.values:
+        alerts = alerts.filter(severity=params['severity'])
+    if params.get('kind') in Alert.Kind.values:
+        alerts = alerts.filter(kind=params['kind'])
+    issuer = params.get('issuer', '')
+    if issuer.isdigit():
+        alerts = alerts.filter(issuer_id=int(issuer))
+    return alerts
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated, IsConsoleOperator])
+def console_resolve_alerts(request):
+    """Resolve several open alerts at once with one note."""
+    ids = request.data.get('ids')
+    if not isinstance(ids, list) or not ids or not all(isinstance(pk, int) for pk in ids) or len(ids) > 200:
+        return Response({'ids': ['Indica entre 1 y 200 alertas.']}, status=status.HTTP_400_BAD_REQUEST)
+    count = resolve(Alert.objects.filter(pk__in=ids), by=request.user, note=str(request.data.get('note', '')).strip())
+    logger.info('%s alertas resueltas por el operador %s', count, request.user.pk)
+    return Response({'resolved': count})
+
+
 def _alert_row(alert):
     return {
         'id': alert.pk, 'kind': alert.kind, 'severity': alert.severity, 'message': alert.message,
         'issuer': {'id': alert.issuer.pk, 'nit': alert.issuer.nit, 'legal_name': alert.issuer.legal_name} if alert.issuer else None,
         'document': {'id': alert.document.pk, 'full_number': alert.document.full_number} if alert.document else None,
         'created_at': alert.created_at, 'resolved_at': alert.resolved_at,
+        'resolved_by': (f'{alert.resolved_by.first_name} {alert.resolved_by.last_name}'.strip() or alert.resolved_by.email)
+        if alert.resolved_by_id else '',
+        'resolution_note': alert.resolution_note,
     }
 
 

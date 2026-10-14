@@ -433,22 +433,72 @@ export const queueAlert = {
   document: null,
 };
 
-/** Stub the alerts like the backend: resolving one removes it from the open list. */
+/**
+ * Stub the alerts like the backend: resolving one (or several, with a note) removes it from the open list, and
+ * `severity`/`kind` filter the list.
+ */
 export async function stubAlerts(page: Page) {
-  const resolved = new Set<number>();
+  const resolved = new Map<number, string>();
+  const closed = (alert: typeof rejectionAlert) =>
+    resolved.has(alert.id) ? { ...alert, resolved_at: '2026-10-05T13:00:00Z', resolved_by: 'Ana Mejía', resolution_note: resolved.get(alert.id) } : alert;
   await page.route(/\/api\/console\/alerts\/(\d+)\/resolve\/$/, (route) => {
     const id = Number(route.request().url().match(/alerts\/(\d+)/)?.[1]);
-    resolved.add(id);
+    resolved.set(id, route.request().postDataJSON()?.note ?? '');
     const alert = [rejectionAlert, queueAlert].find((item) => item.id === id);
-    return fulfillJson(route, 200, { ...alert, resolved_at: '2026-10-05T13:00:00Z' });
+    return fulfillJson(route, 200, alert ? closed(alert) : {});
   });
+  await page.route(/\/api\/console\/alerts\/resolve\/$/, (route) => {
+    const { ids, note } = route.request().postDataJSON() as { ids: number[]; note: string };
+    for (const id of ids) resolved.set(id, note);
+    return fulfillJson(route, 200, { resolved: ids.length });
+  });
+  await page.route(/\/api\/console\/alerts\/export\/(\?.*)?$/, (route) =>
+    route.fulfill({ status: 200, contentType: 'text/csv', body: 'severidad,tipo\ncritical,rejection\n' }),
+  );
   await page.route(/\/api\/console\/alerts\/?(\?.*)?$/, (route) => {
-    const all = new URL(route.request().url()).searchParams.get('state') === 'all';
+    const params = new URL(route.request().url()).searchParams;
+    const all = params.get('state') === 'all';
     const results = [rejectionAlert, queueAlert]
-      .map((alert) => (resolved.has(alert.id) ? { ...alert, resolved_at: '2026-10-05T13:00:00Z' } : alert))
-      .filter((alert) => all || !alert.resolved_at);
+      .map(closed)
+      .filter((alert) => all || !alert.resolved_at)
+      .filter((alert) => !params.get('severity') || alert.severity === params.get('severity'))
+      .filter((alert) => !params.get('kind') || alert.kind === params.get('kind'));
     return fulfillJson(route, 200, { count: results.length, next: null, previous: null, results });
   });
+}
+
+// ── Console (support) ──
+
+export const serviceHealthDetail = {
+  ...healthyService,
+  status: 'degraded',
+  worker: { last_beat_at: '2026-10-05T11:00:00Z', ok: false },
+  queue: { due: 3, oldest_due_seconds: 1800, ok: false },
+  documents: { queued: 3, transmitting: 0, contingency_dian: 1, contingency_issuer: 0 },
+  notices: { pending: 2, failed: 1 },
+  checked_at: '2026-10-05T12:00:00Z',
+};
+
+export const dianStatusAnswer = {
+  is_valid: false,
+  status_code: '99',
+  status_description: 'Validación contiene errores en campos mandatorios.',
+  status_message: '',
+  messages: [{ rule: 'FAD06', message: 'El CUFE no corresponde.', severity: 'error' }],
+};
+
+/** Stub the support actions on a document, the CSV export of documents and the detailed health. */
+export async function stubSupport(page: Page) {
+  await page.route(/\/api\/console\/documents\/\d+\/actions\/(transmit|check-dian|resend-notice)\/$/, (route) => {
+    const action = route.request().url().match(/actions\/([a-z-]+)\//)?.[1];
+    if (action === 'check-dian') return fulfillJson(route, 200, dianStatusAnswer);
+    if (action === 'resend-notice') return fulfillJson(route, 200, { delivered: true, last_status: 200, last_error: '' });
+    return fulfillJson(route, 200, { state: 'contingency_dian', next_attempt_at: '2026-10-05T12:00:00Z' });
+  });
+  await page.route(/\/api\/console\/documents\/export\/(\?.*)?$/, (route) =>
+    route.fulfill({ status: 200, contentType: 'text/csv', body: 'numero,tipo\nSETP990000007,invoice\n' }),
+  );
+  await page.route('**/api/console/health/', (route) => fulfillJson(route, 200, serviceHealthDetail));
 }
 
 export const waiterClient = {

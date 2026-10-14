@@ -80,6 +80,9 @@ export interface Alert {
   document: { id: number; full_number: string } | null;
   created_at: string;
   resolved_at: string | null;
+  /** Who resolved it from the console and why (empty when Fiscal. closed it). */
+  resolved_by?: string;
+  resolution_note?: string;
 }
 
 export interface IssuerDetail extends Omit<IssuerListItem, 'documents' | 'open_alerts' | 'certificate_expires'> {
@@ -137,16 +140,34 @@ export async function fetchIssuer(id: number | string): Promise<IssuerDetail> {
   return response.data;
 }
 
-export async function fetchAlerts({ includeResolved, page }: { includeResolved: boolean; page: number }): Promise<Paginated<Alert>> {
-  const params: Record<string, string | number> = { state: includeResolved ? 'all' : 'open' };
+export interface AlertFilters {
+  severity: AlertSeverity | '';
+  kind: string;
+}
+
+export function alertParams(includeResolved: boolean, filters?: AlertFilters): Record<string, string> {
+  const params: Record<string, string> = { state: includeResolved ? 'all' : 'open' };
+  if (filters?.severity) params.severity = filters.severity;
+  if (filters?.kind) params.kind = filters.kind;
+  return params;
+}
+
+export async function fetchAlerts({ includeResolved, page, filters }: { includeResolved: boolean; page: number; filters?: AlertFilters }): Promise<Paginated<Alert>> {
+  const params: Record<string, string | number> = alertParams(includeResolved, filters);
   if (page > 1) params.page = page;
   const response = await api.get<Paginated<Alert>>(API_ENDPOINTS.CONSOLE_ALERTS, { params });
   return response.data;
 }
 
-export async function resolveAlert(id: number): Promise<Alert> {
-  const response = await api.post<Alert>(`${API_ENDPOINTS.CONSOLE_ALERTS}${id}/resolve/`);
+export async function resolveAlert(id: number, note = ''): Promise<Alert> {
+  const url = `${API_ENDPOINTS.CONSOLE_ALERTS}${id}/resolve/`;
+  const response = note ? await api.post<Alert>(url, { note }) : await api.post<Alert>(url);
   return response.data;
+}
+
+/** Resolve several open alerts with one note; answers how many were closed. */
+export async function resolveAlerts(ids: number[], note: string): Promise<number> {
+  return (await api.post<{ resolved: number }>(`${API_ENDPOINTS.CONSOLE_ALERTS}resolve/`, { ids, note })).data.resolved;
 }
 
 export async function fetchContingencies(): Promise<{ count: number; results: Contingency[] }> {
@@ -192,7 +213,7 @@ export function artifactFileName(fullNumber: string, kind: ArtifactKind): string
   return `${fullNumber}-${kind}.${ARTIFACT_EXTENSIONS[kind]}`;
 }
 
-function saveBlob(data: Blob, fileName: string) {
+export function saveBlob(data: Blob, fileName: string) {
   const url = URL.createObjectURL(data);
   const link = document.createElement('a');
   link.href = url;

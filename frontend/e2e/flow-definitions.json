@@ -452,6 +452,71 @@
       "outcomes": [
         "success"
       ]
+    },
+    "console-document-support": {
+      "name": "Support actions on one document",
+      "module": "console",
+      "roles": [
+        "operator"
+      ],
+      "priority": "P1",
+      "description": "The document page asks the DIAN what it knows about the document and sends the notice to the client system again",
+      "expectedSpecs": 2,
+      "outcomes": [
+        "success"
+      ]
+    },
+    "console-contingency-transmit": {
+      "name": "Transmit a contingency now",
+      "module": "console",
+      "roles": [
+        "operator"
+      ],
+      "priority": "P1",
+      "description": "«Transmitir ahora» on a DIAN contingency moves it to the front of the queue without waiting for the 30-minute sweep",
+      "expectedSpecs": 1,
+      "outcomes": [
+        "success"
+      ]
+    },
+    "console-alerts-bulk-resolve": {
+      "name": "Resolve several alerts with a note",
+      "module": "console",
+      "roles": [
+        "operator"
+      ],
+      "priority": "P2",
+      "description": "/alerts filters by severity and kind, selects the open alerts and resolves them together with a note that stays visible",
+      "expectedSpecs": 1,
+      "outcomes": [
+        "success"
+      ]
+    },
+    "console-documents-search": {
+      "name": "Search documents by number",
+      "module": "console",
+      "roles": [
+        "operator"
+      ],
+      "priority": "P2",
+      "description": "/documents searches by number or CUFE and narrows the list by kind and dates from «Más filtros»",
+      "expectedSpecs": 1,
+      "outcomes": [
+        "success"
+      ]
+    },
+    "console-health-detail": {
+      "name": "Service health in detail",
+      "module": "console",
+      "roles": [
+        "operator"
+      ],
+      "priority": "P2",
+      "description": "The dashboard health card opens /health, with each part's state and links to what waits",
+      "expectedSpecs": 1,
+      "outcomes": [
+        "success"
+      ]
     }
   }
 }

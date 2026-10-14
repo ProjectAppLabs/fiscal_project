@@ -20,11 +20,13 @@ jest.mock('../../../../lib/hooks/useRequireAuth', () => ({
 jest.mock('../../../../lib/services/http', () => ({
   api: {
     get: jest.fn(),
+    post: jest.fn(),
   },
 }));
 
 const mockUseRequireAuth = useRequireAuth as unknown as jest.Mock;
 const mockGet = api.get as unknown as jest.Mock;
+const mockPost = api.post as unknown as jest.Mock;
 const initialConsoleState = useConsoleStore.getState();
 
 function renderSignedIn() {
@@ -264,5 +266,51 @@ describe('DocumentDetailPage', () => {
     await userEvent.click(await screen.findByRole('button', { name: 'Reintentar' }));
 
     expect(await screen.findByRole('heading', { level: 1, name: 'SETP990000007' })).toBeInTheDocument();
+  });
+
+  it.each(['queued', 'contingency_dian'] as const)('offers to transmit a %s document now', async (state) => {
+    mockGet.mockResolvedValue({ data: buildDocumentDetail({ state }) });
+    mockPost.mockResolvedValue({ data: { state, next_attempt_at: '2026-10-05T12:00:00Z' } });
+    renderSignedIn();
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Transmitir ahora' }));
+
+    expect(mockPost).toHaveBeenCalledWith('console/documents/7/actions/transmit/', {});
+  });
+
+  it('offers no transmission for a rejected document', async () => {
+    renderSignedIn();
+
+    await screen.findByRole('heading', { level: 1, name: 'SETP990000007' });
+    const actions = screen.getAllByRole('button').map((button) => button.textContent);
+
+    expect(actions.filter((name) => ['Transmitir ahora', 'Consultar a la DIAN', 'Reenviar aviso'].includes(name ?? ''))).toEqual(['Consultar a la DIAN', 'Reenviar aviso']);
+  });
+
+  it('shows what the DIAN answers about the document', async () => {
+    mockPost.mockResolvedValue({
+      data: { is_valid: false, status_code: '99', status_description: 'Documento con errores.', status_message: '', messages: [{ rule: 'FAD06', message: 'El CUFE no corresponde.', severity: 'error' }] },
+    });
+    renderSignedIn();
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Consultar a la DIAN' }));
+
+    expect(await screen.findByRole('dialog')).toHaveTextContent('La DIAN no lo tiene como válido. Documento con errores.');
+  });
+
+  it('resends the notice to the client system', async () => {
+    mockPost.mockResolvedValue({ data: { delivered: true, last_status: 200, last_error: '' } });
+    renderSignedIn();
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Reenviar aviso' }));
+
+    expect(mockPost).toHaveBeenCalledWith('console/documents/7/actions/resend-notice/', {});
+  });
+
+  it('links the notes issued on the invoice', async () => {
+    mockGet.mockResolvedValue({ data: buildDocumentDetail({ notes: [{ id: 9, full_number: 'NC1', kind: 'credit_note', state: 'validated' }] }) });
+    renderSignedIn();
+
+    expect(await screen.findByRole('link', { name: 'NC1' })).toHaveAttribute('href', '/documents/9');
   });
 });

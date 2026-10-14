@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
-import { Download, ExternalLink } from 'lucide-react';
+import { BellRing, Download, ExternalLink, SearchCheck, Send } from 'lucide-react';
 
 import { ConsoleLoadError, DocumentStateBadge } from '@/components/console/ConsoleStatus';
 import { Page } from '@/components/layout/Page';
@@ -13,7 +13,9 @@ import { Button } from '@/components/ui/Button';
 import { Card, CardHeader, DataItem, DataList } from '@/components/ui/Card';
 import { CodeValue } from '@/components/ui/Copy';
 import { DataTable } from '@/components/ui/DataTable';
+import { Dialog } from '@/components/ui/Dialog';
 import { JsonViewer } from '@/components/ui/JsonViewer';
+import { Notice } from '@/components/ui/Notice';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { NotFoundState, SkeletonCard } from '@/components/ui/States';
 import { toast } from '@/components/ui/Toast';
@@ -28,7 +30,9 @@ import {
   type DocumentDetail,
   type DocumentEvent,
 } from '@/lib/services/console';
+import { stepErrors } from '@/lib/services/onboarding';
 import { ARTIFACT_KINDS, artifactFileName, downloadArtifact, type ArtifactKind } from '@/lib/services/operations';
+import { runDocumentAction, type DianAnswer, type DocumentAction } from '@/lib/services/support';
 import { useConsoleStore, type DetailStatus } from '@/lib/stores/consoleStore';
 
 export default function DocumentDetailPage() {
@@ -73,6 +77,7 @@ function DetailBody({ document, status, onRetry }: { document: DocumentDetail | 
   return (
     <div className="appear">
       <PageHeader
+        actions={<SupportActions document={document} />}
         badge={<DocumentStateBadge size="lg" state={document.state} />}
         breadcrumb={[{ label: t('breadcrumb'), href: ROUTES.DOCUMENTS }, { label: tKinds(document.kind) }]}
         emoji="documents"
@@ -142,6 +147,17 @@ function DocumentData({ document }: { document: DocumentDetail }) {
         {document.invoice_type ? <DataItem label={t('fields.invoiceType')}>{invoiceTypeLabel(document.invoice_type, t)}</DataItem> : null}
         {document.contingency_started_at ? (
           <DataItem label={t('fields.contingencyStarted')}>{formatDateTime(document.contingency_started_at, locale)}</DataItem>
+        ) : null}
+        {document.notes?.length ? (
+          <DataItem label={t('fields.notes')}>
+            <span className="flex flex-wrap gap-2">
+              {document.notes.map((note) => (
+                <Link className="font-mono text-[13px] font-medium text-primary-text hover:underline" href={documentDetailRoute(note.id)} key={note.id}>
+                  {note.full_number}
+                </Link>
+              ))}
+            </span>
+          </DataItem>
         ) : null}
         {document.cufe ? (
           <DataItem label={t('fields.cufe')}>
@@ -308,6 +324,68 @@ function DownloadButton({ documentId, fullNumber, kind }: { documentId: number; 
         </span>
       ) : null}
     </span>
+  );
+}
+
+/**
+ * Support on one document (H-28): put it first in the queue, ask the DIAN what it knows, send the notice again. Each
+ * action stays in the document's history.
+ */
+function SupportActions({ document }: { document: DocumentDetail }) {
+  const t = useTranslations('documentDetail');
+  const refreshDocument = useConsoleStore((s) => s.refreshDocument);
+  const [busy, setBusy] = useState<DocumentAction | null>(null);
+  const [answer, setAnswer] = useState<DianAnswer | null>(null);
+
+  const run = async (action: DocumentAction) => {
+    setBusy(action);
+    try {
+      const result = await runDocumentAction(document.id, action);
+      if (action === 'check-dian') setAnswer(result as unknown as DianAnswer);
+      else toast(action === 'transmit' ? t('actions.transmitted') : result.delivered ? t('actions.noticeDelivered') : t('actions.noticeFailed', { error: String(result.last_error || '—') }), action === 'resend-notice' && !result.delivered ? 'error' : 'success');
+      void refreshDocument(String(document.id));
+    } catch (error) {
+      toast(stepErrors(error)[0] ?? t('actions.failed'), 'error');
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const transmittable = document.state === 'queued' || document.state === 'contingency_dian';
+  return (
+    <>
+      {transmittable ? (
+        <Button icon={<Send aria-hidden className="size-4" />} loading={busy === 'transmit'} onClick={() => void run('transmit')} variant="primary">
+          {t('actions.transmit')}
+        </Button>
+      ) : null}
+      {document.cufe ? (
+        <Button icon={<SearchCheck aria-hidden className="size-4" />} loading={busy === 'check-dian'} onClick={() => void run('check-dian')} variant="secondary">
+          {t('actions.checkDian')}
+        </Button>
+      ) : null}
+      <Button icon={<BellRing aria-hidden className="size-4" />} loading={busy === 'resend-notice'} onClick={() => void run('resend-notice')} variant="ghost">
+        {t('actions.resendNotice')}
+      </Button>
+      <Dialog description={t('actions.dianBody')} onClose={() => setAnswer(null)} open={answer !== null} title={t('actions.dianTitle')}>
+        {answer ? (
+          <div className="flex flex-col gap-3">
+            <Notice tone={answer.is_valid ? 'success' : 'warning'} title={answer.is_valid ? t('actions.dianValid') : t('actions.dianNotValid')}>
+              {answer.status_description || answer.status_code}
+            </Notice>
+            {answer.messages.length ? (
+              <ul className="flex flex-col gap-2">
+                {answer.messages.map((message, index) => (
+                  <li className="rounded-lg bg-surface-sunk/70 px-4 py-2.5 font-mono text-[13px] text-ink-2" key={index}>
+                    {message.rule}: {message.message}
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+          </div>
+        ) : null}
+      </Dialog>
+    </>
   );
 }
 

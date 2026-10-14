@@ -17,11 +17,13 @@ jest.mock('../../../lib/hooks/useRequireAuth', () => ({
 jest.mock('../../../lib/services/http', () => ({
   api: {
     get: jest.fn(),
+    post: jest.fn(),
   },
 }));
 
 const mockUseRequireAuth = useRequireAuth as unknown as jest.Mock;
 const mockGet = api.get as unknown as jest.Mock;
+const mockPost = api.post as unknown as jest.Mock;
 const initialState = useOperationsStore.getState();
 
 function renderSignedIn() {
@@ -71,6 +73,24 @@ describe('ContingenciesPage', () => {
     await userEvent.click(await screen.findByRole('button', { name: 'Reintentar' }));
 
     expect(await screen.findByRole('table', { name: 'Facturas en contingencia' })).toBeInTheDocument();
+  });
+
+  it('transmits a DIAN contingency without waiting for the sweep', async () => {
+    mockPost.mockResolvedValue({ data: { state: 'contingency_dian', next_attempt_at: '2026-10-05T12:00:00Z' } });
+    renderSignedIn();
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Transmitir ahora: SETP990000021' }));
+
+    expect(mockPost).toHaveBeenCalledWith('console/documents/21/actions/transmit/', {});
+  });
+
+  it('offers no transmission for an issuer contingency', async () => {
+    renderSignedIn();
+
+    const row = await screen.findByRole('row', { name: /CONT7/ });
+
+    expect(within(row).getAllByRole('cell').map((cell) => cell.textContent)).not.toContain('Transmitir ahora');
+    expect(row).toHaveTextContent('Del emisor (tipo 03)');
   });
 });
 

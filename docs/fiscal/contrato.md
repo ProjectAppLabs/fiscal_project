@@ -35,17 +35,17 @@ sus logs.
 
 ## Registro de un sistema cliente
 
-Lo hace ProjectApp en el servidor de Fiscal.:
+Lo hace un operador de ProjectApp desde la consola: **Sistemas cliente → Nuevo sistema cliente** (o el paso
+«Sistema cliente» del asistente de inscripción). La consola muestra `FISCAL_KEY_ID` y `FISCAL_SECRET` **una sola vez**;
+van al `.env` del sistema cliente. En la página del sistema cliente quedan la guía de conexión, el botón «Enviar
+aviso de prueba» (envía el evento `ping` a la URL de avisos) y la bitácora de avisos con reintento.
 
-```bash
-python manage.py create_client_system "Waiter" --webhook-url https://<waiter>/internal/fiscal/events
-```
-
-El comando imprime `FISCAL_KEY_ID` y `FISCAL_SECRET` **una sola vez**; van al `.env` del sistema cliente.
-
-- **Rotación:** `python manage.py rotate_client_secret <key_id> --grace-hours 24` emite un secreto nuevo. El
-  anterior sigue sirviendo durante el periodo de gracia, para cambiarlo sin cortar el servicio; los más viejos dejan de
-  servir de inmediato. Nunca hay más de dos secretos vigentes.
+- **Rotación:** «Rotar secreto» en la página del sistema cliente (solo administradores) emite un secreto nuevo. El
+  anterior sigue sirviendo durante el periodo de gracia que se elija, para cambiarlo sin cortar el servicio; los más
+  viejos dejan de servir de inmediato. Nunca hay más de dos secretos vigentes.
+- **Sin consola** (recuperación): los mismos pasos existen como comandos del servidor,
+  `python manage.py create_client_system "Waiter" --webhook-url https://<waiter>/internal/fiscal/events` y
+  `python manage.py rotate_client_secret <key_id> --grace-hours 24`.
 
 ## Firma de cada petición
 

@@ -153,7 +153,8 @@
     "criticalNoticeBody": "Revísalas antes de que detengan la facturación.",
     "contingencyNotice": "{count, plural, one {# factura en contingencia.} other {# facturas en contingencia.}}",
     "contingencyNoticeBody": "Hay que transmitirlas dentro de las 48 horas.",
-    "viewClientSystems": "Ver sistemas cliente"
+    "viewClientSystems": "Ver sistemas cliente",
+    "viewHealth": "Ver salud en detalle"
   },
   "documents": {
     "title": "Documentos",
@@ -183,7 +184,21 @@
     "subtitle": "{count} documentos de todos los emisores",
     "issuerPlaceholder": "Sin puntos ni dígito de verificación",
     "emptyBody": "Prueba con otro estado u otro NIT.",
-    "attemptsValue": "{count, plural, one {# intento} other {# intentos}}"
+    "attemptsValue": "{count, plural, one {# intento} other {# intentos}}",
+    "export": "Exportar CSV",
+    "exportFailed": "No se pudo exportar. Intenta de nuevo.",
+    "filterSearch": "Número o CUFE",
+    "searchPlaceholder": "SETP990000001 o parte del CUFE",
+    "filterKind": "Tipo",
+    "allKinds": "Todos los tipos",
+    "filterClient": "Sistema cliente",
+    "allClients": "Todos los sistemas",
+    "filterFrom": "Emitido desde",
+    "filterTo": "Emitido hasta",
+    "moreFilters": "Más filtros",
+    "moreFiltersCount": "{count, plural, one {Más filtros (# activo)} other {Más filtros (# activos)}}",
+    "lessFilters": "Menos filtros",
+    "clearFilters": "Quitar filtros"
   },
   "documentDetail": {
     "back": "Volver a documentos",
@@ -204,7 +219,8 @@
       "original": "Documento original",
       "cufe": "CUFE",
       "invoiceType": "Tipo de factura DIAN",
-      "contingencyStarted": "En contingencia desde"
+      "contingencyStarted": "En contingencia desde",
+      "notes": "Notas sobre esta factura"
     },
     "viewOriginal": "Ver documento {id}",
     "qr": "Ver código QR",
@@ -246,7 +262,20 @@
     "copyCufe": "Copiar el CUFE",
     "rejections": "Rechazos",
     "notifications": "Notificaciones (no detienen el documento)",
-    "artifactsSubtitle": "Se conservan 10 años; Fiscal. verifica su huella antes de entregarlos."
+    "artifactsSubtitle": "Se conservan 10 años; Fiscal. verifica su huella antes de entregarlos.",
+    "actions": {
+      "transmit": "Transmitir ahora",
+      "transmitted": "Listo: el documento pasó al primer lugar de la cola y Fiscal. lo está transmitiendo.",
+      "checkDian": "Consultar a la DIAN",
+      "resendNotice": "Reenviar aviso",
+      "noticeDelivered": "Aviso entregado al sistema cliente.",
+      "noticeFailed": "El sistema cliente no recibió el aviso: {error}. Fiscal. lo reintentará solo.",
+      "failed": "No se pudo hacer la acción.",
+      "dianTitle": "Lo que dice la DIAN",
+      "dianBody": "La respuesta de la DIAN a esta consulta. Solo informa: el estado del documento en Fiscal. no cambia.",
+      "dianValid": "La DIAN tiene el documento como válido.",
+      "dianNotValid": "La DIAN no lo tiene como válido."
+    }
   },
   "staging": {
     "remainsOne": "queda",
@@ -481,7 +510,8 @@
       "started": "Desde",
       "deadline": "Plazo",
       "left": "Tiempo restante",
-      "attempts": "Intentos"
+      "attempts": "Intentos",
+      "actions": "Acción"
     },
     "kinds": {
       "dian": "DIAN (tipo 04)",
@@ -491,7 +521,10 @@
     "overdue": "Vencido hace {hours} h",
     "emptyBody": "Cuando la DIAN no responda, las facturas esperan aquí con su plazo de 48 horas.",
     "urgentNotice": "{count, plural, one {# factura vence en menos de 8 horas.} other {# facturas vencen en menos de 8 horas.}}",
-    "urgentNoticeBody": "Fiscal. las reintenta cada 30 minutos; si la DIAN sigue sin responder, revisa la carta de contingencia del emisor."
+    "urgentNoticeBody": "Fiscal. las reintenta cada 30 minutos; si la DIAN sigue sin responder, revisa la carta de contingencia del emisor.",
+    "transmit": "Transmitir ahora",
+    "transmitted": "{number} pasó al primer lugar de la cola.",
+    "transmitFailed": "No se pudo transmitir. Intenta de nuevo."
   },
   "alerts": {
     "title": "Alertas",
@@ -521,7 +554,24 @@
     "resolvedToast": "Alerta resuelta",
     "fixCertificate": "Subir certificado",
     "fixRange": "Ver numeración",
-    "fixContingency": "Ver contingencias"
+    "fixContingency": "Ver contingencias",
+    "export": "Exportar CSV",
+    "exportFailed": "No se pudo exportar. Intenta de nuevo.",
+    "filterSeverity": "Severidad",
+    "allSeverities": "Todas",
+    "filterKind": "Tipo",
+    "allKinds": "Todos los tipos",
+    "select": "Seleccionar",
+    "selectAll": "Seleccionar las abiertas de esta página",
+    "selectedCount": "{count, plural, =0 {Ninguna seleccionada} one {# seleccionada} other {# seleccionadas}}",
+    "resolveSelected": "Resolver seleccionadas",
+    "resolveManyTitle": "{count, plural, one {¿Resolver # alerta?} other {¿Resolver # alertas?}}",
+    "resolveManyBody": "Quedan cerradas con tu nombre. Si el problema sigue, Fiscal. vuelve a avisar.",
+    "resolvedMany": "{count, plural, one {# alerta resuelta} other {# alertas resueltas}}",
+    "note": "Nota (opcional)",
+    "noteHint": "Qué se hizo, para quien la lea después. Por ejemplo: «Se subió el certificado nuevo».",
+    "resolvedBy": "Por {name}",
+    "resolvedByFiscal": "La cerró Fiscal."
   },
   "clientSystems": {
     "title": "Sistemas cliente",
@@ -969,5 +1019,51 @@
     "activateBody": "Vuelve a poder entrar con su contraseña.",
     "saved": "Usuario actualizado",
     "failed": "No se pudo completar la acción."
+  },
+  "health": {
+    "title": "Salud del servicio",
+    "subtitle": "Cada parte de Fiscal. y lo que está esperando. Se actualiza sola cada 30 segundos.",
+    "refresh": "Actualizar",
+    "error": "No pudimos consultar la salud del servicio.",
+    "checkedAt": "Revisado el {when}.",
+    "status": {
+      "ok": "Todo en orden.",
+      "degraded": "Con problemas.",
+      "down": "Caído."
+    },
+    "statusBody": {
+      "ok": "La base de datos, el trabajador y la cola responden.",
+      "degraded": "Algo necesita atención: mira abajo qué parte está en rojo.",
+      "down": "La base de datos no responde: Fiscal. no puede recibir ni transmitir documentos."
+    },
+    "partsTitle": "Partes del servicio",
+    "partsSubtitle": "Lo que Fiscal. necesita para recibir, firmar y transmitir.",
+    "database": "Base de datos",
+    "databaseOk": "Responde",
+    "databaseDown": "No responde",
+    "worker": "Trabajador",
+    "workerOk": "Activo",
+    "workerSilent": "No responde",
+    "workerHint": "Sin el trabajador, los documentos se quedan en cola. Avísale a quien administra el servidor.",
+    "lastBeat": "Último latido {when}",
+    "noBeat": "Aún sin latidos",
+    "queue": "Cola de transmisión",
+    "queueDue": "{count, plural, =0 {Al día} one {# documento por transmitir} other {# documentos por transmitir}}",
+    "oldestDue": "El más antiguo espera hace {minutes} min",
+    "queueHint": "La cola lleva mucho tiempo sin avanzar. Revisa que el trabajador esté activo.",
+    "dian": "DIAN",
+    "dianContingency": "{count, plural, =0 {Sin contingencia} one {# documento en contingencia} other {# documentos en contingencia}}",
+    "lastAnswer": "Última respuesta {when}",
+    "noAnswer": "Aún sin respuestas",
+    "waitingTitle": "Lo que espera",
+    "waitingSubtitle": "Toca una fila para ver la lista.",
+    "documents": {
+      "queued": "Documentos en cola",
+      "transmitting": "Documentos transmitiéndose",
+      "contingency_dian": "En contingencia de la DIAN",
+      "contingency_issuer": "En contingencia del emisor"
+    },
+    "noticesPending": "Avisos por entregar",
+    "noticesFailed": "Avisos fallidos"
   }
 }
