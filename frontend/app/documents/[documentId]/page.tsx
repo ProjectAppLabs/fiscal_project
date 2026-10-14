@@ -34,6 +34,7 @@ import { stepErrors } from '@/lib/services/onboarding';
 import { ARTIFACT_KINDS, artifactFileName, downloadArtifact, type ArtifactKind } from '@/lib/services/operations';
 import { runDocumentAction, type DianAnswer, type DocumentAction } from '@/lib/services/support';
 import { useConsoleStore, type DetailStatus } from '@/lib/stores/consoleStore';
+import { HandoffCard } from '@/components/console/HandoffCard';
 
 export default function DocumentDetailPage() {
   const t = useTranslations('documentDetail');
@@ -88,6 +89,7 @@ function DetailBody({ document, status, onRetry }: { document: DocumentDetail | 
         <DocumentData document={document} />
         <div className="flex flex-col gap-4">
           <DianAnswer document={document} />
+          {document.state === 'rejected' ? <HandoffCard guides={['rejection']} issuer={document.issuer} /> : null}
           <Events document={document} />
         </div>
       </div>

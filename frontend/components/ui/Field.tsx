@@ -15,13 +15,16 @@ export const CONTROL_CLASS = cn(
 );
 
 /** Label on top, control, then the hint or the error (the error replaces the hint). */
-export function Field({ id, label, hint, error, labelAction, className, children }: FieldProps) {
+export function Field({ id, label, hint, error, labelAction, help, className, children }: FieldProps) {
   return (
     <div className={cn('flex flex-col gap-1.5', className)}>
-      <div className="flex items-baseline justify-between gap-3">
-        <label className="text-[13px] font-semibold text-ink" htmlFor={id}>
-          {label}
-        </label>
+      <div className="flex items-center justify-between gap-3">
+        <span className="inline-flex items-center gap-1">
+          <label className="text-[13px] font-semibold text-ink" htmlFor={id}>
+            {label}
+          </label>
+          {help}
+        </span>
         {labelAction}
       </div>
       {children}
@@ -98,6 +101,8 @@ interface FieldProps {
   error?: ReactNode;
   /** Something next to the label, like «¿La olvidaste?». */
   labelAction?: ReactNode;
+  /** A «?» right after the label (an InfoTip): what the field is and where its value comes from. */
+  help?: ReactNode;
   className?: string;
   children: ReactNode;
 }

@@ -23,6 +23,7 @@ import {
   type TestSetSize,
 } from '@/lib/services/onboarding';
 import { StepErrors } from './ClientSystemForm';
+import { HelpTip } from './HelpTip';
 
 const READINESS_KEYS = ['environment', 'certificate', 'software', 'test_set_id', 'range'] as const;
 const SIZE_FIELDS = ['invoices', 'credit_notes', 'debit_notes'] as const;
@@ -108,7 +109,13 @@ export function TestSetPanel({ issuerId, onChange }: { issuerId: number; onChang
         }}
       >
         {SIZE_FIELDS.map((field) => (
-          <Field className="w-28" id={`test-set-${field}`} key={field} label={t(`size.${field}`)}>
+          <Field
+            className="w-28"
+            help={field === 'invoices' ? <HelpTip label={t('sizeHint')} topic="testSet.size" /> : undefined}
+            id={`test-set-${field}`}
+            key={field}
+            label={t(`size.${field}`)}
+          >
             <Input
               className="h-11 font-mono"
               id={`test-set-${field}`}

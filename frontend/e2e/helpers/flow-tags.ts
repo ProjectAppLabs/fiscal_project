@@ -58,3 +58,5 @@ export const CONSOLE_CONTINGENCY_TRANSMIT = ['@flow:console-contingency-transmit
 export const CONSOLE_ALERTS_BULK_RESOLVE = ['@flow:console-alerts-bulk-resolve', '@module:console', '@priority:P2'];
 export const CONSOLE_DOCUMENTS_SEARCH = ['@flow:console-documents-search', '@module:console', '@priority:P2'];
 export const CONSOLE_HEALTH_DETAIL = ['@flow:console-health-detail', '@module:console', '@priority:P2'];
+export const CONSOLE_HELP_GUIDES = ['@flow:console-help-guides', '@module:console', '@priority:P2'];
+export const CONSOLE_FIELD_HELP = ['@flow:console-field-help', '@module:console', '@priority:P3'];

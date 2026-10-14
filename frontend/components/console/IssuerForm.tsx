@@ -8,6 +8,7 @@ import { Choice, Field, Input, Select } from '@/components/ui/Field';
 import { checkDigit } from '@/lib/nit';
 import { TAX_RESPONSIBILITIES, TAX_SCHEMES, stepErrors } from '@/lib/services/onboarding';
 import { StepErrors } from './ClientSystemForm';
+import { HelpTip } from './HelpTip';
 import { MunicipalityField } from './MunicipalityField';
 
 /**
@@ -49,24 +50,25 @@ export function IssuerForm({ mode, initial, onSubmit, submitLabel }: IssuerFormP
 
   return (
     <form className="grid gap-4 sm:grid-cols-2" onSubmit={(e) => void submit(e)}>
-      <Field hint={mode === 'edit' ? t('nitLocked') : undefined} id="issuer-nit" label={t('nit')}>
+      <Field help={<HelpTip label={t('nit')} topic="issuer.nit" />} hint={mode === 'edit' ? t('nitLocked') : undefined} id="issuer-nit" label={t('nit')}>
         <Input className="font-mono" disabled={mode === 'edit'} id="issuer-nit" inputMode="numeric" onChange={(e) => setNit(e.target.value.trim())} required value={form.nit} />
       </Field>
       <Field
         error={form.dv && expectedDv && form.dv !== expectedDv ? t('dvMismatch', { expected: expectedDv }) : undefined}
+        help={<HelpTip label={t('dv')} topic="issuer.dv" />}
         hint={expectedDv ? t('dvCalculated') : undefined}
         id="issuer-dv"
         label={t('dv')}
       >
         <Input aria-invalid={Boolean(form.dv && expectedDv && form.dv !== expectedDv)} className="font-mono" id="issuer-dv" inputMode="numeric" maxLength={1} onChange={(e) => set('dv')(e.target.value.trim())} required value={form.dv} />
       </Field>
-      <Field id="issuer-person" label={t('personType')}>
+      <Field help={<HelpTip label={t('personType')} topic="issuer.personType" />} id="issuer-person" label={t('personType')}>
         <Select id="issuer-person" onChange={(e) => set('person_type')(e.target.value)} value={form.person_type}>
           <option value="2">{t('personTypes.2')}</option>
           <option value="1">{t('personTypes.1')}</option>
         </Select>
       </Field>
-      <Field id="issuer-scheme" label={t('taxScheme')}>
+      <Field help={<HelpTip label={t('taxScheme')} topic="issuer.taxScheme" />} id="issuer-scheme" label={t('taxScheme')}>
         <Select id="issuer-scheme" onChange={(e) => set('tax_scheme')(e.target.value)} value={form.tax_scheme}>
           {TAX_SCHEMES.map((code) => (
             <option key={code} value={code}>
@@ -75,14 +77,17 @@ export function IssuerForm({ mode, initial, onSubmit, submitLabel }: IssuerFormP
           ))}
         </Select>
       </Field>
-      <Field id="issuer-name" label={t('legalName')}>
+      <Field help={<HelpTip label={t('legalName')} topic="issuer.legalName" />} id="issuer-name" label={t('legalName')}>
         <Input id="issuer-name" onChange={(e) => set('legal_name')(e.target.value)} required value={form.legal_name} />
       </Field>
-      <Field id="issuer-trade" label={t('tradeName')}>
+      <Field help={<HelpTip label={t('tradeName')} topic="issuer.tradeName" />} id="issuer-trade" label={t('tradeName')}>
         <Input id="issuer-trade" onChange={(e) => set('trade_name')(e.target.value)} value={form.trade_name} />
       </Field>
-      <fieldset className="sm:col-span-2">
-        <legend className="mb-2 text-[13px] font-semibold text-ink">{t('responsibilities')}</legend>
+      <fieldset aria-labelledby="issuer-responsibilities-legend" className="sm:col-span-2">
+        <legend className="mb-2 flex items-center gap-1 text-[13px] font-semibold text-ink">
+          <span id="issuer-responsibilities-legend">{t('responsibilities')}</span>
+          <HelpTip label={t('responsibilities')} topic="issuer.responsibilities" />
+        </legend>
         <div className="grid gap-2 sm:grid-cols-2">
           {TAX_RESPONSIBILITIES.map((code) => (
             <Choice
@@ -96,16 +101,21 @@ export function IssuerForm({ mode, initial, onSubmit, submitLabel }: IssuerFormP
           ))}
         </div>
       </fieldset>
-      <Field id="issuer-address" label={t('address')}>
+      <Field help={<HelpTip label={t('address')} topic="issuer.address" />} id="issuer-address" label={t('address')}>
         <Input id="issuer-address" onChange={(e) => set('address_line')(e.target.value)} required value={form.address_line} />
       </Field>
-      <Field hint={form.municipality_code ? t('municipalityCode', { code: form.municipality_code }) : t('municipalityHint')} id="issuer-municipality" label={t('municipality')}>
+      <Field
+        help={<HelpTip label={t('municipality')} topic="issuer.municipality" />}
+        hint={form.municipality_code ? t('municipalityCode', { code: form.municipality_code }) : t('municipalityHint')}
+        id="issuer-municipality"
+        label={t('municipality')}
+      >
         <MunicipalityField id="issuer-municipality" onChange={set('municipality_code')} value={form.municipality_code} />
       </Field>
-      <Field id="issuer-email" label={t('email')}>
+      <Field help={<HelpTip label={t('email')} topic="issuer.email" />} id="issuer-email" label={t('email')}>
         <Input id="issuer-email" onChange={(e) => set('email')(e.target.value)} required type="email" value={form.email} />
       </Field>
-      <Field id="issuer-phone" label={t('phone')}>
+      <Field help={<HelpTip label={t('phone')} topic="issuer.phone" />} id="issuer-phone" label={t('phone')}>
         <Input id="issuer-phone" onChange={(e) => set('phone')(e.target.value)} value={form.phone} />
       </Field>
       <div className="flex flex-col gap-3 sm:col-span-2">

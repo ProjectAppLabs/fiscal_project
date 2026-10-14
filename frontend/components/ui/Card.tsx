@@ -12,13 +12,16 @@ export function Card({ as: Tag = 'section', className, children, ...props }: Car
 }
 
 /** Card title (Title 3) with an optional subtitle and an action on the right. */
-export function CardHeader({ id, title, subtitle, action, className }: CardHeaderProps) {
+export function CardHeader({ id, title, subtitle, action, help, className }: CardHeaderProps) {
   return (
     <div className={cn('mb-4 flex flex-wrap items-start justify-between gap-3', className)}>
       <div className="min-w-0">
-        <h2 className="text-[17px] font-bold leading-6 text-ink" id={id}>
-          {title}
-        </h2>
+        <div className="flex items-center gap-1">
+          <h2 className="text-[17px] font-bold leading-6 text-ink" id={id}>
+            {title}
+          </h2>
+          {help}
+        </div>
         {subtitle ? <p className="mt-0.5 text-[13px] font-medium text-ink-3">{subtitle}</p> : null}
       </div>
       {action ? <div className="flex shrink-0 flex-wrap items-center gap-2">{action}</div> : null}
@@ -59,5 +62,7 @@ interface CardHeaderProps {
   title: ReactNode;
   subtitle?: ReactNode;
   action?: ReactNode;
+  /** A «?» next to the title, outside the heading so the card keeps its name. */
+  help?: ReactNode;
   className?: string;
 }

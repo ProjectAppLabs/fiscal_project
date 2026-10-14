@@ -71,7 +71,7 @@ test.describe('Console operations', () => {
 
     await page.getByRole('main').getByRole('button', { name: 'Nuevo sistema cliente' }).click();
     const dialog = page.getByRole('dialog', { name: 'Nuevo sistema cliente' });
-    await dialog.getByLabel('Nombre del sistema nuevo').fill('Caja POS');
+    await dialog.getByLabel('Nombre del sistema nuevo', { exact: true }).fill('Caja POS');
     await dialog.getByRole('button', { name: 'Crear sistema cliente' }).click();
 
     await expect(dialog.getByText('secreto-de-una-vez')).toBeVisible();

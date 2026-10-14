@@ -24,7 +24,8 @@
     "more": "More",
     "closeMore": "Close the menu",
     "openCount": "{count, plural, one {# open} other {# open}}",
-    "users": "Console users"
+    "users": "Console users",
+    "help": "Guides and help"
   },
   "footer": {
     "tagline": "ProjectApp's internal electronic invoicing console."
@@ -831,7 +832,8 @@
     "close": "Close",
     "cancel": "Cancel",
     "previous": "Previous",
-    "next": "Next"
+    "next": "Next",
+    "helpAbout": "Help: {label}"
   },
   "account": {
     "title": "Your account",
@@ -1065,5 +1067,251 @@
     },
     "noticesPending": "Notices to deliver",
     "noticesFailed": "Failed notices"
+  },
+  "help": {
+    "what": "What it is",
+    "where": "Where it comes from",
+    "openPage": "Open the page",
+    "tips": {
+      "client": {
+        "name": {
+          "what": "The name the team knows the system that sends the invoices by, for example Waiter.",
+          "where": "You choose it. It shows in notices, the log and reports."
+        },
+        "webhook": {
+          "what": "The https address where Fiscal. tells that system every state change of a document (validated, rejected, in contingency). Notices are signed.",
+          "where": "The client system's technical team gives it to you. You can leave it empty and set it later on the client system's page."
+        },
+        "secret": {
+          "what": "The key the client system signs its calls to Fiscal. with. It goes with the key identifier.",
+          "where": "Fiscal. shows it only once: when the client system is created or the secret is rotated.",
+          "secret": "Keep it in a password manager and hand it to the technical team over a safe channel. Never by chat or e-mail."
+        },
+        "grace": {
+          "what": "Hours the previous secret keeps working, so the client system can switch without an outage.",
+          "where": "24 hours is usually enough. 0 stops it now: use it if the secret was exposed."
+        }
+      },
+      "issuer": {
+        "nit": {
+          "what": "The business's tax identification number. For a natural person it is their ID number.",
+          "where": "RUT, box 5. Without the check digit."
+        },
+        "dv": {
+          "what": "The last digit of the NIT, computed by the DIAN.",
+          "where": "RUT, box 6. Fiscal. computes it from the NIT; if it does not match the RUT, check the NIT."
+        },
+        "personType": {
+          "what": "Whether the business is a company (legal person) or a person (natural person).",
+          "where": "RUT, box 24: 1 is a legal person and 2 a natural person."
+        },
+        "legalName": {
+          "what": "The business's legal name, exactly as in the RUT. It goes on every invoice.",
+          "where": "RUT, box 35 (company name) or boxes 31 to 34 (a natural person's names)."
+        },
+        "tradeName": {
+          "what": "The business's trade name, if it differs from the legal one.",
+          "where": "RUT, box 36. Optional."
+        },
+        "responsibilities": {
+          "what": "The business's tax obligations. If they do not match the RUT, the DIAN rejects the invoices (rule FAJ26).",
+          "where": "RUT, box 53: 13 is O-13, 15 is O-15, 23 is O-23 and 47 is O-47. If none applies, «Not applicable» (R-99-PN). When in doubt, ask the accountant."
+        },
+        "taxScheme": {
+          "what": "The main tax the business charges on its sales: VAT, national consumption tax (INC) or none.",
+          "where": "RUT, box 53: 48 is VAT; 33 is INC (common in restaurants); 49 «Not VAT liable» is «Not applicable». The accountant confirms it."
+        },
+        "address": {
+          "what": "The business's main address. It goes on the invoices.",
+          "where": "RUT, box 41."
+        },
+        "municipality": {
+          "what": "The municipality of the address. Fiscal. stores its DANE code, which the DIAN asks for.",
+          "where": "RUT, box 40. Type the name and pick it from the list."
+        },
+        "email": {
+          "what": "The business's e-mail shown on the invoices.",
+          "where": "RUT, box 42, or whichever the business prefers for invoicing."
+        },
+        "phone": {
+          "what": "A contact phone that goes on the invoices.",
+          "where": "RUT, box 44. Optional."
+        }
+      },
+      "certificate": {
+        "kind": {
+          "what": "Entities deliver the certificate in two ways: one password-protected file (.p12 or .pfx), or the certificate and the private key as separate files.",
+          "where": "Check the e-mail or the portal of the entity that issued it."
+        },
+        "file": {
+          "what": "The business's digital signature certificate. Fiscal. signs every invoice with it. It is issued by an entity accredited by ONAC.",
+          "where": "The business downloads it from its certification entity's portal. It must be a file, not a USB token.",
+          "link": "https://onac.org.co",
+          "linkLabel": "Accredited entities (ONAC)"
+        },
+        "password": {
+          "what": "The password that protects the .p12 or .pfx file.",
+          "where": "The business sets it when downloading the certificate, or the entity sends it.",
+          "secret": "Type it yourself right here. Fiscal. uses it once to open the file and keeps the certificate encrypted."
+        },
+        "keyFile": {
+          "what": "The private key that goes with the certificate (.key). Nothing can be signed without it.",
+          "where": "The entity delivers it with the certificate, or it was generated on the computer when requesting it.",
+          "secret": "It is the secret part of the certificate: do not e-mail it or upload it anywhere else."
+        }
+      },
+      "software": {
+        "environment": {
+          "what": "Habilitación is the DIAN's test environment, with no tax effect. Production is the real one.",
+          "where": "Until the DIAN accepts the test set, it stays in habilitación."
+        },
+        "softwareId": {
+          "what": "The identifier the DIAN gives Fiscal. inside this business's registration. It is not secret.",
+          "where": "Habilitation portal → Registro y habilitación → Documentos electrónicos → Factura electrónica → Configurar modos de operación → «Software propio» row, ID column. It is also on the test set page.",
+          "link": "https://catalogo-vpfe-hab.dian.gov.co/User/Login",
+          "linkLabel": "DIAN habilitation portal"
+        },
+        "pin": {
+          "what": "The PIN the business chose when it associated Fiscal. as its own software. It goes in the security code of every document.",
+          "where": "The business typed it in the «Pin del SW» field of «Configurar modos de operación».",
+          "secret": "It is secret: type it yourself, never in a chat, e-mail or ticket. The portal shows it on screen, so do not share your screen on those pages."
+        },
+        "testSetId": {
+          "what": "The identifier of the test set the DIAN assigned to this registration. It is not secret.",
+          "where": "Habilitation portal → list of operation modes → Fiscal.'s row, «Acciones» column → «¡Importante!» notice at the top of the test set page.",
+          "link": "https://catalogo-vpfe-hab.dian.gov.co/User/Login",
+          "linkLabel": "DIAN habilitation portal"
+        }
+      },
+      "range": {
+        "resolution": {
+          "what": "The number of the DIAN resolution that authorizes this numbering.",
+          "where": "Habilitación: test set page → «Rango de numeración asignado» (18760000001). Production: the resolution issued in MUISCA."
+        },
+        "prefix": {
+          "what": "The letters before the invoice number, like SETP in SETP990000001. Up to 4 characters.",
+          "where": "On the same resolution or test set page. In habilitación it is SETP."
+        },
+        "numbers": {
+          "what": "The first and last numbers authorized in the range.",
+          "where": "On the resolution or the test set page. Habilitación: 990000000 to 995000000."
+        },
+        "validity": {
+          "what": "The dates between which the resolution allows invoicing with this range.",
+          "where": "On the resolution or the test set page. Habilitación: 2019-01-19 to 2030-01-19."
+        },
+        "technicalKey": {
+          "what": "The 40-character key of this range. Fiscal. uses it to compute each invoice's CUFE; if it is wrong, the DIAN rejects with FAD06.",
+          "where": "Habilitación: test set page → «Información del software» (click the field, Ctrl+A and Ctrl+C). Production: Fiscal. fetches it with «Fetch the numbering from the DIAN».",
+          "secret": "It is secret: copy it straight from the portal into this field. Never paste it in a chat."
+        },
+        "kind": {
+          "what": "Invoicing: the numbering authorized for electronic invoices. Contingency: the paper booklet (type 03) for when there is no system.",
+          "where": "The DIAN authorizes both by resolution."
+        },
+        "resolutionDate": {
+          "what": "The date the DIAN issued the resolution.",
+          "where": "On the resolution PDF."
+        },
+        "establishment": {
+          "what": "The branch or till that uses this range.",
+          "where": "If the business has several branches, each one has its prefix in the resolution."
+        }
+      },
+      "testSet": {
+        "size": {
+          "what": "How many invoices, credit notes and debit notes the DIAN asks for to accept the set.",
+          "where": "Test set page in the portal → «Total de documentos requeridos». The usual one is 30, 10 and 10.",
+          "link": "https://catalogo-vpfe-hab.dian.gov.co/User/Login",
+          "linkLabel": "DIAN habilitation portal"
+        }
+      },
+      "production": {
+        "habilitado": {
+          "what": "The last step of the habilitation portal: the business sets the date it starts invoicing electronically.",
+          "where": "The business marks it in the portal after talking to its accountant. It is irreversible and adds responsibility 52 to the RUT."
+        },
+        "numbering": {
+          "what": "Production numbering is authorized by a DIAN resolution, and its prefix is associated with Fiscal. before fetching it.",
+          "where": "DIAN online services (MUISCA) → invoicing numbering request. Then, in the production e-invoicing portal, the prefix is associated with the software."
+        }
+      },
+      "contingency": {
+        "letter": {
+          "what": "The draft letter the business uses to tell the DIAN about the invoices it made in contingency in a period.",
+          "where": "Fiscal. builds it from the contingencies of the chosen dates. The legal representative signs it and the business sends it to contingencia.facturadorvp@dian.gov.co."
+        }
+      },
+      "users": {
+        "role": {
+          "what": "Operator: sees and runs documents, issuers, contingencies and alerts. Administrator: also invites users, rotates secrets, switches issuers and ranges on or off and moves issuers to production.",
+          "where": "Choose it by what the person needs to do. It can be changed later."
+        }
+      }
+    }
+  },
+  "handoff": {
+    "title": "Do it with Claude in Chrome",
+    "body": "Copy the guide and paste it into Claude in Chrome with the portal open. It walks you through each step; you sign in and type the PIN, the technical key and the passwords.",
+    "allGuides": "See all guides",
+    "copy": "Copy guide",
+    "download": "Download .md",
+    "copied": "Guide «{title}» copied. Paste it into Claude in Chrome.",
+    "copyFailed": "Could not copy. Download the .md and paste it from the file.",
+    "downloadFailed": "Could not download the guide. Try again.",
+    "noIssuer": "to be defined (ask the person which issuer it is)",
+    "guides": {
+      "dian-registration": {
+        "title": "Register as an invoicer with the DIAN",
+        "description": "Habilitation portal: sign in and register the business as an electronic invoicer."
+      },
+      "software": {
+        "title": "Set up Fiscal. as own software and read the test set",
+        "description": "Associate Fiscal. with its PIN, read the SoftwareID, TestSetId and numbering, and save them in Fiscal."
+      },
+      "certificate": {
+        "title": "Get and load the digital certificate",
+        "description": "Which certificate works, where to buy it and how to load it in Fiscal."
+      },
+      "enrolment": {
+        "title": "Enrol an issuer in Fiscal.",
+        "description": "The five-step wizard, with the issuer data taken from the RUT box by box."
+      },
+      "test-set": {
+        "title": "Run the DIAN test set",
+        "description": "Send the set, wait for the result and understand the known rejections."
+      },
+      "production": {
+        "title": "Move an issuer to production",
+        "description": "«Habilitado» in the portal, numbering in MUISCA, associated prefix and the step in Fiscal."
+      },
+      "client-system": {
+        "title": "Connect a client system",
+        "description": "Create the client system, keep its credentials and test the connection."
+      },
+      "rejection": {
+        "title": "Review a rejected document",
+        "description": "Read the DIAN rules, find where the error comes from and who fixes it."
+      }
+    }
+  },
+  "helpPage": {
+    "title": "Guides and help",
+    "subtitle": "Each process, step by step, to do it alone or with Claude in Chrome.",
+    "groups": {
+      "dian": "In the DIAN portals",
+      "fiscal": "In Fiscal."
+    },
+    "howTitle": "How to use a guide with Claude in Chrome",
+    "howSteps": {
+      "1": "Open the portal or the Fiscal. page you will work on.",
+      "2": "Copy the guide with «Copy guide», paste it into Claude in Chrome and type «let's start».",
+      "3": "Claude tells you what to do and fills in the data that is not secret. You sign in, pick the files and type the PIN, technical key and passwords.",
+      "4": "Before every irreversible step, Claude stops and asks for confirmation. At the end it gives you a summary without secrets."
+    },
+    "safetyTitle": "What you never give to Claude or anyone",
+    "safetyBody": "The software PIN, the technical key, the certificate password, a client system's secret and the DIAN tokens. The guides tell Claude so; if a screen shows them, copy them yourself.",
+    "tipsTitle": "On every field, the «?»",
+    "tipsBody": "Next to the fields that ask for DIAN, RUT or certificate data there is a «?» that explains what the data is and where it comes from."
   }
 }

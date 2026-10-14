@@ -313,4 +313,10 @@ describe('DocumentDetailPage', () => {
 
     expect(await screen.findByRole('link', { name: 'NC1' })).toHaveAttribute('href', '/documents/9');
   });
+
+  it('offers the Claude in Chrome guide for a rejected document', async () => {
+    renderSignedIn();
+
+    expect(await screen.findByRole('complementary', { name: 'Hazlo con Claude en Chrome' })).toHaveTextContent('Revisar un documento rechazado');
+  });
 });

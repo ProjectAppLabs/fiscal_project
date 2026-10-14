@@ -8,6 +8,7 @@ import { CodeValue } from '@/components/ui/Copy';
 import { Field, Input } from '@/components/ui/Field';
 import { Notice } from '@/components/ui/Notice';
 import { createClientSystem, stepErrors, type CreatedClientSystem } from '@/lib/services/onboarding';
+import { HelpTip } from './HelpTip';
 
 /**
  * Creates a client system and shows its secret **once** (H-32): the same flow in Sistemas cliente and in the
@@ -38,10 +39,10 @@ export function ClientSystemForm({ onDone, submitLabel }: { onDone: (client: Cre
 
   return (
     <form className="flex flex-col gap-4" onSubmit={(e) => void onSubmit(e)}>
-      <Field id="client-name" label={t('name')}>
+      <Field help={<HelpTip label={t('name')} topic="client.name" />} id="client-name" label={t('name')}>
         <Input id="client-name" onChange={(e) => setName(e.target.value)} placeholder={t('namePlaceholder')} required value={name} />
       </Field>
-      <Field hint={t('webhookHint')} id="client-webhook" label={t('webhook')}>
+      <Field help={<HelpTip label={t('webhook')} topic="client.webhook" />} hint={t('webhookHint')} id="client-webhook" label={t('webhook')}>
         <Input id="client-webhook" onChange={(e) => setWebhook(e.target.value)} placeholder="https://" type="url" value={webhook} />
       </Field>
       {errors ? <StepErrors errors={errors} /> : null}
@@ -70,7 +71,10 @@ function SecretReveal({ client, onSaved }: { client: CreatedClientSystem; onSave
           </dd>
         </div>
         <div>
-          <dt className="text-label mb-1.5">{t('secret')}</dt>
+          <dt className="text-label mb-1.5 flex items-center gap-1">
+            {t('secret')}
+            <HelpTip label={t('secret')} topic="client.secret" />
+          </dt>
           <dd>
             <CodeValue value={client.secret} />
           </dd>
