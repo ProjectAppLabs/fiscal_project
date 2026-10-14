@@ -1,6 +1,6 @@
 # Active Context — Fiscal.
 
-> Memory Bank · actualizado 2026-10-04. Refrescar al cerrar cada sesión significativa.
+> Memory Bank · actualizado 2026-10-14. Refrescar al cerrar cada sesión significativa.
 
 ## Foco actual
 
@@ -11,8 +11,12 @@ F1, F2, F4 y F5 terminadas (2026-10-05):
 - alerta sobre certificados, numeración, plazos, rechazos y cola, e informa su salud;
 - tiene la consola completa (tablero, documentos con descargas, emisores, contingencias, alertas y sistemas cliente).
 
-Todo se probó sin la DIAN real. Faltan F3, que espera el certificado y el registro del software de ProjectApp, y F6
-(Waiter conectado), que el dueño pidió dejar para el final.
+F3 (2026-10-13/14): ProjectApp se registró en el portal de habilitación y la DIAN **aceptó su set de pruebas, 50 de
+50** con la transmisión real (`DIAN_GATEWAY=soap`). Hallazgos: las responsabilidades y los conceptos de las notas
+salen de las tablas del anexo, no del genericode; el lote puede quedarse «en proceso» horas y se consulta documento a
+documento. Abiertos: #27 (paso a producción) y #29 (API de inscripción completa para Waiter, con `openapi.json`).
+El paso «Habilitado» del portal no se ha hecho: fija una fecha irreversible y lo decide el dueño con su contador.
+Falta F6 (Waiter conectado), que el dueño pidió dejar para el final.
 
 ## Decisiones activas
 
@@ -37,9 +41,11 @@ Todo se probó sin la DIAN real. Faltan F3, que espera el certificado y el regis
 
 ## Próximos pasos
 
-1. **F6 · Waiter se conecta** (plan en el repositorio de Waiter), al final por decisión del dueño.
-2. **F3 (bloqueada por el dueño):** certificado digital de ProjectApp y registro de Fiscal. en el portal de
-   habilitación. Con eso se corre el set de pruebas y se confirman los puntos de los planes F2 y F4:
-   - direcciones de los servicios, autenticación mutua TLS y formato de `X509IssuerName`;
-   - `UUID` del `AdditionalDocumentReference` en el tipo 03.
+1. Mergear #27 y #29 (en ese orden) y #28 (guía de registro).
+2. El dueño decide «Habilitado» con su contador, pide la numeración en MUISCA y la asocia al software; después, en la
+   consola o por la API: copiar el software, traer la numeración y pasar a producción.
+3. Experimento FAQ04a en habilitación; limpiar CAK55/DAK55, DAK07 y DAJ39 si conviene.
+4. **F6 · Waiter se conecta** (plan en el repositorio de Waiter), al final por decisión del dueño. La API que usa está
+   en `docs/fiscal/contrato.md` y `docs/fiscal/openapi.json`.
+5. Despliegue en un servidor (hoy todo corre en local, D6).
 3. Caja de herramientas y anexos en `~/.cache/fiscal-dian/` (fuera del repositorio).

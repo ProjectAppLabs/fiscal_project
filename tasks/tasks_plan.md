@@ -1,6 +1,6 @@
 # Tasks Plan — Fiscal.
 
-> Memory Bank · actualizado 2026-10-04. **Plan interno de ejecución técnica**, previo al plan de implementación
+> Memory Bank · actualizado 2026-10-14. **Plan interno de ejecución técnica**, previo al plan de implementación
 > detallado de cada fase. Base: `docs/methodology/product_requirement_docs.md`, `architecture.md`, `technical.md` y el
 > inventario en `docs/fiscal/inventario/`.
 
@@ -13,7 +13,8 @@
 | Plantilla adaptada a Fiscal. (nombres, marca, MySQL, limpieza de features demo) | ✅ PR #2, 2026-10-04 | F1 |
 | Núcleo: sistemas cliente, emisores, certificados, rangos, documentos, cola | ✅ hecho y recorrido de punta a punta, 2026-10-04 | F1 |
 | Librería `dian/`: UBL, CUFE/CUDE, XAdES, SOAP | ✅ hecha sin red (PRs #8 a #11, 2026-10-04); la prueba real es el set de pruebas de F3 | F2 |
-| Habilitación de ProjectApp (set de pruebas) | ⏳ espera el certificado y el registro del software de ProjectApp | F3 |
+| Habilitación de ProjectApp (set de pruebas) | ✅ set aceptado 50/50 el 2026-10-14 (PRs #20 a #26); falta «Habilitado» en el portal, que el dueño decide con su contador | F3 |
+| Paso a producción y API de inscripción completa para sistemas cliente | 🔄 PRs #27 y #29 abiertos (2026-10-14) | F3 |
 | Notas, contingencias 04 y 03, entrega (AttachedDocument y PDF), alertas y salud | ✅ hecho (PRs #13 a #16, 2026-10-05) | F4 |
 | Consola de operación (Next.js) | ✅ completa (PRs #17 a #19, 2026-10-05) | F5 |
 | Waiter conectado (plan en su repositorio) | ⏳ pendiente | F6 |
@@ -94,10 +95,18 @@ Plan de implementación: `docs/fiscal/planes/F2-dian.md`.
 
 ### F3 · Habilitación de ProjectApp
 
-- [ ] Correr el set de pruebas con el certificado y el `TestSetId` de ProjectApp hasta quedar aceptado.
-- [ ] `GetNumberingRange` con datos reales.
-- [ ] Resolver los puntos «sin confirmar» del inventario: direcciones de los servicios y tamaño del set de pruebas.
-- [ ] Documentar el paso a paso para que cada restaurante repita la habilitación (base del asistente de Waiter).
+- [x] Correr el set de pruebas con el certificado y el `TestSetId` de ProjectApp hasta quedar aceptado (2026-10-14,
+  50/50; la primera corrida se rechazó por FAJ26: `ZZ` → `R-99-PN`).
+- [ ] `GetNumberingRange` con datos reales: solo responde en producción, después de «Habilitado» y de pedir la
+  numeración en MUISCA. El código ya está (#27).
+- [x] Resolver los puntos «sin confirmar» del inventario: la dirección del servicio de habilitación es la de siempre y
+  el set de ProjectApp pidió 30 facturas, 10 notas crédito y 10 notas débito.
+- [x] Documentar el paso a paso para que cada restaurante repita la habilitación: `docs/fiscal/guias/registro-dian.md`
+  (#28).
+- [x] API de máquina para que Waiter inscriba un comercio de punta a punta (certificado y llave, set de pruebas, paso
+  a producción), con `docs/fiscal/openapi.json` y prueba de paridad con las rutas (#29).
+- [ ] Notificaciones abiertas que no bloquean: FAQ04a (motivo de cargos; probar variantes con SendBillSync),
+  CAK55/DAK55, DAK07 y DAJ39.
 
 ### F4 · Contingencias y entrega
 
@@ -157,5 +166,7 @@ Plan de implementación: `docs/fiscal/planes/F2-dian.md`.
 
 1. Avisos de docstrings (pydocstyle) en pruebas heredadas de la plantilla: el gate los ve en local, donde
    encuentra el ruff del venv, pero no en CI.
-2. `frontend/npm-audit-allowlist.json` acepta `braces` GHSA-vfj7-8cjw-p6xm hasta el 2026-11-04 (no hay versión
+2. `PUT /api/v1/issuers/{nit}/update/` todavía acepta `environment: "1"`: un sistema cliente podría saltarse los
+   controles de `production/promote/`. Conviene que el ambiente solo cambie por ese endpoint.
+3. `frontend/npm-audit-allowlist.json` acepta `braces` GHSA-vfj7-8cjw-p6xm hasta el 2026-11-04 (no hay versión
    corregida). Revisarlo antes de esa fecha.
