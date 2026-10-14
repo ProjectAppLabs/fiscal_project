@@ -12,7 +12,7 @@ import copy
 import io
 import logging
 import zipfile
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from django.conf import settings
 from django.db.models import Max
@@ -42,6 +42,7 @@ from fiscal_app.services.ubl_mapping import (
 logger = logging.getLogger(__name__)
 # GetStatus codes (§7.11.3) that mean «not processed yet»: no answer, 66 NSU not found, 90 TrackId not found.
 NOT_YET = ('', '66', '90')
+STALE_RUN = timedelta(hours=24)
 SET_INVOICES = 30
 SET_CREDIT_NOTES = 10
 SET_DEBIT_NOTES = 10
@@ -100,6 +101,11 @@ def start(issuer: Issuer, invoices: int = SET_INVOICES, credit_notes: int = SET_
     missing = [name for name, ready in readiness(issuer).items() if not ready]
     if missing:
         raise TestSetError(f'Al emisor le falta: {", ".join(MISSING_LABELS[name] for name in missing)}.')
+    # A second run would spend range numbers while the DIAN still validates the first. A run the DIAN never answered
+    # stops blocking a day after it started (checks touch updated_at every 2 minutes) so the business is not stuck.
+    if issuer.test_set_runs.filter(state=TestSetRun.State.PROCESSING,
+                                   created_at__gte=timezone.now() - STALE_RUN).exists():
+        raise TestSetError('Ya hay un set de pruebas en proceso: consulta su resultado antes de iniciar otro.')
     software, numbering = _software(issuer), _range(issuer)
     credentials = credentials_of(active_certificate(issuer))
     run = TestSetRun.objects.create(issuer=issuer, test_set_id=software.test_set_id, credit_notes=credit_notes,

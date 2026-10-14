@@ -1,10 +1,37 @@
 # Fiscal. · Contrato v1 de la API para sistemas cliente
 
-> Estado: autenticación, emisores, certificados, software y rangos (F1 PR 3); documentos con validación previa
-> (F1 PR 4); transmisión, artefactos y avisos firmados (F1 PR 5). La transmisión es contra la DIAN simulada hasta F2. Reemplaza al borrador previo al inventario.
+> Estado (2026-10-14): emisores, certificados (`.p12` o certificado y llave), software, rangos, set de pruebas de la
+> DIAN, paso a producción, documentos con validación previa, transmisión real a la DIAN (`DIAN_GATEWAY=soap`),
+> artefactos y avisos firmados.
 
 API de máquina para los sistemas que usan Fiscal. (Waiter primero; después otras casas de software). Base:
 `/api/v1/`. Cuerpos JSON en UTF-8.
+
+La especificación OpenAPI 3.1 de esta misma API está en [`openapi.json`](openapi.json) (se abre con Swagger UI,
+Redoc o Postman). Una prueba del backend falla si una ruta de `/api/v1/` no está en este contrato y en esa
+especificación.
+
+## Recorrido de un comercio nuevo
+
+Cada comercio factura con **su** certificado y **su** registro ante la DIAN (D1): sistema cliente y Fiscal. solo le
+prestan el software. El orden es:
+
+| # | Quién | Qué | Endpoint |
+|---|---|---|---|
+| 1 | Comercio | Compra su certificado digital a una entidad acreditada por la ONAC | — |
+| 2 | Comercio | Se registra en el portal de habilitación de la DIAN, modo «Software propio», software «Fiscal.» y un PIN ([guía](guias/registro-dian.md)) | — |
+| 3 | Sistema cliente | Crea el emisor | `PUT /api/v1/issuers/{nit}/update/` |
+| 4 | Sistema cliente | Sube el certificado | `PUT /api/v1/issuers/{nit}/certificate/update/` |
+| 5 | Sistema cliente | Registra SoftwareID, PIN y TestSetId de habilitación | `PUT /api/v1/issuers/{nit}/software/update/` |
+| 6 | Sistema cliente | Registra el rango de habilitación (`SETP`, resolución `18760000001`) con la clave técnica del portal | `POST /api/v1/issuers/{nit}/ranges/create/` |
+| 7 | Sistema cliente | Corre el set de pruebas y consulta su resultado hasta que quede `accepted` | `POST …/test-set/start/` y `POST …/test-set/check/` |
+| 8 | Comercio | Con su contador, marca «Habilitado» en el portal (fecha irreversible) y pide la numeración en MUISCA | — |
+| 9 | Sistema cliente | Copia el software a producción, trae la numeración de la DIAN y pasa a producción | `POST …/production/copy-software/`, `…/fetch-ranges/`, `…/promote/` |
+| 10 | Sistema cliente | Emite documentos | `POST /api/v1/documents/create/` |
+
+El PIN, la clave técnica y la contraseña del certificado los escribe el comercio en el sistema cliente; viajan una
+sola vez a Fiscal., quedan cifrados y nunca vuelven a salir. El sistema cliente no debe guardarlos ni registrarlos en
+sus logs.
 
 ## Registro de un sistema cliente
 
@@ -51,6 +78,29 @@ def signed_headers(key_id, secret, method, path, body=b''):
     return {'X-Fiscal-Key': key_id, 'X-Fiscal-Timestamp': ts, 'X-Fiscal-Signature': signature}
 ```
 
+Implementación de referencia en JavaScript (Node 18+), para un sistema cliente en Node:
+
+```javascript
+import { createHash, createHmac } from 'node:crypto'
+
+export function signedHeaders(keyId, secret, method, path, body = '') {
+  const ts = String(Math.floor(Date.now() / 1000))
+  const bodyHash = createHash('sha256').update(body).digest('hex')
+  const canonical = [ts, method.toUpperCase(), path, bodyHash].join('\n')
+  const signature = createHmac('sha256', secret).update(canonical).digest('hex')
+  return { 'X-Fiscal-Key': keyId, 'X-Fiscal-Timestamp': ts, 'X-Fiscal-Signature': signature }
+}
+
+// La firma cubre los bytes exactos del cuerpo: serializa una vez y envía ese mismo texto.
+const body = JSON.stringify({ confirm: true })
+const path = '/api/v1/issuers/900373115/production/promote/'
+await fetch(`${process.env.FISCAL_URL}${path}`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json', ...signedHeaders(keyId, secret, 'POST', path, body) },
+  body,
+})
+```
+
 - Una firma con más de **5 minutos** de diferencia con la hora del servidor se rechaza, así que los dos equipos deben
   tener NTP.
 - **Un JWT de operador no abre esta API:** es solo para sistemas cliente.
@@ -75,7 +125,9 @@ por campo.
 | `invalid_data` | 400 | Validación de campos; ver `fields` |
 | `invalid_nit`, `invalid_dv` | 400 | NIT mal formado o dígito de verificación que no le corresponde |
 | `municipality_department_mismatch` | 400 | El municipio DANE no pertenece al departamento |
-| `invalid_certificate`, `certificate_expired` | 400 | El `.p12` no abre, no trae la llave o ya venció |
+| `invalid_tax_responsibility` | 400 | Una responsabilidad fiscal no está en la tabla 13.2.6.1 |
+| `invalid_certificate`, `certificate_expired` | 400 | El `.p12` o el certificado no abre, no trae la llave o ya venció |
+| `invalid_key`, `key_password`, `key_mismatch` | 400 | La llave privada no se puede leer, necesita su contraseña o no corresponde al certificado |
 | `invalid_range`, `invalid_validity`, `technical_key_required` | 400 | Rango invertido, vigencia invertida o rango de facturación sin clave técnica |
 | `duplicate_range` | 409 | Esa resolución y ese prefijo ya están registrados |
 | `issuer_not_ready` | 409 | El emisor no tiene certificado vigente o registro del software en su ambiente |
@@ -86,6 +138,10 @@ por campo.
 | `document_not_found` | 404 | El documento no existe en **este** sistema cliente |
 | `artifact_not_found` | 404 | El documento todavía no tiene ese archivo |
 | `artifact_unavailable` | 503 | El archivo no se pudo leer o no coincide con su huella registrada |
+| `test_set_not_ready` | 409 | Al emisor le falta algo para el set (lo dice `message`) o ya tiene un set en proceso |
+| `test_set_not_found` | 404 | El emisor no ha iniciado un set de pruebas |
+| `confirmation_required` | 400 | El paso a producción no trae `"confirm": true` |
+| `production_not_ready` | 409 | Falta algo para producción (lo dice `message`) o la DIAN no entregó la numeración |
 
 ## Emisores
 
@@ -114,7 +170,7 @@ Crea (`201`) o actualiza (`200`) un comercio. El NIT va en la URL, sin puntos ni
 | Campo | Regla (códigos de la DIAN, caja de herramientas FE 1.9) |
 |---|---|
 | `person_type` | `TipoOrganizacion`: `1` jurídica, `2` natural |
-| `tax_responsibilities` | `TipoResponsabilidad`: `O-13`, `O-15`, `O-23`, `O-47`, `ZZ`… Se pasan a mayúsculas |
+| `tax_responsibilities` | Tabla 13.2.6.1 del anexo: `O-13` gran contribuyente, `O-15` autorretenedor, `O-23` agente de retención IVA, `O-47` régimen simple, `R-99-PN` no aplica. Se pasan a mayúsculas; vacío o el antiguo `ZZ` quedan como `R-99-PN` (con `ZZ` la DIAN rechaza, FAJ26) |
 | `tax_scheme` | Tributo del emisor: `01` IVA, `04` INC, `ZZ` no aplica |
 | `municipality_code` y `department_code` | Códigos DANE de 5 y 2 dígitos; el municipio debe empezar por el departamento |
 | `environment` | `TipoAmbiente`: `2` pruebas (habilitación), `1` producción |
@@ -128,12 +184,24 @@ Datos del emisor, con:
 
 ### `PUT /api/v1/issuers/{nit}/certificate/update/`
 
+Reemplaza el certificado activo. El certificado es del comercio (D7). Acepta una de dos formas:
+
 ```json
-{"p12": "<base64 del .p12>", "password": "…"}
+{"p12": "<base64 del .p12 o .pfx>", "password": "…"}
 ```
 
-Reemplaza el certificado activo. El certificado es del comercio (D7). Responde titular, emisor, serie y vigencia; el
-archivo y la contraseña quedan cifrados y no vuelven a salir.
+```json
+{"certificate": "<base64 del .cer, .crt, .pem o .der, o del .zip de la entidad>",
+ "private_key": "<base64 de la llave privada, PEM o DER>", "key_password": "<solo si la llave tiene contraseña>"}
+```
+
+Algunas entidades (p. ej. Thomas Signe) entregan el certificado y la llave por separado. En la segunda forma, Fiscal.
+arma el `.p12` y le agrega la cadena hasta la raíz, que descarga de la dirección `caIssuers` del certificado (solo
+`http`/`https` públicas, sin redirecciones, máximo 64 KB por certificado).
+
+Responde titular, emisor, serie, vigencia y `chain_complete`: `false` si no pudo descargar algún intermedio o la raíz
+(el certificado sirve igual, pero conviene revisarlo). Los archivos y las contraseñas quedan cifrados y no vuelven a
+salir.
 
 ### `PUT /api/v1/issuers/{nit}/software/update/`
 
@@ -174,6 +242,92 @@ Queda como el registro activo de ese ambiente. El PIN se guarda cifrado, porque 
 ### `GET /api/v1/issuers/{nit}/ranges/`
 
 Lista los rangos del emisor, sin claves técnicas.
+
+## Set de pruebas de la DIAN
+
+En habilitación, la DIAN exige un set de documentos de prueba antes de dejar facturar al comercio. Fiscal. los arma,
+firma y envía con los datos del emisor, sobre el rango de habilitación.
+
+### `GET /api/v1/issuers/{nit}/test-set/`
+
+```json
+{"readiness": {"environment": true, "certificate": true, "software": true, "test_set_id": true, "range": true},
+ "run": null}
+```
+
+`readiness` dice qué tiene el emisor para correr el set: ambiente de habilitación (`2`), certificado vigente,
+software, `TestSetId` y rango vigente. `run` es la última corrida (forma abajo) o `null`.
+
+### `POST /api/v1/issuers/{nit}/test-set/start/`
+
+```json
+{"invoices": 30, "credit_notes": 10, "debit_notes": 10}
+```
+
+Las cantidades son el «Total de documentos requeridos» de la página del set en el portal; si no se envían, van 30, 10
+y 10. Cada una entre 0 y 50, al menos una factura, y las notas no pasan de 50 entre las dos (un ZIP, anexo §7.8).
+Envía las facturas en un ZIP y responde `201` con la corrida en `processing`. Las notas se envían, cada una sobre una
+factura aceptada, en una consulta posterior, cuando la DIAN acepta las facturas.
+
+`409 test_set_not_ready` si al emisor le falta algo o si ya tiene una corrida en proceso (una corrida sin respuesta de
+la DIAN deja de bloquear 24 horas después de iniciada).
+
+### `POST /api/v1/issuers/{nit}/test-set/check/`
+
+Consulta a la DIAN la última corrida y la devuelve. Si ya terminó, la devuelve sin consultar.
+
+```json
+{"id": 7, "state": "accepted", "error": "", "created_at": "…", "updated_at": "…",
+ "documents": [{"kind": "invoice", "full_number": "SETP990000030", "code": "<CUFE>", "status": "accepted",
+                "messages": [{"rule": "FAQ04a", "severity": "notificacion", "message": "…"}], "file_name": "…"}],
+ "phases": [{"name": "invoices", "zip_key": "…", "errors": [], "dian_status": "…"}]}
+```
+
+| `state` | Qué significa |
+|---|---|
+| `processing` | La DIAN no ha terminado. Consultar de nuevo en unos minutos: en habilitación puede tardar más de una hora |
+| `accepted` | Todos los documentos aceptados. El comercio ya puede marcar «Habilitado» en el portal |
+| `rejected` | Algún documento rechazado; `messages` trae las reglas. Corregir y empezar otra corrida |
+| `failed` | No se pudo enviar (`error` dice por qué) |
+
+Con el trabajador de tareas encendido, Fiscal. consulta solo las corridas en `processing` cada 2 minutos; el sistema
+cliente puede leer el resultado con el `GET` (sin ir a la DIAN) y usar `check` para forzar una consulta. No hay aviso
+por webhook del set.
+
+## Paso a producción
+
+Cuando la DIAN acepta el set, el comercio marca «Habilitado» en el portal (fija su fecha de inicio, irreversible; la
+DIAN agrega la responsabilidad 52 al RUT) y pide su numeración en MUISCA. Después, el sistema cliente:
+
+### `GET /api/v1/issuers/{nit}/production/`
+
+```json
+{"environment": "2",
+ "readiness": {"test_set_accepted": true, "certificate": true, "software": false, "range": false, "gateway": true}}
+```
+
+`readiness`: set aceptado, certificado vigente, software de producción, un rango de producción vigente con su clave
+técnica (no el `18760000001` de habilitación) y la conexión real con la DIAN en el servidor de Fiscal.
+
+### `POST /api/v1/issuers/{nit}/production/copy-software/`
+
+Registra el software de producción con el mismo SoftwareID y PIN de habilitación (la DIAN los conserva). Si el
+comercio registró otro software para producción, se usa `PUT …/software/update/` con `"environment": "1"`.
+
+### `POST /api/v1/issuers/{nit}/production/fetch-ranges/`
+
+Trae de la DIAN (`GetNumberingRange`) los rangos que el comercio asoció al software, cada uno con su clave técnica, y
+los guarda. `409 production_not_ready` si la DIAN no los entrega (p. ej. aún no los asoció en el portal).
+
+### `POST /api/v1/issuers/{nit}/production/promote/`
+
+```json
+{"confirm": true}
+```
+
+Pasa el emisor a producción (`environment` `1`) si todo está listo, y desactiva el rango de habilitación. Desde ahí sus
+documentos tienen efecto fiscal. `confirm` afirma que el comercio ya quedó «Habilitado» en el portal. Responden igual
+que el `GET`; si el emisor ya estaba en producción, no cambia nada.
 
 ## Documentos
 
@@ -329,6 +483,40 @@ Cada condición se avisa una vez. ProjectApp recibe además todas las alertas po
 - **Firma:** las mismas tres cabeceras `X-Fiscal-*`, con el secreto vigente del cliente. El texto canónico usa la ruta y
   la consulta del `webhook_url`. **El sistema cliente debe verificar la firma y la hora antes de creer el aviso**, y
   aceptar esa ruta solo desde la red de Fiscal.
+
+  Verificación en Python (Django):
+
+  ```python
+  import hashlib, hmac, time
+
+  def fiscal_notice_is_genuine(request, secret):
+      ts = request.headers.get('X-Fiscal-Timestamp', '')
+      if not ts.isdigit() or abs(time.time() - int(ts)) > 300:
+          return False
+      canonical = '\n'.join([ts, 'POST', request.get_full_path(), hashlib.sha256(request.body).hexdigest()])
+      expected = hmac.new(secret.encode(), canonical.encode(), hashlib.sha256).hexdigest()
+      return hmac.compare_digest(expected, request.headers.get('X-Fiscal-Signature', ''))
+  ```
+
+  En JavaScript (Express, con el cuerpo crudo: `express.raw({ type: 'application/json' })`):
+
+  ```javascript
+  import { createHash, createHmac, timingSafeEqual } from 'node:crypto'
+
+  export function fiscalNoticeIsGenuine(req, secret) {
+    const ts = req.get('X-Fiscal-Timestamp') ?? ''
+    if (!/^\d+$/.test(ts) || Math.abs(Date.now() / 1000 - Number(ts)) > 300) return false
+    const bodyHash = createHash('sha256').update(req.body).digest('hex')
+    const canonical = [ts, 'POST', req.originalUrl, bodyHash].join('\n')
+    const expected = Buffer.from(createHmac('sha256', secret).update(canonical).digest('hex'))
+    const received = Buffer.from(req.get('X-Fiscal-Signature') ?? '')
+    return expected.length === received.length && timingSafeEqual(expected, received)
+  }
+  ```
+
+  La ruta que se firma es la del `webhook_url` registrado: si un proxy le cambia la ruta al aviso, verifica con la
+  ruta registrada y no con la que ve la aplicación. Al rotar el secreto, Fiscal. firma los avisos con el **nuevo**
+  desde ese momento: durante el periodo de gracia, el sistema cliente debe aceptar la firma con cualquiera de los dos.
 - **Reintentos:** un `2xx` lo da por entregado. Si no, se reintenta a los 30 s, 1 min, 5 min, 15 min y luego cada hora,
   hasta 30 intentos.
 - **Respaldo:** el sistema cliente también puede consultar `GET /api/v1/documents/{id}/` de sus pendientes, por si un
