@@ -450,10 +450,19 @@
     },
     "certificate": {
       "title": "Certificado digital del emisor",
-      "body": "Archivo .p12 o .pfx con contraseña, de una entidad acreditada por la ONAC, con firma digital y no repudio. Se valida al subirlo y se guarda cifrado.",
+      "body": "Del comercio, emitido por una entidad acreditada por la ONAC, con firma digital y no repudio. Se valida al subirlo y se guarda cifrado.",
       "file": "Archivo del certificado",
       "password": "Contraseña del certificado",
-      "loaded": "Certificado de {subject}, vence el {date}."
+      "loaded": "Certificado de {subject}, vence el {date}.",
+      "kind": "¿Cómo te entregaron el certificado?",
+      "kinds": {
+        "p12": "Un archivo .p12 o .pfx con contraseña",
+        "pair": "El certificado (.cer, .crt, .pem o .zip) y la llave privada (.key) por separado"
+      },
+      "certificateFile": "Certificado (.cer, .crt, .pem o el .zip de la entidad)",
+      "keyFile": "Llave privada (.key)",
+      "keyPassword": "Contraseña de la llave (si tiene)",
+      "chainIncomplete": "No se pudo descargar la cadena de la entidad (intermedia y raíz). El certificado firma igual; si la DIAN lo objeta, súbelo de nuevo cuando la página de la entidad esté disponible."
     },
     "software": {
       "title": "Software registrado en la DIAN",
