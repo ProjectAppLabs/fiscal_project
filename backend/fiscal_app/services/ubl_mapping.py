@@ -89,11 +89,16 @@ def document_spec(document: Document, software: SoftwareRegistration) -> Documen
         payment=Payment(payload['payment']['form'], tuple(payload['payment']['means']), payload['payment'].get('due_date') or ''),
         allowances=_adjustments(payload.get('allowances', []), is_charge=False, base=line_extension),
         charges=_adjustments(payload.get('charges', []), is_charge=True, base=line_extension),
-        notes=list(payload.get('notes', [])),
+        notes=[*payload.get('notes', []), *_reason_note(payload)],
         delivery_address=Address(delivery['line'], delivery['municipality_code']) if delivery else None,
         operation_type=payload.get('operation_type', '10'),
         currency=payload.get('currency', 'COP'),
     )
+
+
+def _reason_note(payload):
+    reason = (payload.get('billing_reference') or {}).get('reason', '').strip()
+    return [f'Motivo: {reason}'] if reason else []
 
 
 def resolution_of(numbering_range: NumberingRange) -> Resolution:
@@ -107,15 +112,16 @@ def resolution_of(numbering_range: NumberingRange) -> Resolution:
 
 def invoice_reference(note: Document):
     """BillingReference and DiscrepancyResponse of a note: the original invoice and the correction concept."""
-    from dian.catalogs import code_list
+    from dian.catalogs import note_concepts
     from dian.ubl.notes import InvoiceReference
 
     original = note.original
     reference = note.payload['billing_reference']
-    concepts = code_list('ConceptoNotaCredito' if note.kind == 'credit_note' else 'ConceptoNotaDebito')
+    concepts = note_concepts(note.kind)
     issued = original.issue_datetime.astimezone(ZoneInfo(settings.BUSINESS_TIME_ZONE))
     return InvoiceReference(
         number=original.full_number, cufe=original.cufe, issue_date=issued.date().isoformat(),
         concept_code=reference['concept_code'],
-        concept_description=reference.get('reason') or concepts.get(reference['concept_code'], ''),
+        # CBF04/DBF04: exactly the concept's description; the business's own reason goes in a cbc:Note.
+        concept_description=concepts.get(reference['concept_code'], ''),
     )

@@ -12,6 +12,7 @@ from decimal import Decimal
 from dian.catalogs import (
     RESPONSIBILITIES,
     is_valid,
+    note_concepts,
     responsibilities,
     tax_rates,
 )
@@ -393,12 +394,13 @@ def _billing_reference(check, kind, reference):
             'La nota debe referenciar, con su id en Fiscal., la factura que corrige.',
         )
         return None
-    list_name = 'ConceptoNotaCredito' if kind == 'credit_note' else 'ConceptoNotaDebito'
     concept = str(reference.get('concept_code', ''))
-    if not is_valid(list_name, concept):
+    concepts = note_concepts(kind)
+    if concept not in concepts:
         check.add(
             'billing_reference.concept_code', 'invalid_concept',
-            'El concepto de corrección no está en la lista de la DIAN (por ejemplo 2 = anulación).',
+            'El concepto de corrección no está en la tabla de la DIAN: '
+            + ', '.join(f'{code} = {name}' for code, name in concepts.items()) + '.',
         )
     return {'document_id': reference['document_id'], 'concept_code': concept, 'reason': str(reference.get('reason', ''))[:500]}
 
