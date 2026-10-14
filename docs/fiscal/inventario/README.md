@@ -6,7 +6,7 @@ Se levantó antes de escribir código, para planear sobre hechos.
 > facturador de pruebas, contingencias, servidor y certificados): ver `docs/methodology/product_requirement_docs.md`.
 > El plan está en `tasks/tasks_plan.md`.
 
-Cuatro partes:
+Partes:
 
 1. [Requisitos de la DIAN](01-requisitos-dian.md): documentos, anexos, CUFE y CUDE, firma, servicios web, catálogos,
    habilitación, entrega, contingencia, conservación y sanciones. Basado en la Resolución 000227 de 2025 compilada,
@@ -15,6 +15,8 @@ Cuatro partes:
 3. [Operación e infraestructura](03-operacion.md): servidor, red, respaldos, monitoreo, soporte y escala.
 4. [Negocio y legal](04-negocio-y-legal.md): modalidad ante la DIAN, persona natural, certificados, responsabilidad,
    datos personales, conservación y costos. Termina con preguntas para el contador o abogado.
+5. [Vistas de la consola](05-consola-vistas.md) (agregado el 2026-10-14): inventario de cada vista con capturas y
+   problemas de diseño, como base para rediseñar la consola.
 
 Es investigación, no opinión legal. Lo marcado «sin confirmar» no se pudo verificar en una fuente oficial.
 
