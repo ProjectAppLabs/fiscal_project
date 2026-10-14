@@ -52,3 +52,4 @@ export const I18N_LOCALE_SWITCH = ['@flow:i18n-locale-switch', '@module:i18n', '
 export const NAVIGATION_UNKNOWN_ROUTE = ['@flow:navigation-unknown-route', '@module:navigation', '@priority:P3'];
 export const CONSOLE_CLIENT_SYSTEM_CONNECT = ['@flow:console-client-system-connect', '@module:console', '@priority:P1'];
 export const CONSOLE_USERS_MANAGE = ['@flow:console-users-manage', '@module:console', '@priority:P1'];
+export const CONSOLE_ISSUER_EDIT = ['@flow:console-issuer-edit', '@module:console', '@priority:P2'];

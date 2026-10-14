@@ -11,17 +11,19 @@ from django.db.models import Count, Max, Q
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
+from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from fiscal_app.models import Alert, ClientSystem, Document, Issuer
+from fiscal_app.models import Alert, ClientSystem, Document, Issuer, NumberingRange
 from fiscal_app.models.choices import DocumentKind, DocumentState
+from fiscal_app.serializers import IssuerCreateUpdateSerializer
 from fiscal_app.services.alerts import resolve
 from fiscal_app.services.artifacts import ArtifactIntegrityError, read
 from fiscal_app.services.client_systems import valid_secrets
 
-from .console import ConsolePagination, IsConsoleOperator
+from .console import ConsolePagination, IsConsoleAdmin, IsConsoleOperator
 
 logger = logging.getLogger(__name__)
 CONTINGENCY_DEADLINE = timedelta(hours=48)
@@ -48,17 +50,30 @@ def console_issuers(request):
     return paginator.get_paginated_response([_issuer_row(issuer) for issuer in page])
 
 
-@api_view(['GET'])
+@api_view(['GET', 'PATCH'])
 @permission_classes([IsAuthenticated, IsConsoleOperator])
 def console_issuer(request, issuer_id):
+    """GET: everything about an issuer. PATCH: correct its data (H-11); the NIT and the environment do not change here."""
     issuer = get_object_or_404(Issuer.objects.select_related('client'), pk=issuer_id)
+    if request.method == 'PATCH':
+        data = {key: value for key, value in request.data.items() if key not in ('nit', 'environment', 'client_id')}
+        if 'municipality_code' in data and 'department_code' not in data:
+            data['department_code'] = str(data['municipality_code'])[:2]
+        serializer = IssuerCreateUpdateSerializer(issuer, data=data, partial=True, context={'nit': issuer.nit})
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        logger.info('Emisor %s corregido por el operador %s: %s', issuer.pk, request.user.pk, sorted(data))
+        issuer.refresh_from_db()
     return Response({
         **_issuer_row(issuer, with_counts=False),
         'person_type': issuer.person_type,
         'trade_name': issuer.trade_name,
         'tax_responsibilities': issuer.tax_responsibilities,
-        'address': {'line': issuer.address_line, 'municipality_code': issuer.municipality_code},
+        'tax_scheme': issuer.tax_scheme,
+        'address': {'line': issuer.address_line, 'municipality_code': issuer.municipality_code,
+                    'department_code': issuer.department_code, 'postal_code': issuer.postal_code},
         'email': issuer.email,
+        'phone': issuer.phone,
         'certificates': [
             {'id': cert.pk, 'subject': cert.subject, 'issued_by': cert.issued_by, 'serial': cert.serial,
              'not_before': cert.not_before, 'not_after': cert.not_after, 'active': cert.active}
@@ -190,3 +205,47 @@ def _alert_row(alert):
         'document': {'id': alert.document.pk, 'full_number': alert.document.full_number} if alert.document else None,
         'created_at': alert.created_at, 'resolved_at': alert.resolved_at,
     }
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated, IsConsoleAdmin])
+def console_issuer_activation(request, issuer_id):
+    """Switch an issuer off or on (H-16). Off, its client system cannot issue for it; its documents are kept 10 years."""
+    issuer = get_object_or_404(Issuer, pk=issuer_id)
+    active = request.data.get('active')
+    if not isinstance(active, bool):
+        return Response({'active': ['Indica true o false.']}, status=status.HTTP_400_BAD_REQUEST)
+    issuer.active = active
+    issuer.save(update_fields=['active', 'updated_at'])
+    logger.warning('Emisor %s %s por el administrador %s', issuer.pk, 'activado' if active else 'desactivado', request.user.pk)
+    return Response({'id': issuer.pk, 'active': issuer.active})
+
+
+@api_view(['PATCH'])
+@permission_classes([IsAuthenticated, IsConsoleAdmin])
+def console_range(request, issuer_id, range_id):
+    """Switch a numbering range off or on (H-15). A range is never deleted: its documents point to it."""
+    numbering = get_object_or_404(NumberingRange, pk=range_id, issuer_id=issuer_id)
+    active = request.data.get('active')
+    if not isinstance(active, bool):
+        return Response({'active': ['Indica true o false.']}, status=status.HTTP_400_BAD_REQUEST)
+    numbering.active = active
+    numbering.save(update_fields=['active'])
+    logger.info('Rango %s %s por el administrador %s', numbering.pk, 'activado' if active else 'desactivado', request.user.pk)
+    return Response(_range_row(numbering))
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated, IsConsoleOperator])
+def console_test_set_runs(request, issuer_id):
+    """Every test set run of the issuer, newest first, with how many documents the DIAN accepted (H-17)."""
+    issuer = get_object_or_404(Issuer, pk=issuer_id)
+    rows = []
+    for run in issuer.test_set_runs.order_by('-created_at')[:20]:
+        statuses = [entry.get('status') for entry in run.entries]
+        rows.append({
+            'id': run.pk, 'state': run.state, 'test_set_id': run.test_set_id, 'created_at': run.created_at,
+            'updated_at': run.updated_at, 'total': len(statuses), 'accepted': statuses.count('accepted'),
+            'rejected': statuses.count('rejected'), 'pending': statuses.count('pending'), 'error': run.error,
+        })
+    return Response({'count': len(rows), 'results': rows})

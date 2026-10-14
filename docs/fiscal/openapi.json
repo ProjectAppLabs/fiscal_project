@@ -116,7 +116,7 @@
             }
           },
           "400": {
-            "description": "Códigos: `invalid_data`, `invalid_dv`, `invalid_nit`, `municipality_department_mismatch`, `invalid_tax_responsibility`",
+            "description": "Códigos: `invalid_data`, `invalid_dv`, `invalid_nit`, `municipality_department_mismatch`, `invalid_tax_responsibility`, `environment_locked`",
             "content": {
               "application/json": {
                 "schema": {
@@ -982,7 +982,7 @@
             }
           },
           "409": {
-            "description": "Códigos: `issuer_not_ready`, `idempotency_conflict`, `duplicate_number`",
+            "description": "Códigos: `issuer_not_ready`, `idempotency_conflict`, `duplicate_number`, `issuer_inactive`",
             "content": {
               "application/json": {
                 "schema": {
@@ -1358,8 +1358,8 @@
               "1",
               "2"
             ],
-            "description": "`2` habilitación (pruebas), `1` producción.",
-            "default": "2"
+            "default": "2",
+            "description": "`2` habilitación. Producción solo con POST …/production/promote/ (si no, `environment_locked`)."
           }
         }
       },

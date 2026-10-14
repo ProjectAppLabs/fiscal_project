@@ -370,7 +370,8 @@
       "numbers": "Números",
       "validity": "Vigencia",
       "used": "Usado",
-      "last": "Último número"
+      "last": "Último número",
+      "actions": "Acción"
     },
     "alertsTitle": "Alertas abiertas",
     "noAlerts": "Sin alertas abiertas.",
@@ -435,7 +436,37 @@
     "saveRange": "Guardar rango",
     "rangeSaved": "Rango agregado",
     "rangesSubtitle": "Uso y vigencia de cada resolución",
-    "productionRangesHint": "La numeración de producción se trae de la DIAN en el paso a producción, cuando el comercio ya la pidió en MUISCA."
+    "productionRangesHint": "La numeración de producción se trae de la DIAN en el paso a producción, cuando el comercio ya la pidió en MUISCA.",
+    "editData": "Editar datos",
+    "editBody": "Corrige los datos tal como están en el RUT. Aplican a los documentos nuevos; los ya emitidos no cambian.",
+    "saveData": "Guardar datos",
+    "dataSaved": "Datos del emisor guardados",
+    "actionFailed": "No se pudo completar la acción.",
+    "activateIssuer": "Activar emisor",
+    "deactivateIssuer": "Desactivar emisor",
+    "activateIssuerTitle": "¿Activar {name}?",
+    "deactivateIssuerTitle": "¿Desactivar {name}?",
+    "activateIssuerBody": "Su sistema cliente vuelve a poder emitir documentos para este NIT.",
+    "deactivateIssuerBody": "Su sistema cliente deja de poder emitir para este NIT. Los documentos y archivos se conservan 10 años.",
+    "issuerActivated": "Emisor activado",
+    "issuerDeactivated": "Emisor desactivado",
+    "inactiveNotice": "Este emisor está desactivado: su sistema cliente no puede emitir documentos para él.",
+    "activateRange": "Activar",
+    "deactivateRange": "Desactivar",
+    "rangeConfirmTitle": "¿Cambiar el rango {range}?",
+    "activateRangeBody": "Vuelve a poder numerar documentos mientras esté vigente.",
+    "deactivateRangeBody": "Deja de numerar documentos. No se borra: los documentos ya emitidos siguen apuntando a él.",
+    "rangeActivated": "Rango activado",
+    "rangeDeactivated": "Rango desactivado",
+    "runsTitle": "Corridas anteriores del set",
+    "runsSubtitle": "Cada vez que se envió el set de pruebas a la DIAN.",
+    "runColumns": {
+      "date": "Fecha",
+      "state": "Resultado",
+      "result": "Documentos",
+      "error": "Error"
+    },
+    "runResult": "{accepted} de {total} aceptados{rejected, plural, =0 {} one { · # rechazado} other { · # rechazados}}"
   },
   "contingencies": {
     "title": "Contingencias",
@@ -581,7 +612,8 @@
         "O-23": "Agente de retención IVA",
         "O-47": "Régimen simple de tributación",
         "R-99-PN": "No aplica (ninguna de las anteriores)"
-      }
+      },
+      "nitLocked": "El NIT no se cambia: identifica al emisor ante la DIAN."
     },
     "certificate": {
       "title": "Certificado digital del emisor",

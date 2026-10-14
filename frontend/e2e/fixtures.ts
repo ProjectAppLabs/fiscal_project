@@ -362,6 +362,10 @@ export async function stubIssuerList(page: Page) {
 export async function stubIssuerDetail(page: Page) {
   // The life cycle on the issuer's page reads the test set; stubTestSet can override it afterwards.
   await page.route(/\/api\/console\/issuers\/\d+\/test-set\/$/, (route) => fulfillJson(route, 200, { readiness: readyIssuer, run: null }));
+  await page.route(/\/api\/console\/issuers\/\d+\/test-set\/runs\/$/, (route) => fulfillJson(route, 200, { count: 0, results: [] }));
+  await page.route(/\/api\/console\/issuers\/\d+\/activation\/$/, (route) =>
+    fulfillJson(route, 200, { id: testIssuerDetail.id, ...route.request().postDataJSON() }),
+  );
   await page.route(/\/api\/console\/issuers\/\d+\/production\/$/, (route) =>
     fulfillJson(route, 200, {
       environment: '2',
@@ -370,9 +374,10 @@ export async function stubIssuerDetail(page: Page) {
   );
   await page.route(/\/api\/console\/issuers\/\d+\/$/, (route) => {
     const id = Number(route.request().url().match(/issuers\/(\d+)/)?.[1]);
-    return id === testIssuerDetail.id
-      ? fulfillJson(route, 200, testIssuerDetail)
-      : fulfillJson(route, 404, { detail: 'No encontrado.' });
+    if (id !== testIssuerDetail.id) return fulfillJson(route, 404, { detail: 'No encontrado.' });
+    return route.request().method() === 'PATCH'
+      ? fulfillJson(route, 200, { ...testIssuerDetail, ...route.request().postDataJSON() })
+      : fulfillJson(route, 200, testIssuerDetail);
   });
 }
 

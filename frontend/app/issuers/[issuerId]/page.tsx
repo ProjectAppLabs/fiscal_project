@@ -4,10 +4,11 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { FormEvent, useCallback, useEffect, useState } from 'react';
-import { FileText, Plus, Upload } from 'lucide-react';
+import { FileText, Pencil, Plus, Power, Upload } from 'lucide-react';
 
 import { ConsoleLoadError } from '@/components/console/ConsoleStatus';
 import { CertificateForm, RangeFormFields, SoftwareFormFields } from '@/components/console/EnrolmentForms';
+import { IssuerForm } from '@/components/console/IssuerForm';
 import { ProductionPanel } from '@/components/console/ProductionPanel';
 import { TestSetPanel } from '@/components/console/TestSetPanel';
 import { Page } from '@/components/layout/Page';
@@ -15,7 +16,7 @@ import { Badge } from '@/components/ui/Badge';
 import { Button, ButtonLink } from '@/components/ui/Button';
 import { Card, CardHeader, DataItem, DataList } from '@/components/ui/Card';
 import { DataTable } from '@/components/ui/DataTable';
-import { Dialog } from '@/components/ui/Dialog';
+import { ConfirmDialog, Dialog } from '@/components/ui/Dialog';
 import { Field, Input } from '@/components/ui/Field';
 import { Notice } from '@/components/ui/Notice';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -25,11 +26,25 @@ import { Lifecycle, type LifecycleStep } from '@/components/ui/Steps';
 import { TabPanel, Tabs } from '@/components/ui/Tabs';
 import { toast } from '@/components/ui/Toast';
 import { ROUTES, documentDetailRoute } from '@/lib/constants';
-import { formatDate, formatNumber } from '@/lib/format';
+import { formatDate, formatDateTime, formatNumber } from '@/lib/format';
+import { useIsAdmin } from '@/lib/hooks/useIsAdmin';
 import { useQueryParams } from '@/lib/hooks/useQueryParams';
 import { useRequireAuth } from '@/lib/hooks/useRequireAuth';
 import { fetchProduction, fetchTestSet, type ProductionStatus, type TestSetReadiness, type TestSetRun } from '@/lib/services/onboarding';
-import { daysUntil, downloadContingencyLetter, isAlertKind, type Alert, type IssuerDetail, type IssuerRange } from '@/lib/services/operations';
+import {
+  daysUntil,
+  downloadContingencyLetter,
+  fetchTestSetRuns,
+  isAlertKind,
+  setIssuerActive,
+  setRangeActive,
+  updateIssuer,
+  type Alert,
+  type IssuerDetail,
+  type IssuerRange,
+  type TestSetRunSummary,
+} from '@/lib/services/operations';
+import { stepErrors } from '@/lib/services/onboarding';
 import type { DetailStatus } from '@/lib/stores/consoleStore';
 import { useOperationsStore } from '@/lib/stores/operationsStore';
 
@@ -98,6 +113,24 @@ function IssuerView({ issuer }: { issuer: IssuerDetail }) {
     lifecycle.reload();
   };
 
+  const isAdmin = useIsAdmin();
+  const [editing, setEditing] = useState(false);
+  const [toggling, setToggling] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const toggleActive = async () => {
+    setBusy(true);
+    try {
+      await setIssuerActive(issuer.id, !issuer.active);
+      toast(issuer.active ? t('issuerDeactivated') : t('issuerActivated'));
+      setToggling(false);
+      refresh();
+    } catch (error) {
+      toast(stepErrors(error)[0] ?? t('actionFailed'), 'error');
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const certificate = issuer.certificates.find((item) => item.active) ?? null;
   const certificateDays = daysUntil(certificate?.not_after ?? null);
   const incomplete = lifecycle.testSet ? missingForEnrolment(lifecycle.testSet.readiness) : [];
@@ -105,6 +138,18 @@ function IssuerView({ issuer }: { issuer: IssuerDetail }) {
   return (
     <div className="appear">
       <PageHeader
+        actions={
+          <>
+            <Button icon={<Pencil aria-hidden className="size-4" />} onClick={() => setEditing(true)} variant="secondary">
+              {t('editData')}
+            </Button>
+            {isAdmin ? (
+              <Button icon={<Power aria-hidden className="size-4" />} onClick={() => setToggling(true)} variant="ghost">
+                {issuer.active ? t('deactivateIssuer') : t('activateIssuer')}
+              </Button>
+            ) : null}
+          </>
+        }
         badge={
           <Badge size="lg" tone={issuer.environment === '1' ? 'success' : 'pending'}>
             {tEnvironments(issuer.environment)}
@@ -126,6 +171,7 @@ function IssuerView({ issuer }: { issuer: IssuerDetail }) {
       />
 
       <div className="flex flex-col gap-4">
+        {issuer.active ? null : <Notice tone="neutral">{t('inactiveNotice')}</Notice>}
         <Card aria-label={t('lifecycleLabel')}>
           <Lifecycle label={t('lifecycleLabel')} steps={lifecycleSteps(issuer, lifecycle, t)} />
         </Card>
@@ -177,9 +223,12 @@ function IssuerView({ issuer }: { issuer: IssuerDetail }) {
             </div>
           ) : null}
           {tab === 'habilitation' ? (
-            <div className="grid items-start gap-4 xl:grid-cols-2">
-              <TestSetPanel issuerId={issuer.id} onChange={refresh} />
-              <ProductionPanel issuerId={issuer.id} onChange={refresh} />
+            <div className="flex flex-col gap-4">
+              <div className="grid items-start gap-4 xl:grid-cols-2">
+                <TestSetPanel issuerId={issuer.id} onChange={refresh} />
+                <ProductionPanel issuerId={issuer.id} onChange={refresh} />
+              </div>
+              <TestSetRuns issuerId={issuer.id} version={lifecycle.version} />
             </div>
           ) : null}
           {tab === 'certificates' ? (
@@ -192,7 +241,91 @@ function IssuerView({ issuer }: { issuer: IssuerDetail }) {
           {tab === 'contingency' ? <ContingencyLetter issuerId={issuer.id} /> : null}
         </TabPanel>
       </div>
+      <Dialog description={t('editBody')} onClose={() => setEditing(false)} open={editing} size="lg" title={t('editData')}>
+        <IssuerForm
+          initial={{
+            nit: issuer.nit,
+            dv: issuer.dv,
+            person_type: issuer.person_type,
+            legal_name: issuer.legal_name,
+            trade_name: issuer.trade_name,
+            tax_responsibilities: issuer.tax_responsibilities,
+            tax_scheme: issuer.tax_scheme ?? '01',
+            address_line: issuer.address.line,
+            municipality_code: issuer.address.municipality_code,
+            email: issuer.email,
+            phone: issuer.phone ?? '',
+          }}
+          mode="edit"
+          onSubmit={async (data) => {
+            // The backend ignores the NIT; it is left out so the request says only what changes.
+            const changes: Partial<typeof data> = { ...data };
+            delete changes.nit;
+            await updateIssuer(issuer.id, changes);
+            setEditing(false);
+            toast(t('dataSaved'));
+            refresh();
+          }}
+          submitLabel={t('saveData')}
+        />
+      </Dialog>
+      <ConfirmDialog
+        busy={busy}
+        confirmLabel={issuer.active ? t('deactivateIssuer') : t('activateIssuer')}
+        danger={issuer.active}
+        description={issuer.active ? t('deactivateIssuerBody') : t('activateIssuerBody')}
+        onClose={() => setToggling(false)}
+        onConfirm={() => void toggleActive()}
+        open={toggling}
+        title={issuer.active ? t('deactivateIssuerTitle', { name: issuer.legal_name }) : t('activateIssuerTitle', { name: issuer.legal_name })}
+      />
     </div>
+  );
+}
+
+/** Earlier runs of the DIAN test set (H-17), newest first. */
+function TestSetRuns({ issuerId, version }: { issuerId: number; version: number }) {
+  const t = useTranslations('issuerDetail');
+  const tStates = useTranslations('testSet.states');
+  const locale = useLocale();
+  const [runs, setRuns] = useState<TestSetRunSummary[] | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    fetchTestSetRuns(issuerId)
+      .then((rows) => active && setRuns(rows))
+      .catch(() => active && setRuns([]));
+    return () => {
+      active = false;
+    };
+  }, [issuerId, version]);
+
+  if (!runs || runs.length < 2) return null;
+  return (
+    <Card aria-labelledby="issuer-runs">
+      <CardHeader id="issuer-runs" subtitle={t('runsSubtitle')} title={t('runsTitle')} />
+      <DataTable<TestSetRunSummary>
+        caption={t('runsTitle')}
+        columns={[
+          { key: 'date', header: t('runColumns.date'), mobile: 'title', className: 'whitespace-nowrap', cell: (run) => formatDateTime(run.created_at, locale) },
+          {
+            key: 'state',
+            header: t('runColumns.state'),
+            mobile: 'badge',
+            cell: (run) => (
+              <Badge size="sm" tone={run.state === 'accepted' ? 'success' : run.state === 'processing' ? 'info' : 'danger'}>
+                {tStates(run.state)}
+              </Badge>
+            ),
+          },
+          { key: 'result', header: t('runColumns.result'), mobile: 'body', cell: (run) => t('runResult', { accepted: run.accepted, total: run.total, rejected: run.rejected }) },
+          { key: 'error', header: t('runColumns.error'), className: 'text-[13px] text-ink-2', cell: (run) => run.error || '—' },
+        ]}
+        framed={false}
+        rowKey={(run) => run.id}
+        rows={runs}
+      />
+    </Card>
   );
 }
 
@@ -377,7 +510,24 @@ function Ranges({ issuer, onChange }: { issuer: IssuerDetail; onChange: () => vo
   const t = useTranslations('issuerDetail');
   const tKinds = useTranslations('operations.rangeKinds');
   const locale = useLocale();
+  const isAdmin = useIsAdmin();
   const [open, setOpen] = useState(false);
+  const [toggling, setToggling] = useState<IssuerRange | null>(null);
+  const [busy, setBusy] = useState(false);
+  const toggle = async () => {
+    if (!toggling) return;
+    setBusy(true);
+    try {
+      await setRangeActive(issuer.id, toggling.id, !toggling.active);
+      toast(toggling.active ? t('rangeDeactivated') : t('rangeActivated'));
+      setToggling(null);
+      onChange();
+    } catch (error) {
+      toast(stepErrors(error)[0] ?? t('actionFailed'), 'error');
+    } finally {
+      setBusy(false);
+    }
+  };
   const percent = new Intl.NumberFormat(locale, { style: 'percent', maximumFractionDigits: 1 });
 
   return (
@@ -440,6 +590,21 @@ function Ranges({ issuer, onChange }: { issuer: IssuerDetail; onChange: () => vo
               ),
             },
             { key: 'last', header: t('rangeColumns.last'), cell: (range) => <span className="font-mono text-[13px]">{range.last_number ?? '—'}</span> },
+            ...(isAdmin
+              ? [
+                  {
+                    key: 'actions',
+                    header: t('rangeColumns.actions'),
+                    mobile: 'action' as const,
+                    align: 'end' as const,
+                    cell: (range: IssuerRange) => (
+                      <Button onClick={() => setToggling(range)} size="sm" variant="ghost">
+                        {range.active ? t('deactivateRange') : t('activateRange')}
+                      </Button>
+                    ),
+                  },
+                ]
+              : []),
           ]}
           framed={false}
           rowKey={(range) => range.id}
@@ -447,6 +612,16 @@ function Ranges({ issuer, onChange }: { issuer: IssuerDetail; onChange: () => vo
         />
       )}
       {issuer.environment === '2' ? <Notice className="mt-4" tone="info">{t('productionRangesHint')}</Notice> : null}
+      <ConfirmDialog
+        busy={busy}
+        confirmLabel={toggling?.active ? t('deactivateRange') : t('activateRange')}
+        danger={Boolean(toggling?.active)}
+        description={toggling?.active ? t('deactivateRangeBody') : t('activateRangeBody')}
+        onClose={() => setToggling(null)}
+        onConfirm={() => void toggle()}
+        open={toggling !== null}
+        title={toggling ? t('rangeConfirmTitle', { range: `${toggling.prefix}${toggling.number_from}–${toggling.prefix}${toggling.number_to}` }) : ''}
+      />
       <Dialog description={t('addRangeBody')} onClose={() => setOpen(false)} open={open} size="lg" title={t('addRange')}>
         <RangeFormFields
           allowKind
@@ -541,7 +716,7 @@ function useLifecycleData(issuerId: number) {
   }, [issuerId, version]);
 
   const reload = useCallback(() => setVersion((current) => current + 1), []);
-  return { testSet, production, reload };
+  return { testSet, production, reload, version };
 }
 
 function missingForEnrolment(readiness: TestSetReadiness | undefined): ('certificate' | 'software' | 'test_set_id' | 'range')[] {

@@ -439,6 +439,19 @@
       "outcomes": [
         "success"
       ]
+    },
+    "console-issuer-edit": {
+      "name": "Correct the issuer data",
+      "module": "console",
+      "roles": [
+        "operator"
+      ],
+      "priority": "P2",
+      "description": "«Editar datos» on the issuer page corrects the RUT data; the NIT and the environment never change there",
+      "expectedSpecs": 1,
+      "outcomes": [
+        "success"
+      ]
     }
   }
 }

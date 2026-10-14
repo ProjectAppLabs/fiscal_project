@@ -370,7 +370,8 @@
       "numbers": "Numbers",
       "validity": "Validity",
       "used": "Used",
-      "last": "Last number"
+      "last": "Last number",
+      "actions": "Action"
     },
     "alertsTitle": "Open alerts",
     "noAlerts": "No open alerts.",
@@ -435,7 +436,37 @@
     "saveRange": "Save range",
     "rangeSaved": "Range added",
     "rangesSubtitle": "Usage and validity of each resolution",
-    "productionRangesHint": "The production numbering is brought from the DIAN in the move to production, once the business asked for it in MUISCA."
+    "productionRangesHint": "The production numbering is brought from the DIAN in the move to production, once the business asked for it in MUISCA.",
+    "editData": "Edit data",
+    "editBody": "Correct the data as it is in the RUT. It applies to new documents; those already issued do not change.",
+    "saveData": "Save data",
+    "dataSaved": "Issuer data saved",
+    "actionFailed": "The action could not be completed.",
+    "activateIssuer": "Activate issuer",
+    "deactivateIssuer": "Deactivate issuer",
+    "activateIssuerTitle": "Activate {name}?",
+    "deactivateIssuerTitle": "Deactivate {name}?",
+    "activateIssuerBody": "Its client system can issue documents for this NIT again.",
+    "deactivateIssuerBody": "Its client system can no longer issue for this NIT. Documents and files are kept for 10 years.",
+    "issuerActivated": "Issuer activated",
+    "issuerDeactivated": "Issuer deactivated",
+    "inactiveNotice": "This issuer is deactivated: its client system cannot issue documents for it.",
+    "activateRange": "Activate",
+    "deactivateRange": "Deactivate",
+    "rangeConfirmTitle": "Change the range {range}?",
+    "activateRangeBody": "It can number documents again while it is valid.",
+    "deactivateRangeBody": "It stops numbering documents. It is not deleted: documents already issued still point to it.",
+    "rangeActivated": "Range activated",
+    "rangeDeactivated": "Range deactivated",
+    "runsTitle": "Earlier test set runs",
+    "runsSubtitle": "Every time the test set was sent to the DIAN.",
+    "runColumns": {
+      "date": "Date",
+      "state": "Result",
+      "result": "Documents",
+      "error": "Error"
+    },
+    "runResult": "{accepted} of {total} accepted{rejected, plural, =0 {} one { · # rejected} other { · # rejected}}"
   },
   "contingencies": {
     "title": "Contingencies",
@@ -581,7 +612,8 @@
         "O-23": "VAT withholding agent",
         "O-47": "Simple tax regime",
         "R-99-PN": "Not applicable (none of the above)"
-      }
+      },
+      "nitLocked": "The NIT does not change: it identifies the issuer before the DIAN."
     },
     "certificate": {
       "title": "Issuer's digital certificate",

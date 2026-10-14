@@ -86,8 +86,10 @@ export interface IssuerDetail extends Omit<IssuerListItem, 'documents' | 'open_a
   person_type: '1' | '2';
   trade_name: string;
   tax_responsibilities: string[];
-  address: { line: string; municipality_code: string };
+  tax_scheme?: '01' | '04' | 'ZZ';
+  address: { line: string; municipality_code: string; department_code?: string; postal_code?: string };
   email: string;
+  phone?: string;
   certificates: IssuerCertificate[];
   software: IssuerSoftware[];
   ranges: IssuerRange[];
@@ -208,3 +210,34 @@ const ARTIFACT_EXTENSIONS: Record<ArtifactKind, string> = {
   dian_response: 'xml',
   evidence: 'json',
 };
+
+/** A past run of the DIAN test set, with how many documents the DIAN accepted. */
+export interface TestSetRunSummary {
+  id: number;
+  state: 'processing' | 'accepted' | 'rejected' | 'failed';
+  test_set_id: string;
+  created_at: string;
+  updated_at: string;
+  total: number;
+  accepted: number;
+  rejected: number;
+  pending: number;
+  error: string;
+}
+
+/** Correct the issuer's data (never its NIT nor its environment). */
+export async function updateIssuer(id: number, changes: Record<string, unknown>): Promise<IssuerDetail> {
+  return (await api.patch<IssuerDetail>(`${API_ENDPOINTS.CONSOLE_ISSUERS}${id}/`, changes)).data;
+}
+
+export async function setIssuerActive(id: number, active: boolean): Promise<{ id: number; active: boolean }> {
+  return (await api.post(`${API_ENDPOINTS.CONSOLE_ISSUERS}${id}/activation/`, { active })).data;
+}
+
+export async function setRangeActive(issuerId: number, rangeId: number, active: boolean): Promise<IssuerRange> {
+  return (await api.patch<IssuerRange>(`${API_ENDPOINTS.CONSOLE_ISSUERS}${issuerId}/ranges/${rangeId}/`, { active })).data;
+}
+
+export async function fetchTestSetRuns(issuerId: number): Promise<TestSetRunSummary[]> {
+  return (await api.get<{ count: number; results: TestSetRunSummary[] }>(`${API_ENDPOINTS.CONSOLE_ISSUERS}${issuerId}/test-set/runs/`)).data.results;
+}

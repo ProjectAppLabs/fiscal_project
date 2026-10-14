@@ -131,6 +131,8 @@ por campo.
 | `invalid_range`, `invalid_validity`, `technical_key_required` | 400 | Rango invertido, vigencia invertida o rango de facturación sin clave técnica |
 | `duplicate_range` | 409 | Esa resolución y ese prefijo ya están registrados |
 | `issuer_not_ready` | 409 | El emisor no tiene certificado vigente o registro del software en su ambiente |
+| `issuer_inactive` | 409 | Un administrador desactivó el emisor en Fiscal. |
+| `environment_locked` | 400 | Se intentó poner un emisor en producción sin el paso a producción (`/production/promote/`) |
 | `number_out_of_range` | 400 | El número no está en un rango vigente del emisor para la fecha de emisión |
 | `issue_datetime_in_future`, `issue_datetime_too_old` | 400 | Fecha de emisión futura, o de hace más de 24 h sin ser contingencia |
 | `invalid_document` | 400 | El documento tiene problemas que la DIAN rechazaría; ver `problems` |
@@ -173,7 +175,7 @@ Crea (`201`) o actualiza (`200`) un comercio. El NIT va en la URL, sin puntos ni
 | `tax_responsibilities` | Tabla 13.2.6.1 del anexo: `O-13` gran contribuyente, `O-15` autorretenedor, `O-23` agente de retención IVA, `O-47` régimen simple, `R-99-PN` no aplica. Se pasan a mayúsculas; vacío o el antiguo `ZZ` quedan como `R-99-PN` (con `ZZ` la DIAN rechaza, FAJ26) |
 | `tax_scheme` | Tributo del emisor: `01` IVA, `04` INC, `ZZ` no aplica |
 | `municipality_code` y `department_code` | Códigos DANE de 5 y 2 dígitos; el municipio debe empezar por el departamento |
-| `environment` | `TipoAmbiente`: `2` pruebas (habilitación), `1` producción |
+| `environment` | `TipoAmbiente`: `2` pruebas (habilitación). Un emisor solo pasa a `1` producción con `POST …/production/promote/`; aquí se rechaza con `environment_locked` |
 
 ### `GET /api/v1/issuers/{nit}/`
 
