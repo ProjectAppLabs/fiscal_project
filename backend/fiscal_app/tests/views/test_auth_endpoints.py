@@ -240,7 +240,7 @@ def test_update_password_requires_fields(api_client):
     response = api_client.post(reverse('update_password'), {}, format='json')
 
     assert response.status_code == status.HTTP_400_BAD_REQUEST
-    assert response.json()['error'] == 'Current password and new password are required'
+    assert response.json()['error'] == 'Escribe la contraseña actual y la nueva.'
 
 
 @pytest.mark.django_db
@@ -252,12 +252,26 @@ def test_update_password_rejects_wrong_current(api_client):
 
     response = api_client.post(
         reverse('update_password'),
-        {'current_password': 'wrong', 'new_password': 'newpass'},
+        {'current_password': 'wrong', 'new_password': 'newpass-123'},
         format='json',
     )
 
     assert response.status_code == status.HTTP_400_BAD_REQUEST
-    assert response.json()['error'] == 'Current password is incorrect'
+    assert response.json()['error'] == 'La contraseña actual no es correcta.'
+
+
+@pytest.mark.django_db
+def test_update_password_rejects_short_password(api_client):
+    """Fails if the console can set a password shorter than 8 characters, which the reset flow already refuses."""
+    User = get_user_model()
+    user = User.objects.create_user(email='update-short@example.com', password='pass1234')
+    api_client.force_authenticate(user=user)
+
+    response = api_client.post(reverse('update_password'), {'current_password': 'pass1234', 'new_password': 'corta'}, format='json')
+
+    user.refresh_from_db()
+    assert response.json()['error'] == 'La contraseña nueva debe tener al menos 8 caracteres.'
+    assert user.check_password('pass1234') is True
 
 
 @pytest.mark.django_db
@@ -270,13 +284,13 @@ def test_update_password_success(api_client):
 
     response = api_client.post(
         reverse('update_password'),
-        {'current_password': 'pass1234', 'new_password': 'newpass'},
+        {'current_password': 'pass1234', 'new_password': 'newpass-123'},
         format='json',
     )
 
     assert response.status_code == status.HTTP_200_OK
     user.refresh_from_db()
-    assert user.check_password('newpass') is True
+    assert user.check_password('newpass-123') is True
 
 
 @pytest.mark.django_db
