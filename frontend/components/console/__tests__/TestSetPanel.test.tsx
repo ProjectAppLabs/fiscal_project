@@ -24,7 +24,7 @@ const RUN: TestSetRun = {
   created_at: '2026-10-05T12:00:00Z',
   updated_at: '2026-10-05T12:00:00Z',
   documents: [{ kind: 'invoice', full_number: 'SETP990000000', code: 'abc', status: 'pending', messages: [], file_name: 'fv.xml' }],
-  phases: [{ name: 'invoices', zip_key: 'zip-1', errors: [] }],
+  phases: [{ name: 'invoices', zip_key: 'zip-1', errors: [], dian_status: 'Batch en proceso de validación.' }],
 };
 
 describe('TestSetPanel', () => {
@@ -79,6 +79,14 @@ describe('TestSetPanel', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Iniciar set de pruebas' }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent('El rango de habilitación no tiene números suficientes.');
+  });
+
+  it('shows what the DIAN last said about each phase', async () => {
+    mockGet.mockResolvedValue({ data: { readiness: READY, run: RUN } });
+
+    renderWithIntl(<TestSetPanel issuerId={3} />);
+
+    expect(await screen.findByText('DIAN sobre las facturas: «Batch en proceso de validación.»')).toBeInTheDocument();
   });
 
   it('says when the set has not been run', async () => {

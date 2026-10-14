@@ -3,7 +3,8 @@
 from decimal import Decimal
 
 import pytest
-from dian.catalogs import GENERICODE_DIR, code_list, tax_rates
+
+from dian.catalogs import GENERICODE_DIR, code_list, responsibilities, tax_rates
 from dian.money import round_money, to_decimal, within
 
 
@@ -53,3 +54,13 @@ def test_tolerance_is_two_pesos():
 def test_non_finite_amounts_are_rejected(value):
     """Fails if a boolean, text or non-finite value is read as an amount."""
     assert to_decimal(value) is None
+
+
+@pytest.mark.parametrize('declared,expected', [
+    (['ZZ'], ['R-99-PN']),
+    ([], ['R-99-PN']),
+    (['o-13', 'ZZ', 'R-99-PN'], ['O-13', 'R-99-PN']),
+])
+def test_responsibilities_follow_table_13_2_6_1(declared, expected):
+    """Fails if the legacy «ZZ» (genericode) or an empty list reaches the XML instead of R-99-PN, which the DIAN expects."""
+    assert responsibilities(declared) == expected

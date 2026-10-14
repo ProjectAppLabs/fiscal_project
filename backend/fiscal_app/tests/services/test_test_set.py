@@ -165,17 +165,47 @@ def test_short_range_fails_without_sending(habilitation_issuer, invoice_range):
     assert session.requests == []
 
 
+def document_status(code, valid, rules=(), status='00'):
+    """GetStatus answer (§7.11.3) for one document."""
+    strings = ''.join(f'<c:string>{rule}</c:string>' for rule in rules)
+    return Reply(200, answer('GetStatus', f'''<GetStatusResult xmlns:b="http://schemas.datacontract.org/2004/07/DianResponse">
+<b:ErrorMessage xmlns:c="http://schemas.microsoft.com/2003/10/Serialization/Arrays">{strings}</b:ErrorMessage>
+<b:IsValid>{'true' if valid else 'false'}</b:IsValid><b:StatusCode>{status}</b:StatusCode>
+<b:StatusDescription>x</b:StatusDescription><b:XmlDocumentKey>{code}</b:XmlDocumentKey></GetStatusResult>'''))
+
+
+ZIP_IN_PROCESS = Reply(200, answer('GetStatusZip', '''<GetStatusZipResult xmlns:b="http://schemas.datacontract.org/2004/07/DianResponse">
+<b:DianResponse><b:IsValid>false</b:IsValid><b:StatusCode/><b:StatusDescription>Batch en proceso de validación.</b:StatusDescription>
+</b:DianResponse></GetStatusZipResult>'''))
+
+
 @pytest.mark.django_db
-def test_pending_answers_keep_the_run_open(habilitation_issuer):
-    """Fails if a ZIP the DIAN is still processing (no answers yet) closes the run."""
+def test_documents_unknown_to_the_dian_stay_pending(habilitation_issuer):
+    """Fails if a document the DIAN has not processed yet (GetStatus 90, TrackId not found) is taken as rejected."""
     factory, _session = client_with(receipt())
-    run = test_set.start(habilitation_issuer, credit_notes=1, debit_notes=1, invoices=1, client_factory=factory)
-    factory, _session = client_with(zip_status([]))
+    run = test_set.start(habilitation_issuer, invoices=1, credit_notes=1, debit_notes=1, client_factory=factory)
+    factory, _session = client_with(ZIP_IN_PROCESS, document_status(run.entries[0]['code'], False, status='90'))
 
     run = test_set.check(run, client_factory=factory)
 
     assert run.state == TestSetRun.State.PROCESSING
     assert run.entries[0]['status'] == 'pending'
+
+
+@pytest.mark.django_db
+def test_stuck_zip_is_read_document_by_document(habilitation_issuer):
+    """Fails if a batch stuck «en proceso» hides the per-document answers GetStatus already has (seen in habilitación)."""
+    factory, _session = client_with(receipt())
+    run = test_set.start(habilitation_issuer, invoices=2, credit_notes=0, debit_notes=0, client_factory=factory)
+    first, second = (entry['code'] for entry in run.entries)
+    rule = 'Regla: FAJ26, Rechazo: Responsabilidad informada por emisor no valida según lista.'
+    factory, _session = client_with(ZIP_IN_PROCESS, document_status(first, True), document_status(second, False, [rule], '99'))
+
+    run = test_set.check(run, client_factory=factory)
+
+    assert [entry['status'] for entry in run.entries] == ['accepted', 'rejected']
+    assert run.entries[1]['messages'][0]['rule'] == 'FAJ26'
+    assert run.phases[0]['dian_status'] == 'Batch en proceso de validación.'
 
 
 @pytest.mark.django_db

@@ -1,8 +1,7 @@
 from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework import serializers
 
-from dian.catalogs import code_list, is_valid
-
+from dian.catalogs import RESPONSIBILITIES, is_valid, responsibilities
 from fiscal_app.models import Issuer
 from fiscal_app.models.choices import Environment, PersonType
 from fiscal_app.services.nit import validate_nit
@@ -32,11 +31,10 @@ class IssuerCreateUpdateSerializer(serializers.ModelSerializer):
         )
 
     def validate_tax_responsibilities(self, value):
-        codes = [code.strip().upper() for code in value]
-        valid = code_list('TipoResponsabilidad')
-        if any(code not in valid for code in codes):
+        codes = responsibilities(value)
+        if any(code not in RESPONSIBILITIES for code in codes):
             raise serializers.ValidationError(
-                f'Usa las responsabilidades de la lista de la DIAN: {", ".join(sorted(valid))}.',
+                f'Usa las responsabilidades de la tabla 13.2.6.1 de la DIAN: {", ".join(RESPONSIBILITIES)}.',
                 code='invalid_tax_responsibility',
             )
         return codes

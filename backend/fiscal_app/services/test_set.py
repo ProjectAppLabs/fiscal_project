@@ -40,6 +40,8 @@ from fiscal_app.services.ubl_mapping import (
 )
 
 logger = logging.getLogger(__name__)
+# GetStatus codes (§7.11.3) that mean «not processed yet»: no answer, 66 NSU not found, 90 TrackId not found.
+NOT_YET = ('', '66', '90')
 SET_INVOICES = 30
 SET_CREDIT_NOTES = 10
 SET_DEBIT_NOTES = 10
@@ -134,9 +136,15 @@ def check(run: TestSetRun, client_factory=default_client) -> TestSetRun:
             run.error = str(error)[:500]
             run.save(update_fields=['error', 'updated_at'])
             return run
-        for response in responses:
+        keyed = [response for response in responses if response.document_key]
+        phase['dian_status'] = next((r.status_description for r in responses if r.status_description), '')
+        if not keyed:
+            # In habilitación the batch can stay «Batch en proceso de validación» for hours while every document is
+            # already validated (seen 2026-10-13): ask for each pending document by its CUFE/CUDE instead.
+            keyed = _statuses_one_by_one(client, [by_code[code] for code in phase['codes'] if by_code[code]['status'] == 'pending'])
+        for response in keyed:
             entry = by_code.get(response.document_key)
-            if entry is None:
+            if entry is None or response.status_code in NOT_YET:
                 continue
             entry['status'] = 'accepted' if response.is_valid else 'rejected'
             entry['messages'] = [message.as_dict() for message in response.messages]
@@ -148,6 +156,18 @@ def check(run: TestSetRun, client_factory=default_client) -> TestSetRun:
     run.state = _state(run)
     run.save()
     return run
+
+
+def _statuses_one_by_one(client, entries):
+    """GetStatus of each document (§7.11); stops at the first service failure and leaves the rest pending."""
+    responses = []
+    for entry in entries:
+        try:
+            responses.append(client.get_status(entry['code']))
+        except (soap.DianServiceError, DianUnavailable) as error:
+            logger.warning('GetStatus de %s falló: %s', entry['full_number'], error)
+            break
+    return responses
 
 
 def _send_notes(run, credentials, client_factory):

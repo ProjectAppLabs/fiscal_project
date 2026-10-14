@@ -143,7 +143,7 @@ function IssuerStep({ clientId, onDone }: { clientId: number; onDone: (issuerId:
   const t = useTranslations('onboarding.issuer');
   const tStep = useTranslations('onboarding');
   const [form, setForm] = useState<Omit<IssuerForm, 'client_id' | 'department_code' | 'environment'>>({
-    nit: '', dv: '', person_type: '2', legal_name: '', trade_name: '', tax_responsibilities: ['ZZ'], tax_scheme: 'ZZ',
+    nit: '', dv: '', person_type: '2', legal_name: '', trade_name: '', tax_responsibilities: ['R-99-PN'], tax_scheme: 'ZZ',
     address_line: '', municipality_code: '', email: '', phone: '',
   });
   const { errors, saving, run } = useStep();

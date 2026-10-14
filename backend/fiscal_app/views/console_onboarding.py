@@ -174,6 +174,7 @@ def _run(run):
             {key: entry[key] for key in ('kind', 'full_number', 'code', 'status', 'messages', 'file_name')}
             for entry in run.entries
         ],
-        'phases': [{'name': phase['name'], 'zip_key': phase.get('zip_key', ''), 'errors': phase.get('errors', [])}
+        'phases': [{'name': phase['name'], 'zip_key': phase.get('zip_key', ''), 'errors': phase.get('errors', []),
+                    'dian_status': phase.get('dian_status', '')}
                    for phase in run.phases],
     }

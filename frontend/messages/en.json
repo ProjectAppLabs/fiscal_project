@@ -518,6 +518,11 @@
       "invoices": "Invoices",
       "credit_notes": "Credit notes",
       "debit_notes": "Debit notes"
+    },
+    "dianSays": "DIAN on {phase}: «{status}»",
+    "phases": {
+      "invoices": "the invoices",
+      "notes": "the notes"
     }
   }
 }

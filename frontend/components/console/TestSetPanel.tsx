@@ -137,6 +137,13 @@ export function TestSetPanel({ issuerId }: { issuerId: number }) {
             {t(`states.${run.state}`)} · {formatDateTime(run.updated_at, locale)}
           </p>
           {run.error ? <p className="mt-1 text-sm text-destructive">{run.error}</p> : null}
+          {run.phases
+            .filter((phase) => phase.dian_status)
+            .map((phase) => (
+              <p className="mt-1 text-sm text-muted-foreground" key={phase.name}>
+                {t('dianSays', { phase: t(`phases.${phase.name === 'notes' ? 'notes' : 'invoices'}`), status: phase.dian_status })}
+              </p>
+            ))}
           <div className="mt-3 overflow-x-auto">
             <table className="w-full text-left text-sm">
               <caption className="sr-only">{t('tableCaption')}</caption>

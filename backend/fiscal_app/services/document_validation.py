@@ -9,7 +9,12 @@ import re
 from dataclasses import dataclass, field
 from decimal import Decimal
 
-from dian.catalogs import code_list, is_valid, tax_rates
+from dian.catalogs import (
+    RESPONSIBILITIES,
+    is_valid,
+    responsibilities,
+    tax_rates,
+)
 from dian.money import IVA_TOLERANCE, MONEY_TOLERANCE, round_money, to_decimal, within
 from fiscal_app.services.nit import check_digit
 
@@ -154,14 +159,13 @@ def _buyer(check, buyer):
     if not _text(buyer.get('name'), 450):
         check.add('buyer.name', 'required', 'Falta el nombre o la razón social del adquirente.')
     normalized['name'] = (buyer.get('name') or '').strip()
-    responsibilities = [str(code).upper() for code in buyer.get('tax_responsibilities') or [FINAL_CONSUMER_RESPONSIBILITY]]
-    valid = set(code_list('TipoResponsabilidad')) | {FINAL_CONSUMER_RESPONSIBILITY}
-    if any(code not in valid for code in responsibilities):
+    declared = responsibilities(buyer.get('tax_responsibilities'))
+    if any(code not in RESPONSIBILITIES for code in declared):
         check.add(
             'buyer.tax_responsibilities', 'invalid_tax_responsibility',
-            'Usa las responsabilidades de la lista de la DIAN (por ejemplo O-13, ZZ o R-99-PN).', 'FAK26',
+            f'Usa las responsabilidades de la tabla 13.2.6.1 de la DIAN: {", ".join(RESPONSIBILITIES)}.', 'FAK26',
         )
-    normalized['tax_responsibilities'] = responsibilities
+    normalized['tax_responsibilities'] = declared
     tax_scheme = buyer.get('tax_scheme', 'ZZ')
     if tax_scheme not in BUYER_TAX_SCHEMES:
         check.add('buyer.tax_scheme', 'invalid_tax_scheme', 'El tributo del adquirente debe ser 01, 04 o ZZ.')

@@ -3,8 +3,8 @@
 import { API_ENDPOINTS } from '@/lib/constants';
 import { api } from '@/lib/services/http';
 
-/** Fiscal responsibilities an issuer can declare (TipoResponsabilidad-2.1 of the DIAN toolkit). */
-export const TAX_RESPONSIBILITIES = ['O-13', 'O-15', 'O-23', 'O-47', 'ZZ'] as const;
+/** Fiscal responsibilities an issuer can declare (annex table 13.2.6.1; R-99-PN means none of the others). */
+export const TAX_RESPONSIBILITIES = ['O-13', 'O-15', 'O-23', 'O-47', 'R-99-PN'] as const;
 export const TAX_SCHEMES = ['01', '04', 'ZZ'] as const;
 
 /** The habilitación range of the official toolkit example; the participants catalog shows each issuer's own values. */
@@ -84,7 +84,7 @@ export interface TestSetRun {
   created_at: string;
   updated_at: string;
   documents: TestSetDocument[];
-  phases: { name: string; zip_key: string; errors: string[] }[];
+  phases: { name: string; zip_key: string; errors: string[]; dian_status: string }[];
 }
 
 export async function createClientSystem(data: { name: string; webhook_url: string }): Promise<CreatedClientSystem> {

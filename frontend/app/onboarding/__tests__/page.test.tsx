@@ -81,7 +81,7 @@ describe('OnboardingPage', () => {
     await fillIssuer();
 
     expect(mockPost).toHaveBeenCalledWith('console/issuers/create/', expect.objectContaining({
-      client_id: 1, nit: '900373115', dv: '3', department_code: '05', environment: '2', tax_responsibilities: ['ZZ'],
+      client_id: 1, nit: '900373115', dv: '3', department_code: '05', environment: '2', tax_responsibilities: ['R-99-PN'],
     }));
     expect(await screen.findByRole('region', { name: 'Certificado digital del emisor' })).toBeInTheDocument();
   });
