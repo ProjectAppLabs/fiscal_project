@@ -95,15 +95,30 @@ export async function createIssuer(data: IssuerForm): Promise<{ id: number; nit:
   return (await api.post(`${API_ENDPOINTS.CONSOLE_ISSUERS}create/`, data)).data;
 }
 
-export async function uploadCertificate(issuerId: number, file: File, password: string) {
+/** What the operator has: a .p12/.pfx with its password, or the certificate and its private key as separate files. */
+export type CertificateUpload =
+  | { kind: 'p12'; file: File; password: string }
+  | { kind: 'pair'; certificate: File; privateKey: File; keyPassword: string };
+
+export interface LoadedCertificate {
+  id: number;
+  subject: string;
+  not_after: string;
+  /** False when the entity's intermediate or root could not be downloaded; the certificate still signs. */
+  chain_complete: boolean;
+}
+
+export async function uploadCertificate(issuerId: number, upload: CertificateUpload): Promise<LoadedCertificate> {
   const form = new FormData();
-  form.append('p12', file);
-  form.append('password', password);
-  const response = await api.post<{ id: number; subject: string; not_after: string }>(
-    `${API_ENDPOINTS.CONSOLE_ISSUERS}${issuerId}/certificate/`,
-    form,
-  );
-  return response.data;
+  if (upload.kind === 'p12') {
+    form.append('p12', upload.file);
+    form.append('password', upload.password);
+  } else {
+    form.append('certificate', upload.certificate);
+    form.append('private_key', upload.privateKey);
+    if (upload.keyPassword) form.append('key_password', upload.keyPassword);
+  }
+  return (await api.post<LoadedCertificate>(`${API_ENDPOINTS.CONSOLE_ISSUERS}${issuerId}/certificate/`, form)).data;
 }
 
 export async function registerSoftware(issuerId: number, data: SoftwareForm) {

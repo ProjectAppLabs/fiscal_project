@@ -19,9 +19,11 @@ def make_note(ready_issuer, make_document):
     invoice = make_document(state='validated', cufe='a' * 96)
     software = SoftwareRegistration.objects.get(issuer=ready_issuer)
 
-    def build(kind):
+    def build(kind, reason=''):
         bill = restaurant_bill()
-        bill['billing_reference'] = {'document_id': invoice.pk, 'concept_code': '2' if kind == 'credit_note' else '4'}
+        bill['billing_reference'] = {
+            'document_id': invoice.pk, 'concept_code': '2' if kind == 'credit_note' else '4', 'reason': reason,
+        }
         payload, problems = validate_document(kind, bill)
         assert problems == []
         note = make_document(
@@ -94,3 +96,20 @@ def test_notes_have_no_numbering_resolution(make_note):
     note, _spec, _reference = make_note('credit_note')
 
     assert note.root.find('.//sts:InvoiceControl', NS) is None
+
+
+@pytest.mark.django_db
+def test_business_reason_does_not_replace_the_concept_description(make_note):
+    """Fails if the business's own reason replaces the concept's description, which the DIAN rejects (CBF04)."""
+    note, _spec, _reference = make_note('credit_note', reason='El cliente devolvió el plato')
+
+    assert text(note.root, 'cac:DiscrepancyResponse/cbc:Description') == 'Anulación de factura electrónica'
+    assert 'Motivo: El cliente devolvió el plato' in [node.text for node in note.root.findall('cbc:Note', NS)]
+
+
+@pytest.mark.django_db
+def test_debit_note_concept_uses_the_annex_table(make_note):
+    """Fails if a debit note of concept 4 says «Otro» (genericode) instead of «Otros» (table 13.2.5, rule DBF04)."""
+    note, _spec, _reference = make_note('debit_note')
+
+    assert text(note.root, 'cac:DiscrepancyResponse/cbc:Description') == 'Otros'

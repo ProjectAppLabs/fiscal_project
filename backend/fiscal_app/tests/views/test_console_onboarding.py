@@ -211,3 +211,32 @@ def test_production_software_is_copied_from_the_console(authenticated_client, re
     response = authenticated_client.post(f'/api/console/issuers/{ready_issuer.pk}/production/copy-software/', format='json')
 
     assert response.json()['readiness']['software'] is True
+
+
+def test_certificate_and_key_can_be_uploaded_separately(authenticated_client, issuer):
+    """Fails if a certificate delivered as .cer plus .key cannot be loaded without assembling the .p12 by hand."""
+    from cryptography.hazmat.primitives import serialization
+    from cryptography.hazmat.primitives.serialization import pkcs12
+
+    key, certificate, _others = pkcs12.load_key_and_certificates(base64.b64decode(self_signed_p12('ProjectApp', 'x')), b'x')
+    cert_file = SimpleUploadedFile('7674.cer', certificate.public_bytes(serialization.Encoding.DER))
+    key_file = SimpleUploadedFile('private.key', key.private_bytes(
+        serialization.Encoding.PEM, serialization.PrivateFormat.PKCS8, serialization.NoEncryption(),
+    ))
+
+    response = authenticated_client.post(
+        f'/api/console/issuers/{issuer.pk}/certificate/', {'certificate': cert_file, 'private_key': key_file}, format='multipart'
+    )
+
+    assert response.status_code == 201
+    assert (response.json()['subject'], response.json()['chain_complete']) == ('CN=ProjectApp', True)
+
+
+@pytest.mark.django_db
+def test_certificate_without_its_key_is_refused(authenticated_client, issuer):
+    """Fails if a certificate alone (no private key) is accepted: it could never sign."""
+    response = authenticated_client.post(
+        f'/api/console/issuers/{issuer.pk}/certificate/', {'certificate': SimpleUploadedFile('7674.cer', b'x')}, format='multipart'
+    )
+
+    assert response.json()['p12'] == ['Sube el certificado y su llave privada.']
