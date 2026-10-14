@@ -134,10 +134,21 @@ def test_numbers_never_repeat_across_runs(habilitation_issuer):
     factory, _session = client_with(receipt(), receipt('otro'))
 
     first = test_set.start(habilitation_issuer, credit_notes=1, debit_notes=1, invoices=2, client_factory=factory)
+    TestSetRun.objects.filter(pk=first.pk).update(state=TestSetRun.State.REJECTED)
     second = test_set.start(habilitation_issuer, credit_notes=1, debit_notes=1, invoices=2, client_factory=factory)
 
     assert [entry['number'] for entry in first.entries] == [990000000, 990000001]
     assert [entry['number'] for entry in second.entries] == [990000002, 990000003]
+
+
+@pytest.mark.django_db
+def test_second_run_waits_for_the_first(habilitation_issuer):
+    """Fails if a new run can start while the DIAN still validates the previous one (it would spend range numbers)."""
+    factory, _session = client_with(receipt())
+    test_set.start(habilitation_issuer, credit_notes=0, debit_notes=0, invoices=1, client_factory=factory)
+
+    with pytest.raises(test_set.TestSetError, match='Ya hay un set de pruebas en proceso'):
+        test_set.start(habilitation_issuer, credit_notes=0, debit_notes=0, invoices=1, client_factory=factory)
 
 
 @pytest.mark.django_db

@@ -110,3 +110,64 @@ def test_issuer_detail_never_shows_secrets(signed_client, issuer, invoice_range)
 
     assert 'fc8eac422eba16e22ffd8c6f94b3f40a6e38162c' not in response.content.decode()
     assert response.json()['numbering_ranges'][0]['has_technical_key'] is True
+
+
+def certificate_and_key(password='x'):
+    """The certificate (DER) and its private key (PEM, unencrypted) of a self-signed .p12, each in base64."""
+    import base64
+
+    from cryptography.hazmat.primitives import serialization
+    from cryptography.hazmat.primitives.serialization import pkcs12
+
+    key, certificate, _others = pkcs12.load_key_and_certificates(
+        base64.b64decode(self_signed_p12('Restaurante de Prueba SAS', password)), password.encode(),
+    )
+    key_pem = key.private_bytes(serialization.Encoding.PEM, serialization.PrivateFormat.PKCS8, serialization.NoEncryption())
+    return (base64.b64encode(certificate.public_bytes(serialization.Encoding.DER)).decode(),
+            base64.b64encode(key_pem).decode())
+
+
+@pytest.mark.django_db
+def test_certificate_and_key_can_be_sent_separately(signed_client, issuer):
+    """Fails if a client system cannot load a certificate the entity delivered as .cer plus .key."""
+    certificate, key = certificate_and_key()
+
+    response = signed_client.put(
+        f'/api/v1/issuers/{issuer.nit}/certificate/update/', {'certificate': certificate, 'private_key': key}
+    )
+
+    assert response.status_code == 200
+    assert (response.json()['subject'], response.json()['chain_complete']) == ('CN=Restaurante de Prueba SAS', True)
+
+
+@pytest.mark.django_db
+def test_certificate_without_its_key_is_refused(signed_client, issuer):
+    """Fails if a certificate alone is accepted through the API: it could never sign."""
+    certificate, _key = certificate_and_key()
+
+    response = signed_client.put(f'/api/v1/issuers/{issuer.nit}/certificate/update/', {'certificate': certificate})
+
+    assert response.json()['error']['fields'] == {'private_key': ['Envía el certificado y su llave privada.']}
+
+
+@pytest.mark.django_db
+def test_certificate_that_is_not_base64_is_refused(signed_client, issuer):
+    """Fails if a certificate field that is not base64 reaches the parser instead of a clear field error."""
+    response = signed_client.put(
+        f'/api/v1/issuers/{issuer.nit}/certificate/update/', {'certificate': 'no es base64', 'private_key': 'tampoco'}
+    )
+
+    assert response.json()['error']['fields']['certificate'] == ['No es un base64 válido.']
+
+
+@pytest.mark.django_db
+def test_key_of_another_certificate_is_refused(signed_client, issuer):
+    """Fails if a private key that does not belong to the certificate is accepted."""
+    certificate, _key = certificate_and_key()
+    _other_certificate, other_key = certificate_and_key()
+
+    response = signed_client.put(
+        f'/api/v1/issuers/{issuer.nit}/certificate/update/', {'certificate': certificate, 'private_key': other_key}
+    )
+
+    assert response.json()['error']['code'] == 'key_mismatch'

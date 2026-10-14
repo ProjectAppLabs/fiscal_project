@@ -23,6 +23,7 @@ from fiscal_app.serializers import (
     SoftwareRegistrationCreateUpdateSerializer,
     SoftwareRegistrationDetailSerializer,
 )
+from fiscal_app.services import certificate_assembly
 from fiscal_app.services.certificates import set_certificate
 from fiscal_app.services.software import register_software
 from fiscal_app.utils.errors import FiscalError
@@ -67,11 +68,20 @@ def update_issuer(request, nit):
 
 @machine_view(['PUT'])
 def update_certificate(request, nit):
+    """A .p12 with its password, or the certificate and its private key; `chain_complete` is False when Fiscal. could
+    not download an intermediate or the root of the chain."""
     issuer = own_issuer(request.user, nit)
     serializer = CertificateCreateUpdateSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
-    certificate = set_certificate(issuer, serializer.validated_data['p12'], serializer.validated_data['password'])
-    return Response(CertificateDetailSerializer(certificate).data)
+    data = serializer.validated_data
+    chain_complete = True
+    if 'certificate' in data:
+        assembled = certificate_assembly.assemble(data['certificate'], data['private_key'], data.get('key_password', ''))
+        p12, password, chain_complete = assembled.p12_base64, assembled.password, assembled.chain_complete
+    else:
+        p12, password = data['p12'], data['password']
+    certificate = set_certificate(issuer, p12, password)
+    return Response({**CertificateDetailSerializer(certificate).data, 'chain_complete': chain_complete})
 
 
 @machine_view(['PUT'])

@@ -1,0 +1,2369 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Fiscal. · API para sistemas cliente",
+    "version": "1.0.0",
+    "description": "Facturación electrónica DIAN como servicio para los sistemas de ProjectApp (Waiter primero). Contrato con ejemplos y reglas: docs/fiscal/contrato.md.\n\nToda petición va firmada: `X-Fiscal-Signature` = hex(HMAC-SHA256(secreto, \"<timestamp>\\n<MÉTODO>\\n<ruta?consulta>\\n<sha256 hex del cuerpo>\")), con ventana de 5 minutos."
+  },
+  "servers": [
+    {
+      "url": "http://127.0.0.1:8000",
+      "description": "Desarrollo local"
+    }
+  ],
+  "security": [
+    {
+      "FiscalKey": [],
+      "FiscalTimestamp": [],
+      "FiscalSignature": []
+    }
+  ],
+  "tags": [
+    {
+      "name": "Emisores"
+    },
+    {
+      "name": "Set de pruebas"
+    },
+    {
+      "name": "Producción"
+    },
+    {
+      "name": "Documentos"
+    }
+  ],
+  "paths": {
+    "/api/v1/issuers/{nit}/": {
+      "get": {
+        "operationId": "retrieveIssuer",
+        "tags": [
+          "Emisores"
+        ],
+        "summary": "Datos del emisor",
+        "responses": {
+          "200": {
+            "description": "El emisor, sin secretos.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Issuer"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Códigos: `signature_missing`, `signature_expired`, `signature_invalid`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Códigos: `issuer_not_found`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "nit",
+            "in": "path",
+            "required": true,
+            "description": "NIT del emisor, sin puntos ni dígito de verificación.",
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9]{5,15}$"
+            },
+            "example": "900373115"
+          }
+        ]
+      }
+    },
+    "/api/v1/issuers/{nit}/update/": {
+      "put": {
+        "operationId": "updateIssuer",
+        "tags": [
+          "Emisores"
+        ],
+        "summary": "Crear o actualizar un emisor",
+        "responses": {
+          "200": {
+            "description": "Actualizado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Issuer"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Creado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Issuer"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Códigos: `invalid_data`, `invalid_dv`, `invalid_nit`, `municipality_department_mismatch`, `invalid_tax_responsibility`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Códigos: `signature_missing`, `signature_expired`, `signature_invalid`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "nit",
+            "in": "path",
+            "required": true,
+            "description": "NIT del emisor, sin puntos ni dígito de verificación.",
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9]{5,15}$"
+            },
+            "example": "900373115"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IssuerInput"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/issuers/{nit}/certificate/update/": {
+      "put": {
+        "operationId": "updateCertificate",
+        "tags": [
+          "Emisores"
+        ],
+        "summary": "Subir el certificado del emisor",
+        "responses": {
+          "200": {
+            "description": "Titular, emisor, serie, vigencia y si la cadena quedó completa.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CertificateUpload"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Códigos: `invalid_data`, `invalid_certificate`, `certificate_expired`, `invalid_key`, `key_password`, `key_mismatch`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Códigos: `signature_missing`, `signature_expired`, `signature_invalid`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Códigos: `issuer_not_found`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "description": "Un .p12/.pfx con su contraseña, o el certificado y su llave privada por separado.",
+        "parameters": [
+          {
+            "name": "nit",
+            "in": "path",
+            "required": true,
+            "description": "NIT del emisor, sin puntos ni dígito de verificación.",
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9]{5,15}$"
+            },
+            "example": "900373115"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CertificateInput"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/issuers/{nit}/software/update/": {
+      "put": {
+        "operationId": "updateSoftware",
+        "tags": [
+          "Emisores"
+        ],
+        "summary": "Registrar el software de un ambiente",
+        "responses": {
+          "200": {
+            "description": "El registro, sin el PIN.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Software"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Códigos: `invalid_data`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Códigos: `signature_missing`, `signature_expired`, `signature_invalid`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Códigos: `issuer_not_found`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "nit",
+            "in": "path",
+            "required": true,
+            "description": "NIT del emisor, sin puntos ni dígito de verificación.",
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9]{5,15}$"
+            },
+            "example": "900373115"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SoftwareInput"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/issuers/{nit}/ranges/": {
+      "get": {
+        "operationId": "listRanges",
+        "tags": [
+          "Emisores"
+        ],
+        "summary": "Rangos de numeración",
+        "responses": {
+          "200": {
+            "description": "Sin claves técnicas.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Range"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Códigos: `signature_missing`, `signature_expired`, `signature_invalid`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Códigos: `issuer_not_found`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "nit",
+            "in": "path",
+            "required": true,
+            "description": "NIT del emisor, sin puntos ni dígito de verificación.",
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9]{5,15}$"
+            },
+            "example": "900373115"
+          }
+        ]
+      }
+    },
+    "/api/v1/issuers/{nit}/ranges/create/": {
+      "post": {
+        "operationId": "createRange",
+        "tags": [
+          "Emisores"
+        ],
+        "summary": "Registrar un rango de numeración",
+        "responses": {
+          "201": {
+            "description": "El rango, sin su clave técnica.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Range"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Códigos: `invalid_data`, `invalid_range`, `invalid_validity`, `technical_key_required`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Códigos: `signature_missing`, `signature_expired`, `signature_invalid`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Códigos: `issuer_not_found`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Códigos: `duplicate_range`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "nit",
+            "in": "path",
+            "required": true,
+            "description": "NIT del emisor, sin puntos ni dígito de verificación.",
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9]{5,15}$"
+            },
+            "example": "900373115"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RangeInput"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/issuers/{nit}/test-set/": {
+      "get": {
+        "operationId": "retrieveTestSet",
+        "tags": [
+          "Set de pruebas"
+        ],
+        "summary": "Estado del set de pruebas",
+        "responses": {
+          "200": {
+            "description": "Lo que tiene el emisor para correr el set y su última corrida.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TestSet"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Códigos: `signature_missing`, `signature_expired`, `signature_invalid`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Códigos: `issuer_not_found`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "nit",
+            "in": "path",
+            "required": true,
+            "description": "NIT del emisor, sin puntos ni dígito de verificación.",
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9]{5,15}$"
+            },
+            "example": "900373115"
+          }
+        ]
+      }
+    },
+    "/api/v1/issuers/{nit}/test-set/start/": {
+      "post": {
+        "operationId": "startTestSet",
+        "tags": [
+          "Set de pruebas"
+        ],
+        "summary": "Iniciar el set de pruebas",
+        "responses": {
+          "201": {
+            "description": "La corrida, en `processing`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TestSetRun"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Códigos: `invalid_data`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Códigos: `signature_missing`, `signature_expired`, `signature_invalid`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Códigos: `issuer_not_found`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Códigos: `test_set_not_ready`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "description": "Firma y envía las facturas; las notas se envían en una consulta posterior, cuando la DIAN acepta las facturas.",
+        "parameters": [
+          {
+            "name": "nit",
+            "in": "path",
+            "required": true,
+            "description": "NIT del emisor, sin puntos ni dígito de verificación.",
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9]{5,15}$"
+            },
+            "example": "900373115"
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TestSetStart"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/issuers/{nit}/test-set/check/": {
+      "post": {
+        "operationId": "checkTestSet",
+        "tags": [
+          "Set de pruebas"
+        ],
+        "summary": "Consultar el set de pruebas a la DIAN",
+        "responses": {
+          "200": {
+            "description": "La última corrida, actualizada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TestSetRun"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Códigos: `signature_missing`, `signature_expired`, `signature_invalid`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Códigos: `issuer_not_found`, `test_set_not_found`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "nit",
+            "in": "path",
+            "required": true,
+            "description": "NIT del emisor, sin puntos ni dígito de verificación.",
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9]{5,15}$"
+            },
+            "example": "900373115"
+          }
+        ]
+      }
+    },
+    "/api/v1/issuers/{nit}/production/": {
+      "get": {
+        "operationId": "retrieveProduction",
+        "tags": [
+          "Producción"
+        ],
+        "summary": "Qué falta para producción",
+        "responses": {
+          "200": {
+            "description": "Ambiente y requisitos.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Production"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Códigos: `signature_missing`, `signature_expired`, `signature_invalid`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Códigos: `issuer_not_found`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "nit",
+            "in": "path",
+            "required": true,
+            "description": "NIT del emisor, sin puntos ni dígito de verificación.",
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9]{5,15}$"
+            },
+            "example": "900373115"
+          }
+        ]
+      }
+    },
+    "/api/v1/issuers/{nit}/production/copy-software/": {
+      "post": {
+        "operationId": "copyProductionSoftware",
+        "tags": [
+          "Producción"
+        ],
+        "summary": "Usar el software de habilitación en producción",
+        "responses": {
+          "200": {
+            "description": "Ambiente y requisitos.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Production"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Códigos: `signature_missing`, `signature_expired`, `signature_invalid`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Códigos: `issuer_not_found`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Códigos: `production_not_ready`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "nit",
+            "in": "path",
+            "required": true,
+            "description": "NIT del emisor, sin puntos ni dígito de verificación.",
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9]{5,15}$"
+            },
+            "example": "900373115"
+          }
+        ]
+      }
+    },
+    "/api/v1/issuers/{nit}/production/fetch-ranges/": {
+      "post": {
+        "operationId": "fetchProductionRanges",
+        "tags": [
+          "Producción"
+        ],
+        "summary": "Traer la numeración de producción de la DIAN",
+        "responses": {
+          "200": {
+            "description": "Ambiente y requisitos.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Production"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Códigos: `signature_missing`, `signature_expired`, `signature_invalid`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Códigos: `issuer_not_found`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Códigos: `production_not_ready`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "description": "GetNumberingRange: los rangos que el comercio asoció al software, con sus claves técnicas.",
+        "parameters": [
+          {
+            "name": "nit",
+            "in": "path",
+            "required": true,
+            "description": "NIT del emisor, sin puntos ni dígito de verificación.",
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9]{5,15}$"
+            },
+            "example": "900373115"
+          }
+        ]
+      }
+    },
+    "/api/v1/issuers/{nit}/production/promote/": {
+      "post": {
+        "operationId": "promoteIssuer",
+        "tags": [
+          "Producción"
+        ],
+        "summary": "Pasar el emisor a producción",
+        "responses": {
+          "200": {
+            "description": "Ambiente y requisitos.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Production"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Códigos: `confirmation_required`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Códigos: `signature_missing`, `signature_expired`, `signature_invalid`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Códigos: `issuer_not_found`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Códigos: `production_not_ready`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "description": "Solo cuando el comercio ya quedó «Habilitado» en el portal de la DIAN. Desde ahí sus documentos tienen efecto fiscal.",
+        "parameters": [
+          {
+            "name": "nit",
+            "in": "path",
+            "required": true,
+            "description": "NIT del emisor, sin puntos ni dígito de verificación.",
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9]{5,15}$"
+            },
+            "example": "900373115"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "confirm"
+                ],
+                "properties": {
+                  "confirm": {
+                    "const": true
+                  }
+                }
+              },
+              "example": {
+                "confirm": true
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/documents/create/": {
+      "post": {
+        "operationId": "createDocument",
+        "tags": [
+          "Documentos"
+        ],
+        "summary": "Emitir un documento",
+        "responses": {
+          "200": {
+            "description": "Reenvío idempotente: el mismo documento.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Document"
+                }
+              }
+            }
+          },
+          "202": {
+            "description": "Recibido y en cola (`queued`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Document"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Códigos: `invalid_data`, `invalid_document`, `number_out_of_range`, `issue_datetime_in_future`, `issue_datetime_too_old`, `contingency_not_allowed`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Códigos: `signature_missing`, `signature_expired`, `signature_invalid`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Códigos: `issuer_not_found`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Códigos: `issuer_not_ready`, `idempotency_conflict`, `duplicate_number`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DocumentInput"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/documents/{id}/": {
+      "get": {
+        "operationId": "retrieveDocument",
+        "tags": [
+          "Documentos"
+        ],
+        "summary": "Estado de un documento",
+        "responses": {
+          "200": {
+            "description": "Estado, CUFE o CUDE, errores de la DIAN, artefactos y eventos.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Document"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Códigos: `signature_missing`, `signature_expired`, `signature_invalid`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Códigos: `document_not_found`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Id del documento en Fiscal.",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ]
+      }
+    },
+    "/api/v1/documents/{id}/artifacts/{kind}/": {
+      "get": {
+        "operationId": "retrieveArtifact",
+        "tags": [
+          "Documentos"
+        ],
+        "summary": "Descargar un archivo del documento",
+        "responses": {
+          "200": {
+            "description": "El archivo, con su tipo y la cabecera `X-Fiscal-SHA256`.",
+            "headers": {
+              "X-Fiscal-SHA256": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/xml": {},
+              "application/pdf": {}
+            }
+          },
+          "401": {
+            "description": "Códigos: `signature_missing`, `signature_expired`, `signature_invalid`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Códigos: `document_not_found`, `artifact_not_found`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Códigos: `artifact_unavailable`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Id del documento en Fiscal.",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "kind",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "signed_xml",
+                "dian_response",
+                "attached_document",
+                "pdf",
+                "evidence"
+              ]
+            }
+          }
+        ]
+      }
+    }
+  },
+  "webhooks": {
+    "document.state_changed": {
+      "post": {
+        "summary": "Un documento quedó validated, rejected o en contingency_dian",
+        "description": "Fiscal. hace POST al `webhook_url` del sistema cliente con las tres cabeceras `X-Fiscal-*`, firmadas con el secreto vigente sobre la ruta del `webhook_url`. Un 2xx lo da por entregado.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DocumentStateChanged"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Recibido."
+          }
+        }
+      }
+    },
+    "issuer.alert": {
+      "post": {
+        "summary": "Algo exige acción del comercio",
+        "description": "Fiscal. hace POST al `webhook_url` del sistema cliente con las tres cabeceras `X-Fiscal-*`, firmadas con el secreto vigente sobre la ruta del `webhook_url`. Un 2xx lo da por entregado.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IssuerAlert"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Recibido."
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "FiscalKey": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-Fiscal-Key"
+      },
+      "FiscalTimestamp": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-Fiscal-Timestamp",
+        "description": "Segundos Unix del momento de la firma."
+      },
+      "FiscalSignature": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-Fiscal-Signature"
+      }
+    },
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "required": [
+          "error"
+        ],
+        "properties": {
+          "error": {
+            "type": "object",
+            "required": [
+              "code",
+              "message"
+            ],
+            "properties": {
+              "code": {
+                "type": "string",
+                "description": "Código estable; ver la tabla de errores del contrato."
+              },
+              "message": {
+                "type": "string",
+                "description": "En español, listo para mostrar al comercio."
+              },
+              "fields": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "description": "Errores por campo (validación)."
+              },
+              "problems": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/DocumentProblem"
+                },
+                "description": "Solo en `invalid_document`."
+              }
+            }
+          }
+        }
+      },
+      "IssuerInput": {
+        "type": "object",
+        "required": [
+          "dv",
+          "person_type",
+          "legal_name",
+          "address_line",
+          "municipality_code",
+          "department_code",
+          "email"
+        ],
+        "properties": {
+          "dv": {
+            "type": "string",
+            "pattern": "^[0-9]$"
+          },
+          "person_type": {
+            "type": "string",
+            "enum": [
+              "1",
+              "2"
+            ],
+            "description": "`1` jurídica, `2` natural."
+          },
+          "legal_name": {
+            "type": "string"
+          },
+          "trade_name": {
+            "type": "string"
+          },
+          "tax_responsibilities": {
+            "type": "array",
+            "maxItems": 10,
+            "items": {
+              "type": "string",
+              "enum": [
+                "O-13",
+                "O-15",
+                "O-23",
+                "O-47",
+                "R-99-PN"
+              ]
+            },
+            "description": "Tabla 13.2.6.1. Vacío o `ZZ` quedan como `R-99-PN`."
+          },
+          "tax_scheme": {
+            "type": "string",
+            "enum": [
+              "01",
+              "04",
+              "ZZ"
+            ],
+            "default": "01"
+          },
+          "address_line": {
+            "type": "string"
+          },
+          "municipality_code": {
+            "type": "string",
+            "pattern": "^[0-9]{5}$",
+            "description": "DANE."
+          },
+          "department_code": {
+            "type": "string",
+            "pattern": "^[0-9]{2}$",
+            "description": "DANE."
+          },
+          "postal_code": {
+            "type": "string",
+            "pattern": "^[0-9]{6}$"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "environment": {
+            "type": "string",
+            "enum": [
+              "1",
+              "2"
+            ],
+            "description": "`2` habilitación (pruebas), `1` producción.",
+            "default": "2"
+          }
+        }
+      },
+      "Certificate": {
+        "type": "object",
+        "properties": {
+          "subject": {
+            "type": "string"
+          },
+          "issued_by": {
+            "type": "string"
+          },
+          "serial": {
+            "type": "string"
+          },
+          "not_before": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "not_after": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "active": {
+            "type": "boolean"
+          }
+        }
+      },
+      "CertificateUpload": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Certificate"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "chain_complete": {
+                "type": "boolean",
+                "description": "`false` si no se pudo descargar algún intermedio o la raíz."
+              }
+            }
+          }
+        ]
+      },
+      "CertificateInput": {
+        "oneOf": [
+          {
+            "title": ".p12 o .pfx",
+            "type": "object",
+            "required": [
+              "p12",
+              "password"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "p12": {
+                "type": "string",
+                "contentEncoding": "base64"
+              },
+              "password": {
+                "type": "string",
+                "writeOnly": true
+              }
+            }
+          },
+          {
+            "title": "Certificado y llave",
+            "type": "object",
+            "required": [
+              "certificate",
+              "private_key"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "certificate": {
+                "type": "string",
+                "contentEncoding": "base64",
+                "description": ".cer, .crt, .pem o .der, o el .zip de la entidad con un solo certificado."
+              },
+              "private_key": {
+                "type": "string",
+                "contentEncoding": "base64",
+                "writeOnly": true,
+                "description": "PEM o DER."
+              },
+              "key_password": {
+                "type": "string",
+                "writeOnly": true,
+                "description": "Solo si la llave tiene contraseña."
+              }
+            }
+          }
+        ]
+      },
+      "SoftwareInput": {
+        "type": "object",
+        "required": [
+          "environment",
+          "software_id",
+          "software_pin"
+        ],
+        "properties": {
+          "environment": {
+            "type": "string",
+            "enum": [
+              "1",
+              "2"
+            ],
+            "description": "`2` habilitación (pruebas), `1` producción."
+          },
+          "software_id": {
+            "type": "string",
+            "maxLength": 80
+          },
+          "software_pin": {
+            "type": "string",
+            "maxLength": 80,
+            "writeOnly": true
+          },
+          "test_set_id": {
+            "type": "string",
+            "maxLength": 80,
+            "description": "Solo en habilitación."
+          }
+        }
+      },
+      "Software": {
+        "type": "object",
+        "properties": {
+          "environment": {
+            "type": "string",
+            "enum": [
+              "1",
+              "2"
+            ],
+            "description": "`2` habilitación (pruebas), `1` producción."
+          },
+          "software_id": {
+            "type": "string"
+          },
+          "has_software_pin": {
+            "type": "boolean"
+          },
+          "test_set_id": {
+            "type": "string"
+          },
+          "manufacturer_nit": {
+            "type": "string"
+          },
+          "manufacturer_name": {
+            "type": "string"
+          },
+          "software_name": {
+            "type": "string"
+          },
+          "active": {
+            "type": "boolean"
+          }
+        }
+      },
+      "RangeInput": {
+        "type": "object",
+        "required": [
+          "resolution_number",
+          "number_from",
+          "number_to",
+          "valid_from",
+          "valid_to"
+        ],
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "invoice",
+              "contingency"
+            ],
+            "default": "invoice"
+          },
+          "resolution_number": {
+            "type": "string"
+          },
+          "resolution_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "prefix": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9]{0,4}$"
+          },
+          "number_from": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "number_to": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "valid_from": {
+            "type": "string",
+            "format": "date"
+          },
+          "valid_to": {
+            "type": "string",
+            "format": "date"
+          },
+          "technical_key": {
+            "type": "string",
+            "writeOnly": true,
+            "description": "Obligatoria en los rangos de facturación (entra en el CUFE)."
+          },
+          "establishment": {
+            "type": "string"
+          }
+        }
+      },
+      "Range": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "invoice",
+              "contingency"
+            ]
+          },
+          "resolution_number": {
+            "type": "string"
+          },
+          "resolution_date": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "prefix": {
+            "type": "string"
+          },
+          "number_from": {
+            "type": "integer"
+          },
+          "number_to": {
+            "type": "integer"
+          },
+          "valid_from": {
+            "type": "string",
+            "format": "date"
+          },
+          "valid_to": {
+            "type": "string",
+            "format": "date"
+          },
+          "has_technical_key": {
+            "type": "boolean"
+          },
+          "establishment": {
+            "type": "string"
+          },
+          "active": {
+            "type": "boolean"
+          }
+        }
+      },
+      "Issuer": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/IssuerInput"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "nit": {
+                "type": "string"
+              },
+              "country_code": {
+                "type": "string"
+              },
+              "active": {
+                "type": "boolean"
+              },
+              "certificate": {
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/Certificate"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "software_registrations": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Software"
+                }
+              },
+              "numbering_ranges": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Range"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "TestSetStart": {
+        "type": "object",
+        "description": "Al menos una factura; las notas no pasan de 50 entre las dos.",
+        "properties": {
+          "invoices": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 50,
+            "default": 30
+          },
+          "credit_notes": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 50,
+            "default": 10
+          },
+          "debit_notes": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 50,
+            "default": 10
+          }
+        }
+      },
+      "DianMessage": {
+        "type": "object",
+        "properties": {
+          "rule": {
+            "type": "string",
+            "examples": [
+              "FAJ43b"
+            ]
+          },
+          "severity": {
+            "type": "string",
+            "enum": [
+              "rechazo",
+              "notificacion"
+            ]
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "TestSetRun": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "processing",
+              "accepted",
+              "rejected",
+              "failed"
+            ]
+          },
+          "error": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "documents": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "invoice",
+                    "credit_note",
+                    "debit_note"
+                  ]
+                },
+                "full_number": {
+                  "type": "string"
+                },
+                "code": {
+                  "type": "string",
+                  "description": "CUFE o CUDE."
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "pending",
+                    "accepted",
+                    "rejected"
+                  ]
+                },
+                "messages": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DianMessage"
+                  }
+                },
+                "file_name": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "phases": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "enum": [
+                    "invoices",
+                    "notes"
+                  ]
+                },
+                "zip_key": {
+                  "type": "string"
+                },
+                "errors": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "dian_status": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "TestSet": {
+        "type": "object",
+        "properties": {
+          "readiness": {
+            "type": "object",
+            "properties": {
+              "environment": {
+                "type": "boolean"
+              },
+              "certificate": {
+                "type": "boolean"
+              },
+              "software": {
+                "type": "boolean"
+              },
+              "test_set_id": {
+                "type": "boolean"
+              },
+              "range": {
+                "type": "boolean"
+              }
+            }
+          },
+          "run": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/TestSetRun"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      },
+      "Production": {
+        "type": "object",
+        "properties": {
+          "environment": {
+            "type": "string",
+            "enum": [
+              "1",
+              "2"
+            ],
+            "description": "`2` habilitación (pruebas), `1` producción."
+          },
+          "readiness": {
+            "type": "object",
+            "properties": {
+              "test_set_accepted": {
+                "type": "boolean"
+              },
+              "certificate": {
+                "type": "boolean"
+              },
+              "software": {
+                "type": "boolean"
+              },
+              "range": {
+                "type": "boolean"
+              },
+              "gateway": {
+                "type": "boolean"
+              }
+            }
+          }
+        }
+      },
+      "DocumentInput": {
+        "type": "object",
+        "required": [
+          "idempotency_key",
+          "issuer",
+          "kind",
+          "number",
+          "issue_datetime",
+          "document"
+        ],
+        "properties": {
+          "idempotency_key": {
+            "type": "string",
+            "maxLength": 120,
+            "examples": [
+              "waiter:<org>:<id>"
+            ]
+          },
+          "issuer": {
+            "type": "string",
+            "pattern": "^[0-9]{5,15}$"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "invoice",
+              "credit_note",
+              "debit_note"
+            ]
+          },
+          "prefix": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9]{0,4}$"
+          },
+          "number": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "issue_datetime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "document": {
+            "$ref": "#/components/schemas/CommercialDocument"
+          }
+        }
+      },
+      "CommercialDocument": {
+        "type": "object",
+        "description": "Reglas completas en el contrato (sección «Documento comercial»).",
+        "required": [
+          "buyer",
+          "lines",
+          "totals",
+          "payment"
+        ],
+        "properties": {
+          "buyer": {
+            "type": "object",
+            "description": "`{\"final_consumer\": true}` o los datos del adquiriente."
+          },
+          "sale_channel": {
+            "type": "string",
+            "enum": [
+              "on_site",
+              "delivery"
+            ]
+          },
+          "delivery_address": {
+            "type": "object",
+            "properties": {
+              "line": {
+                "type": "string"
+              },
+              "municipality_code": {
+                "type": "string"
+              }
+            }
+          },
+          "issuer_contingency": {
+            "type": "boolean",
+            "description": "Factura de talonario o papel (tipo 03)."
+          },
+          "lines": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 500,
+            "items": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string"
+                },
+                "description": {
+                  "type": "string"
+                },
+                "quantity": {
+                  "type": "string"
+                },
+                "unit_code": {
+                  "type": "string"
+                },
+                "unit_price": {
+                  "type": "string",
+                  "pattern": "^\\d+(\\.\\d{1,2})?$",
+                  "examples": [
+                    "36900.00"
+                  ]
+                },
+                "line_extension": {
+                  "type": "string",
+                  "pattern": "^\\d+(\\.\\d{1,2})?$",
+                  "examples": [
+                    "36900.00"
+                  ]
+                },
+                "taxes": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "code": {
+                        "type": "string",
+                        "enum": [
+                          "01",
+                          "04"
+                        ]
+                      },
+                      "rate": {
+                        "type": "string"
+                      },
+                      "taxable_amount": {
+                        "type": "string",
+                        "pattern": "^\\d+(\\.\\d{1,2})?$",
+                        "examples": [
+                          "36900.00"
+                        ]
+                      },
+                      "amount": {
+                        "type": "string",
+                        "pattern": "^\\d+(\\.\\d{1,2})?$",
+                        "examples": [
+                          "36900.00"
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "allowances": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "reason": {
+                  "type": "string"
+                },
+                "amount": {
+                  "type": "string",
+                  "pattern": "^\\d+(\\.\\d{1,2})?$",
+                  "examples": [
+                    "36900.00"
+                  ]
+                }
+              }
+            }
+          },
+          "charges": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "tip"
+                  ]
+                },
+                "reason": {
+                  "type": "string"
+                },
+                "amount": {
+                  "type": "string",
+                  "pattern": "^\\d+(\\.\\d{1,2})?$",
+                  "examples": [
+                    "36900.00"
+                  ]
+                }
+              }
+            }
+          },
+          "totals": {
+            "type": "object",
+            "properties": {
+              "line_extension": {
+                "type": "string",
+                "pattern": "^\\d+(\\.\\d{1,2})?$",
+                "examples": [
+                  "36900.00"
+                ]
+              },
+              "tax_exclusive": {
+                "type": "string",
+                "pattern": "^\\d+(\\.\\d{1,2})?$",
+                "examples": [
+                  "36900.00"
+                ]
+              },
+              "tax_inclusive": {
+                "type": "string",
+                "pattern": "^\\d+(\\.\\d{1,2})?$",
+                "examples": [
+                  "36900.00"
+                ]
+              },
+              "allowance_total": {
+                "type": "string",
+                "pattern": "^\\d+(\\.\\d{1,2})?$",
+                "examples": [
+                  "36900.00"
+                ]
+              },
+              "charge_total": {
+                "type": "string",
+                "pattern": "^\\d+(\\.\\d{1,2})?$",
+                "examples": [
+                  "36900.00"
+                ]
+              },
+              "rounding": {
+                "type": "string",
+                "pattern": "^\\d+(\\.\\d{1,2})?$",
+                "examples": [
+                  "36900.00"
+                ]
+              },
+              "payable": {
+                "type": "string",
+                "pattern": "^\\d+(\\.\\d{1,2})?$",
+                "examples": [
+                  "36900.00"
+                ]
+              }
+            }
+          },
+          "payment": {
+            "type": "object",
+            "properties": {
+              "form": {
+                "type": "string",
+                "enum": [
+                  "1",
+                  "2"
+                ]
+              },
+              "means": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "due_date": {
+                "type": "string",
+                "format": "date"
+              }
+            }
+          },
+          "billing_reference": {
+            "type": "object",
+            "description": "Solo en las notas.",
+            "properties": {
+              "document_id": {
+                "type": "integer"
+              },
+              "concept_code": {
+                "type": "string"
+              },
+              "reason": {
+                "type": "string"
+              }
+            }
+          },
+          "currency": {
+            "type": "string",
+            "enum": [
+              "COP"
+            ]
+          }
+        }
+      },
+      "DocumentProblem": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "rule": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "Artifact": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "signed_xml",
+              "dian_response",
+              "attached_document",
+              "pdf",
+              "evidence"
+            ]
+          },
+          "sha256": {
+            "type": "string"
+          },
+          "size": {
+            "type": "integer"
+          },
+          "content_type": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "Document": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "idempotency_key": {
+            "type": "string"
+          },
+          "issuer": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "invoice",
+              "credit_note",
+              "debit_note"
+            ]
+          },
+          "prefix": {
+            "type": "string"
+          },
+          "number": {
+            "type": "integer"
+          },
+          "full_number": {
+            "type": "string"
+          },
+          "issue_datetime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "queued",
+              "transmitting",
+              "validated",
+              "rejected",
+              "contingency_dian",
+              "contingency_issuer"
+            ]
+          },
+          "invoice_type": {
+            "type": "string",
+            "enum": [
+              "",
+              "01",
+              "03",
+              "04"
+            ]
+          },
+          "cufe": {
+            "type": "string"
+          },
+          "qr_url": {
+            "type": "string"
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DianMessage"
+            }
+          },
+          "attempts": {
+            "type": "integer"
+          },
+          "original": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "validated_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "contingency_started_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "artifacts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Artifact"
+            }
+          },
+          "events": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "state": {
+                  "type": "string"
+                },
+                "detail": {
+                  "type": "string"
+                },
+                "created_at": {
+                  "type": "string",
+                  "format": "date-time"
+                }
+              }
+            }
+          }
+        }
+      },
+      "DocumentStateChanged": {
+        "type": "object",
+        "properties": {
+          "event": {
+            "const": "document.state_changed"
+          },
+          "document": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Document"
+              }
+            ],
+            "description": "Sin `events`."
+          }
+        }
+      },
+      "IssuerAlert": {
+        "type": "object",
+        "properties": {
+          "event": {
+            "const": "issuer.alert"
+          },
+          "alert": {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "certificate_expiring",
+                  "range_low",
+                  "resolution_expiring",
+                  "contingency_deadline",
+                  "rejection"
+                ]
+              },
+              "severity": {
+                "type": "string",
+                "enum": [
+                  "warning",
+                  "critical"
+                ]
+              },
+              "message": {
+                "type": "string"
+              },
+              "issuer": {
+                "type": "string"
+              },
+              "document": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "created_at": {
+                "type": "string",
+                "format": "date-time"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

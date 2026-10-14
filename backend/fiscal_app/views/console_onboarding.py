@@ -22,6 +22,8 @@ from fiscal_app.serializers import (
     IssuerCreateUpdateSerializer,
     NumberingRangeCreateUpdateSerializer,
     SoftwareRegistrationCreateUpdateSerializer,
+    TestSetStartSerializer,
+    describe_run,
 )
 from fiscal_app.services import certificate_assembly, production, test_set
 from fiscal_app.services.certificates import set_certificate
@@ -149,46 +151,23 @@ def console_test_set(request, issuer_id):
     issuer = get_object_or_404(Issuer, pk=issuer_id)
     if request.method == 'GET':
         run = issuer.test_set_runs.first()
-        return Response({'readiness': test_set.readiness(issuer), 'run': _run(run) if run else None})
-    sizes = {
-        'invoices': request.data.get('invoices', test_set.SET_INVOICES),
-        'credit_notes': request.data.get('credit_notes', test_set.SET_CREDIT_NOTES),
-        'debit_notes': request.data.get('debit_notes', test_set.SET_DEBIT_NOTES),
-    }
-    # At most 50 documents per ZIP (annex §7.8); the invoices go in one ZIP and the notes in another.
-    errors = {name: ['Indica entre 0 y 50.'] for name, value in sizes.items() if not isinstance(value, int) or not 0 <= value <= 50}
-    if sizes['invoices'] == 0:
-        errors['invoices'] = ['El set necesita al menos una factura.']
-    if sizes['credit_notes'] + sizes['debit_notes'] > 50:
-        errors['notes'] = ['Las notas crédito y débito no pueden pasar de 50 en total.']
-    if errors:
-        return Response(errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'readiness': test_set.readiness(issuer), 'run': describe_run(run) if run else None})
+    serializer = TestSetStartSerializer(data=request.data)
+    if not serializer.is_valid():
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     try:
-        run = test_set.start(issuer, **sizes)
+        run = test_set.start(issuer, **serializer.validated_data)
     except test_set.TestSetError as error:
         return Response({'code': 'not_ready', 'detail': str(error)}, status=status.HTTP_409_CONFLICT)
     logger.info('Set de pruebas %s iniciado para el emisor %s (operador %s)', run.pk, issuer.pk, request.user.pk)
-    return Response(_run(run), status=status.HTTP_201_CREATED)
+    return Response(describe_run(run), status=status.HTTP_201_CREATED)
 
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated, IsConsoleOperator])
 def console_check_test_set(request, run_id):
     run = get_object_or_404(TestSetRun.objects.select_related('issuer'), pk=run_id)
-    return Response(_run(test_set.check(run)))
-
-
-def _run(run):
-    return {
-        'id': run.pk, 'state': run.state, 'error': run.error, 'created_at': run.created_at, 'updated_at': run.updated_at,
-        'documents': [
-            {key: entry[key] for key in ('kind', 'full_number', 'code', 'status', 'messages', 'file_name')}
-            for entry in run.entries
-        ],
-        'phases': [{'name': phase['name'], 'zip_key': phase.get('zip_key', ''), 'errors': phase.get('errors', []),
-                    'dian_status': phase.get('dian_status', '')}
-                   for phase in run.phases],
-    }
+    return Response(describe_run(test_set.check(run)))
 
 
 @api_view(['GET'])
