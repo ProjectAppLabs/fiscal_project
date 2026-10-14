@@ -412,6 +412,20 @@
       "outcomes": [
         "success"
       ]
+    },
+    "console-client-system-connect": {
+      "name": "Connect a client system from its page",
+      "module": "console",
+      "roles": [
+        "operator",
+        "admin"
+      ],
+      "priority": "P1",
+      "description": "The client system page guides the connection: key, notice URL, a signed test notice, secret rotation and the notice log with resend",
+      "expectedSpecs": 3,
+      "outcomes": [
+        "success"
+      ]
     }
   }
 }

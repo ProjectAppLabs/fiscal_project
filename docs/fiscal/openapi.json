@@ -1180,6 +1180,36 @@
           }
         }
       }
+    },
+    "ping": {
+      "post": {
+        "summary": "Aviso de prueba enviado desde la consola",
+        "description": "Solo debe responder 2xx; no se reintenta.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "event": {
+                    "const": "ping"
+                  },
+                  "sent_at": {
+                    "type": "string",
+                    "format": "date-time"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Recibido."
+          }
+        }
+      }
     }
   },
   "components": {

@@ -49,3 +49,11 @@ def rotate_secret(client: ClientSystem, grace: timedelta = timedelta(hours=24)) 
     secret = new_secret()
     ClientSecret.objects.create(client=client, secret=secret)
     return secret
+
+
+def secrets_overview(client: ClientSystem) -> list[dict]:
+    """The secrets that still authenticate the client, newest first, without their value."""
+    now = timezone.now()
+    rows = client.secrets.filter(Q(expires_at__isnull=True) | Q(expires_at__gt=now)).order_by('-created_at')[:MAX_VALID_SECRETS]
+    return [{'id': row.pk, 'created_at': row.created_at, 'expires_at': row.expires_at, 'current': index == 0}
+            for index, row in enumerate(rows)]

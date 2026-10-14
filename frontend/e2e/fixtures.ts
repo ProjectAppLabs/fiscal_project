@@ -465,6 +465,55 @@ export async function stubClientSystems(page: Page) {
   await page.route('**/api/console/client-systems/', (route) => fulfillJson(route, 200, { count: 1, results: [waiterClient] }));
 }
 
+export const waiterClientDetail = {
+  id: 1,
+  name: 'Waiter',
+  key_id: 'fk_waiter',
+  webhook_url: 'https://waiter.local/fiscal/avisos/',
+  active: true,
+  created_at: '2026-10-01T00:00:00Z',
+  secrets: [{ id: 1, created_at: '2026-10-01T00:00:00Z', expires_at: null, current: true }],
+  issuers: [{ id: 3, nit: testIssuer.nit, dv: '3', legal_name: testIssuer.legal_name, environment: '2', active: true }],
+  notices: { pending: 0, failed: 1, delivered: 12 },
+  last_delivered_at: '2026-10-05T11:00:00Z',
+};
+
+export const failedAlertNotice = {
+  id: 41,
+  event: 'issuer.alert',
+  state: 'failed',
+  attempts: 30,
+  document: null,
+  alert_kind: 'range_low',
+  last_status: 502,
+  last_error: 'HTTP 502',
+  next_attempt_at: null,
+  delivered_at: null,
+  created_at: '2026-10-05T10:00:00Z',
+  payload: { event: 'issuer.alert', alert: { kind: 'range_low', issuer: testIssuer.nit } },
+};
+
+/** Stub a client system's page: its detail, its notices, the test notice, secret rotation and resending. */
+export async function stubClientSystemDetail(page: Page) {
+  await page.route(/\/api\/console\/client-systems\/1\/$/, (route) =>
+    route.request().method() === 'PATCH'
+      ? fulfillJson(route, 200, { ...waiterClientDetail, ...route.request().postDataJSON() })
+      : fulfillJson(route, 200, waiterClientDetail),
+  );
+  await page.route(/\/api\/console\/client-systems\/1\/deliveries\/(\?.*)?$/, (route) =>
+    fulfillJson(route, 200, { count: 1, next: null, previous: null, results: [failedAlertNotice] }),
+  );
+  await page.route('**/api/console/client-systems/1/ping/', (route) =>
+    fulfillJson(route, 200, { ...failedAlertNotice, id: 42, event: 'ping', state: 'delivered', attempts: 1, last_status: 204, last_error: '', alert_kind: '', delivered_at: '2026-10-14T12:00:00Z' }),
+  );
+  await page.route('**/api/console/client-systems/1/rotate-secret/', (route) =>
+    fulfillJson(route, 201, { secret: 'secreto-nuevo-de-una-vez', grace_hours: 24 }),
+  );
+  await page.route('**/api/console/deliveries/41/retry/', (route) =>
+    fulfillJson(route, 200, { ...failedAlertNotice, state: 'delivered', attempts: 31, last_status: 200, last_error: '', delivered_at: '2026-10-14T12:00:00Z' }),
+  );
+}
+
 // ── Console (onboarding and test set) ──
 
 /** Stub the onboarding steps; each POST answers like the backend for a valid step. */

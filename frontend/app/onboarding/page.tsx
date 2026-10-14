@@ -30,8 +30,9 @@ export default function OnboardingPage() {
   const t = useTranslations('onboarding');
   const { isAuthenticated } = useRequireAuth();
   const { read, write } = useQueryParams();
-  const [step, setStep] = useState(0);
-  const [clientId, setClientId] = useState<number | null>(null);
+  const [step, setStep] = useState(() => (Number(read('client')) ? 1 : 0));
+  // ?client=ID (from a client system's page) skips the first step.
+  const [clientId, setClientId] = useState<number | null>(() => Number(read('client')) || null);
   const [issuerId, setIssuerId] = useState<number | null>(null);
   const [resuming, setResuming] = useState(() => Boolean(Number(read('issuer'))));
 

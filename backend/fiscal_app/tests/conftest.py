@@ -53,6 +53,22 @@ def admin_client(api_client, admin_user):
     return api_client
 
 
+@pytest.fixture
+def console_admin(db):
+    """An operator with the administrator role of the console (users, secrets, deactivations, production)."""
+    from fiscal_app.models import User
+
+    return User.objects.create_user(email='jefa@projectapp.co', password='clave-admin-1', first_name='Ana', role=User.Role.ADMIN)
+
+
+@pytest.fixture
+def console_admin_client(console_admin):
+    """APIClient signed in as a console administrator."""
+    client = APIClient()
+    client.force_authenticate(user=console_admin)
+    return client
+
+
 def pytest_collection_modifyitems(config, items):
     """Skip MySQL-only tests when the suite runs on SQLite (the template default)."""
     if 'mysql' in settings.DATABASES['default']['ENGINE']:

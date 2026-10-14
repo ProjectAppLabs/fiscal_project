@@ -480,6 +480,13 @@ Además, cuando algo exige acción del comercio, llega un aviso `issuer.alert`:
 
 Cada condición se avisa una vez. ProjectApp recibe además todas las alertas por correo, también la de cola detenida.
 
+Desde la consola (ficha del sistema cliente → «Enviar aviso de prueba») se puede mandar un aviso `ping` para comprobar la
+URL y la verificación de la firma. El sistema cliente solo debe responder `2xx`; no se reintenta:
+
+```json
+{"event": "ping", "sent_at": "2026-10-14T12:00:00-05:00"}
+```
+
 - **Firma:** las mismas tres cabeceras `X-Fiscal-*`, con el secreto vigente del cliente. El texto canónico usa la ruta y
   la consulta del `webhook_url`. **El sistema cliente debe verificar la firma y la hora antes de creer el aviso**, y
   aceptar esa ruta solo desde la red de Fiscal.

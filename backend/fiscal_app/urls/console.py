@@ -1,6 +1,6 @@
 from django.urls import path
 
-from fiscal_app.views import console, console_onboarding, console_operations
+from fiscal_app.views import console, console_client_systems, console_onboarding, console_operations
 
 urlpatterns = [
     path('summary/', console.console_summary, name='console-summary'),
@@ -18,6 +18,15 @@ urlpatterns = [
         name='console-document-artifact',
     ),
     path('client-systems/create/', console_onboarding.console_create_client_system, name='console-create-client-system'),
+    path('client-systems/<int:client_id>/', console_client_systems.console_client_system, name='console-client-system'),
+    path('client-systems/<int:client_id>/rotate-secret/', console_client_systems.console_rotate_secret, name='console-rotate-secret'),
+    path('client-systems/<int:client_id>/ping/', console_client_systems.console_ping_client_system, name='console-ping-client-system'),
+    path('client-systems/<int:client_id>/deliveries/', console_client_systems.console_client_deliveries, name='console-client-deliveries'),
+    path(
+        'client-systems/<int:client_id>/deliveries/retry-failed/', console_client_systems.console_retry_failed_deliveries,
+        name='console-retry-failed-deliveries',
+    ),
+    path('deliveries/<int:delivery_id>/retry/', console_client_systems.console_retry_delivery, name='console-retry-delivery'),
     path('issuers/create/', console_onboarding.console_create_issuer, name='console-create-issuer'),
     path('issuers/<int:issuer_id>/certificate/', console_onboarding.console_upload_certificate, name='console-upload-certificate'),
     path('issuers/<int:issuer_id>/software/', console_onboarding.console_register_software, name='console-register-software'),

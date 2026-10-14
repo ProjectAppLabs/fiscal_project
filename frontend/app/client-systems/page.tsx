@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { Plus } from 'lucide-react';
@@ -14,6 +15,7 @@ import { Dialog } from '@/components/ui/Dialog';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { EmptyState, SkeletonTable } from '@/components/ui/States';
 import { toast } from '@/components/ui/Toast';
+import { ROUTES } from '@/lib/constants';
 import { formatDateTime } from '@/lib/format';
 import { useRequireAuth } from '@/lib/hooks/useRequireAuth';
 import type { ClientSystemRow } from '@/lib/services/operations';
@@ -78,7 +80,9 @@ function ClientTable({ clients }: { clients: ClientSystemRow[] }) {
           mobile: 'body',
           cell: (client) => (
             <span className="flex flex-wrap items-center gap-2">
-              <span className="font-semibold text-ink">{client.name}</span>
+              <Link className="font-semibold text-ink hover:text-primary-text hover:underline" href={`${ROUTES.CLIENT_SYSTEMS}/${client.id}`}>
+                {client.name}
+              </Link>
               {client.active ? null : (
                 <Badge size="sm" tone="neutral">
                   {t('inactive')}
