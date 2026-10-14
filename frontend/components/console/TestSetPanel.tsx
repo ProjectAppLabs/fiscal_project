@@ -3,6 +3,13 @@
 import { useLocale, useTranslations } from 'next-intl';
 import { FormEvent, useEffect, useState } from 'react';
 
+import { Badge, type BadgeTone } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
+import { Card, CardHeader } from '@/components/ui/Card';
+import { DataTable } from '@/components/ui/DataTable';
+import { Field, Input } from '@/components/ui/Field';
+import { ProgressBar } from '@/components/ui/Progress';
+import { RequirementList } from '@/components/ui/Steps';
 import { formatDateTime } from '@/lib/format';
 import {
   DEFAULT_TEST_SET_SIZE,
@@ -10,26 +17,24 @@ import {
   fetchTestSet,
   startTestSet,
   stepErrors,
+  type TestSetDocument,
   type TestSetReadiness,
   type TestSetRun,
   type TestSetSize,
 } from '@/lib/services/onboarding';
+import { StepErrors } from './ClientSystemForm';
 
-const CARD_CLASS = 'rounded-2xl border border-border bg-card p-6';
-const BUTTON_CLASS =
-  'rounded-full border border-border px-4 py-2 text-sm hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50';
 const READINESS_KEYS = ['environment', 'certificate', 'software', 'test_set_id', 'range'] as const;
 const SIZE_FIELDS = ['invoices', 'credit_notes', 'debit_notes'] as const;
-const STATE_TONE: Record<TestSetRun['state'], string> = {
-  processing: 'text-foreground',
-  accepted: 'text-success',
-  rejected: 'text-destructive',
-  failed: 'text-destructive',
-};
+const STATE_TONE: Record<TestSetRun['state'], BadgeTone> = { processing: 'info', accepted: 'success', rejected: 'danger', failed: 'danger' };
+const DOC_TONE: Record<TestSetDocument['status'], BadgeTone> = { pending: 'pending', accepted: 'success', rejected: 'danger' };
 
-export function TestSetPanel({ issuerId }: { issuerId: number }) {
+/**
+ * The DIAN test set (H-17): progress, what the issuer lacks, the sizes of the TestSetId, the DIAN's rules grouped (the
+ * same notice on 30 invoices reads once) and, folded, every document.
+ */
+export function TestSetPanel({ issuerId, onChange }: { issuerId: number; onChange?: () => void }) {
   const t = useTranslations('testSet');
-  const tKinds = useTranslations('console.kinds');
   const locale = useLocale();
   const [readiness, setReadiness] = useState<TestSetReadiness | null>(null);
   const [run, setRun] = useState<TestSetRun | null>(null);
@@ -58,6 +63,7 @@ export function TestSetPanel({ issuerId }: { issuerId: number }) {
     setErrors(null);
     try {
       setRun(await action());
+      onChange?.();
     } catch (error) {
       setErrors(stepErrors(error));
     } finally {
@@ -66,115 +72,156 @@ export function TestSetPanel({ issuerId }: { issuerId: number }) {
   };
 
   const ready = readiness !== null && READINESS_KEYS.every((key) => readiness[key]);
-
+  const accepted = run?.documents.filter((document) => document.status === 'accepted').length ?? 0;
+  const total = run?.documents.length ?? 0;
   return (
-    <section aria-labelledby="issuer-test-set" className={CARD_CLASS}>
-      <h2 className="text-lg font-semibold" id="issuer-test-set">
-        {t('title')}
-      </h2>
-      <p className="mt-2 text-sm text-muted-foreground">{t('body')}</p>
+    <Card aria-labelledby="issuer-test-set">
+      <CardHeader
+        action={run ? <Badge tone={STATE_TONE[run.state]}>{t(`states.${run.state}`)}</Badge> : null}
+        id="issuer-test-set"
+        subtitle={run ? t('lastRun', { date: formatDateTime(run.updated_at, locale) }) : t('body')}
+        title={t('title')}
+      />
+
+      {run && total ? (
+        <div className="mb-5">
+          <div className="mb-2 flex items-baseline justify-between gap-3 text-[13px] font-semibold">
+            <span className="text-ink">{t('progress', { accepted, total })}</span>
+            <span className="tabular-nums text-ink-2">{Math.round((accepted / total) * 100)} %</span>
+          </div>
+          <ProgressBar label={t('progress', { accepted, total })} value={accepted / total} />
+        </div>
+      ) : null}
 
       {readiness ? (
-        <div className="mt-4">
-          <h3 className="text-sm font-medium">{t('readinessTitle')}</h3>
-          <ul className="mt-2 grid gap-1 text-sm sm:grid-cols-2">
-            {READINESS_KEYS.map((key) => (
-              <li className={readiness[key] ? 'text-success' : 'text-destructive'} key={key}>
-                {readiness[key] ? '✓' : '✗'} {t(`readiness.${key}`)}
-              </li>
-            ))}
-          </ul>
+        <div className="mb-5">
+          <h3 className="text-label mb-2">{t('readinessTitle')}</h3>
+          <RequirementList className="sm:grid sm:grid-cols-2" items={READINESS_KEYS.map((key) => ({ key, ok: readiness[key], label: t(`readiness.${key}`) }))} />
         </div>
       ) : null}
 
       <form
-        className="mt-4 flex flex-wrap items-end gap-3"
+        className="flex flex-wrap items-end gap-3"
         onSubmit={(e: FormEvent) => {
           e.preventDefault();
           void act('start', () => startTestSet(issuerId, size));
         }}
       >
         {SIZE_FIELDS.map((field) => (
-          <div key={field}>
-            <label className="mb-1 block text-sm" htmlFor={`test-set-${field}`}>
-              {t(`size.${field}`)}
-            </label>
-            <input
+          <Field className="w-28" id={`test-set-${field}`} key={field} label={t(`size.${field}`)}>
+            <Input
+              className="h-11 font-mono"
               id={`test-set-${field}`}
-              className="w-24 rounded-xl border border-border bg-card px-3 py-2 text-sm"
               max={50}
               min={field === 'invoices' ? 1 : 0}
+              onChange={(e) => setSize((current) => ({ ...current, [field]: Number(e.target.value) }))}
               type="number"
               value={size[field]}
-              onChange={(e) => setSize((current) => ({ ...current, [field]: Number(e.target.value) }))}
             />
-          </div>
+          </Field>
         ))}
-        <button className={BUTTON_CLASS} disabled={!ready || busy !== null || run?.state === 'processing'} type="submit">
-          {busy === 'start' ? t('starting') : t('start')}
-        </button>
+        <Button disabled={!ready || busy !== null || run?.state === 'processing'} loading={busy === 'start'} loadingLabel={t('starting')} type="submit" variant="secondary">
+          {t('start')}
+        </Button>
         {run && run.state === 'processing' ? (
-          <button className={BUTTON_CLASS} disabled={busy !== null} onClick={() => void act('check', () => checkTestSet(run.id))} type="button">
-            {busy === 'check' ? t('checking') : t('check')}
-          </button>
+          <Button disabled={busy !== null} loading={busy === 'check'} loadingLabel={t('checking')} onClick={() => void act('check', () => checkTestSet(run.id))} variant="soft">
+            {t('check')}
+          </Button>
         ) : null}
       </form>
+      <p className="mt-2 text-[13px] text-ink-3">{t('sizeHint')}</p>
 
       {errors ? (
-        <div className="mt-3 text-sm text-destructive" role="alert">
-          <p>{t('error')}</p>
-          <ul className="list-disc pl-5">
-            {errors.map((message) => (
-              <li key={message}>{message}</li>
+        <div className="mt-4">
+          <StepErrors errors={errors} />
+        </div>
+      ) : null}
+
+      {run ? <RunResult run={run} /> : <p className="mt-5 text-[15px] text-ink-2">{t('noRun')}</p>}
+    </Card>
+  );
+}
+
+function RunResult({ run }: { run: TestSetRun }) {
+  const t = useTranslations('testSet');
+  const tKinds = useTranslations('console.kinds');
+  const [showAll, setShowAll] = useState(false);
+  const rules = groupRules(run.documents);
+
+  return (
+    <div className="mt-6 flex flex-col gap-4">
+      {run.error ? <p className="rounded-lg bg-danger-bg px-4 py-3 text-[13px] text-danger-fg">{run.error}</p> : null}
+      {run.phases
+        .filter((phase) => phase.dian_status)
+        .map((phase) => (
+          <p className="text-[13px] text-ink-2" key={phase.name}>
+            {t('dianSays', { phase: t(`phases.${phase.name === 'notes' ? 'notes' : 'invoices'}`), status: phase.dian_status })}
+          </p>
+        ))}
+
+      {rules.length ? (
+        <div>
+          <h3 className="text-label mb-2">{t('rulesTitle')}</h3>
+          <ul className="flex flex-col gap-2">
+            {rules.map((rule) => (
+              <li className={rule.rejection ? 'rounded-lg bg-danger-bg px-4 py-2.5 text-danger-fg' : 'rounded-lg bg-neutral-bg px-4 py-2.5 text-neutral-fg'} key={rule.key}>
+                <span className="font-mono text-[13px] font-semibold">{rule.rule}</span>
+                <span className="text-[13px]">: {rule.message}</span>
+                <span className="ml-2 text-[12px] font-semibold opacity-80">{t('ruleCount', { count: rule.count })}</span>
+              </li>
             ))}
           </ul>
         </div>
       ) : null}
 
-      {run ? (
-        <div className="mt-6">
-          <p className={`text-base font-semibold ${STATE_TONE[run.state]}`}>
-            {t(`states.${run.state}`)} · {formatDateTime(run.updated_at, locale)}
-          </p>
-          {run.error ? <p className="mt-1 text-sm text-destructive">{run.error}</p> : null}
-          {run.phases
-            .filter((phase) => phase.dian_status)
-            .map((phase) => (
-              <p className="mt-1 text-sm text-muted-foreground" key={phase.name}>
-                {t('dianSays', { phase: t(`phases.${phase.name === 'notes' ? 'notes' : 'invoices'}`), status: phase.dian_status })}
-              </p>
-            ))}
-          <div className="mt-3 overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <caption className="sr-only">{t('tableCaption')}</caption>
-              <thead className="border-b border-border text-xs text-muted-foreground">
-                <tr>
-                  <th className="py-2 pr-4 font-medium" scope="col">{t('columns.document')}</th>
-                  <th className="py-2 pr-4 font-medium" scope="col">{t('columns.kind')}</th>
-                  <th className="py-2 pr-4 font-medium" scope="col">{t('columns.status')}</th>
-                  <th className="py-2 font-medium" scope="col">{t('columns.messages')}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {run.documents.map((document) => (
-                  <tr className="border-b border-border last:border-0" key={document.code}>
-                    <td className="py-2 pr-4 font-mono">{document.full_number}</td>
-                    <td className="py-2 pr-4">{tKinds(document.kind)}</td>
-                    <td className={`py-2 pr-4 ${document.status === 'rejected' ? 'text-destructive' : document.status === 'accepted' ? 'text-success' : ''}`}>
-                      {t(`docStatus.${document.status}`)}
-                    </td>
-                    <td className="py-2">
-                      {document.messages.map((message) => `${message.rule}: ${message.message}`).join(' · ') || '—'}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      ) : (
-        <p className="mt-6 text-sm text-muted-foreground">{t('noRun')}</p>
-      )}
-    </section>
+      <div>
+        <Button aria-expanded={showAll} onClick={() => setShowAll((current) => !current)} size="sm" variant="ghost">
+          {showAll ? t('hideDocuments') : t('showDocuments', { count: run.documents.length })}
+        </Button>
+        {showAll ? (
+          <DataTable<TestSetDocument>
+            caption={t('tableCaption')}
+            className="mt-3"
+            columns={[
+              { key: 'document', header: t('columns.document'), mobile: 'title', cell: (document) => <span className="font-mono text-[13px]">{document.full_number}</span> },
+              { key: 'kind', header: t('columns.kind'), mobile: 'body', cell: (document) => tKinds(document.kind) },
+              {
+                key: 'status',
+                header: t('columns.status'),
+                mobile: 'badge',
+                cell: (document) => (
+                  <Badge size="sm" tone={DOC_TONE[document.status]}>
+                    {t(`docStatus.${document.status}`)}
+                  </Badge>
+                ),
+              },
+              {
+                key: 'messages',
+                header: t('columns.messages'),
+                className: 'text-[13px] text-ink-2',
+                cell: (document) => document.messages.map((message) => `${message.rule}: ${message.message}`).join(' · ') || '—',
+              },
+            ]}
+            framed={false}
+            rowKey={(document) => document.code}
+            rows={run.documents}
+          />
+        ) : null}
+      </div>
+    </div>
   );
+}
+
+/** The DIAN's messages by rule, with how many documents carry each; rejections first. */
+function groupRules(documents: TestSetDocument[]) {
+  const byRule = new Map<string, { key: string; rule: string; message: string; rejection: boolean; count: number }>();
+  for (const document of documents) {
+    for (const message of document.messages) {
+      const key = `${message.rule}|${message.message}`;
+      const current = byRule.get(key);
+      if (current) current.count += 1;
+      else byRule.set(key, { key, rule: message.rule, message: message.message, rejection: message.severity !== 'notificacion', count: 1 });
+    }
+  }
+  return [...byRule.values()].sort((a, b) => Number(b.rejection) - Number(a.rejection) || b.count - a.count);
 }

@@ -10,7 +10,7 @@ test.describe('Console', () => {
     await page.goto('/dashboard');
     await waitForPageLoad(page);
 
-    await expect(page.getByRole('heading', { level: 1, name: 'Fiscal.' })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1, name: 'Tablero' })).toBeVisible();
     await expect(page.getByTestId('dashboard-empty-state')).toContainText('Todavía no hay documentos');
   });
 

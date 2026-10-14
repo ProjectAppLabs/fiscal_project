@@ -12,7 +12,18 @@
     "contingencies": "Contingencias",
     "alerts": "Alertas",
     "clientSystems": "Sistemas cliente",
-    "onboarding": "Inscribir emisor"
+    "onboarding": "Inscribir emisor",
+    "account": "Tu cuenta",
+    "roles": {
+      "admin": "Administrador",
+      "operator": "Operador"
+    },
+    "language": "Idioma",
+    "theme": "Tema",
+    "changePassword": "Cambiar contraseña",
+    "more": "Más",
+    "closeMore": "Cerrar el menú",
+    "openCount": "{count, plural, one {# abierta} other {# abiertas}}"
   },
   "footer": {
     "tagline": "Consola interna de facturación electrónica de ProjectApp."
@@ -32,14 +43,16 @@
   },
   "signIn": {
     "title": "Iniciar sesión",
-    "subtitle": "Entra con tu cuenta para operar la consola.",
+    "subtitle": "Facturación electrónica de ProjectApp.",
     "email": "Correo electrónico",
     "password": "Contraseña",
     "submit": "Iniciar sesión",
     "submitting": "Iniciando sesión…",
     "captchaRequired": "Completa la verificación de reCAPTCHA.",
     "invalidCredentials": "Credenciales inválidas.",
-    "forgotPassword": "¿Olvidaste tu contraseña?"
+    "forgotPassword": "¿Olvidaste tu contraseña?",
+    "emailPlaceholder": "tu@empresa.co",
+    "passwordPlaceholder": "Tu contraseña"
   },
   "forgotPassword": {
     "title": "Restablecer contraseña",
@@ -93,7 +106,7 @@
   "dashboard": {
     "subtitle": "Consola de operación",
     "emptyTitle": "Todavía no hay documentos",
-    "emptyBody": "Cuando se emitan facturas y otros documentos electrónicos, aparecerán aquí.",
+    "emptyBody": "Aparecen aquí cuando un sistema cliente envíe la primera factura.",
     "error": "No pudimos cargar el tablero.",
     "documentsTitle": "Documentos por estado",
     "total": "Total",
@@ -121,7 +134,22 @@
     "workerOk": "Trabajador activo",
     "workerSilent": "El trabajador no responde",
     "dianContingency": "{count, plural, =0 {Sin documentos en contingencia} one {# documento en contingencia} other {# documentos en contingencia}}",
-    "viewContingencies": "Ver contingencias"
+    "viewContingencies": "Ver contingencias",
+    "title": "Tablero",
+    "greeting": "Hola, {name} · {today}",
+    "totalCaption": "<strong>{count}</strong> en total",
+    "queueDueCaption": "listos para enviar",
+    "viewQueue": "Ver la cola",
+    "alertsCaption": "sin resolver",
+    "service": "Servicio",
+    "worker": "Trabajador",
+    "lastBeat": "Latido {when}",
+    "contingencies": "Contingencias",
+    "criticalNotice": "{count, plural, one {# alerta crítica sin resolver.} other {# alertas críticas sin resolver.}}",
+    "criticalNoticeBody": "Revísalas antes de que detengan la facturación.",
+    "contingencyNotice": "{count, plural, one {# factura en contingencia.} other {# facturas en contingencia.}}",
+    "contingencyNoticeBody": "Hay que transmitirlas dentro de las 48 horas.",
+    "viewClientSystems": "Ver sistemas cliente"
   },
   "documents": {
     "title": "Documentos",
@@ -147,7 +175,11 @@
     "pagination": "Paginación",
     "previous": "Anterior",
     "next": "Siguiente",
-    "pageInfo": "Página {page} · {count, plural, one {# documento} other {# documentos}}"
+    "pageInfo": "Página {page} · {count, plural, one {# documento} other {# documentos}}",
+    "subtitle": "{count} documentos de todos los emisores",
+    "issuerPlaceholder": "Sin puntos ni dígito de verificación",
+    "emptyBody": "Prueba con otro estado u otro NIT.",
+    "attemptsValue": "{count, plural, one {# intento} other {# intentos}}"
   },
   "documentDetail": {
     "back": "Volver a documentos",
@@ -172,7 +204,7 @@
     },
     "viewOriginal": "Ver documento {id}",
     "qr": "Ver código QR",
-    "errorsTitle": "Errores de la DIAN",
+    "errorsTitle": "Respuesta de la DIAN",
     "noErrors": "La DIAN no reportó errores.",
     "artifactsTitle": "Artefactos",
     "artifactsCaption": "Artefactos guardados",
@@ -204,7 +236,13 @@
       "invoice_type": "Firmada como tipo",
       "waiting_for": "Espera la factura",
       "delivery_failed": "Falló la entrega"
-    }
+    },
+    "breadcrumb": "Documentos",
+    "payloadSubtitle": "Tal como lo envió {client}",
+    "copyCufe": "Copiar el CUFE",
+    "rejections": "Rechazos",
+    "notifications": "Notificaciones (no detienen el documento)",
+    "artifactsSubtitle": "Se conservan 10 años; Fiscal. verifica su huella antes de entregarlos."
   },
   "staging": {
     "remainsOne": "queda",
@@ -252,7 +290,7 @@
     "searchLabel": "Buscar por NIT o nombre",
     "searchSubmit": "Buscar",
     "tableCaption": "Emisores registrados",
-    "empty": "No hay emisores con esa búsqueda.",
+    "empty": "No hay emisores",
     "error": "No pudimos cargar los emisores.",
     "columns": {
       "issuer": "Emisor",
@@ -269,7 +307,11 @@
     "previous": "Anterior",
     "next": "Siguiente",
     "pagination": "Paginación de emisores",
-    "enrol": "Inscribir emisor"
+    "enrol": "Inscribir emisor",
+    "subtitle": "{count, plural, one {# comercio inscrito} other {# comercios inscritos}}",
+    "searchPlaceholder": "Buscar por NIT o nombre",
+    "emptyBody": "Inscribe el primer comercio para que pueda correr su set de pruebas.",
+    "emptySearchBody": "Ningún emisor coincide con esa búsqueda."
   },
   "issuerDetail": {
     "back": "Volver a emisores",
@@ -284,7 +326,9 @@
       "personType": "Tipo de persona",
       "responsibilities": "Responsabilidades",
       "address": "Dirección",
-      "email": "Correo"
+      "email": "Correo",
+      "legalName": "Razón social",
+      "tradeName": "Nombre comercial"
     },
     "personTypes": {
       "1": "Persona jurídica",
@@ -308,7 +352,8 @@
       "environment": "Ambiente",
       "softwareId": "Identificador",
       "testSet": "Set de pruebas",
-      "state": "Estado"
+      "state": "Estado",
+      "pin": "PIN"
     },
     "testSetYes": "Con TestSetId",
     "testSetNo": "Sin TestSetId",
@@ -330,7 +375,63 @@
     "letterFrom": "Desde",
     "letterTo": "Hasta",
     "letterSubmit": "Descargar borrador",
-    "letterError": "No se pudo generar la carta. Revisa las fechas."
+    "letterError": "No se pudo generar la carta. Revisa las fechas.",
+    "breadcrumb": "Emisores",
+    "breadcrumbDetail": "Ficha",
+    "clientCaption": "sistema cliente {client}",
+    "lifecycleLabel": "Ciclo de vida del emisor",
+    "tabsLabel": "Secciones de la ficha",
+    "tabs": {
+      "summary": "Resumen",
+      "habilitation": "Habilitación",
+      "certificates": "Certificados y software",
+      "numbering": "Numeración",
+      "contingency": "Contingencia"
+    },
+    "lifecycle": {
+      "enrolled": "Inscrito",
+      "testSet": "Set aceptado",
+      "enabled": "Habilitado",
+      "production": "Producción",
+      "done": "Listo",
+      "missing": "Falta completar",
+      "pending": "Pendiente",
+      "setRejected": "Con rechazos",
+      "setProgress": "En curso · {accepted} de {total}",
+      "inPortal": "Márcalo en el portal de la DIAN",
+      "live": "Con efecto fiscal"
+    },
+    "incompleteTitle": "Inscripción incompleta.",
+    "incompleteBody": "Falta: {missing}.",
+    "completeEnrolment": "Completar inscripción",
+    "missing": {
+      "certificate": "certificado",
+      "software": "software",
+      "test_set_id": "TestSetId",
+      "range": "rango de numeración"
+    },
+    "certificateExpiring": "El certificado vence en {days, plural, one {# día.} other {# días.}}",
+    "certificateExpired": "El certificado ya venció.",
+    "certificateExpiringBody": "Súbelo antes de que venza para no detener la emisión.",
+    "viewCertificate": "Ver certificado",
+    "replaceCertificate": "Reemplazar certificado",
+    "uploadCertificate": "Subir certificado",
+    "replaceCertificateBody": "El certificado actual deja de usarse para firmar y queda en la lista como inactivo.",
+    "saveCertificate": "Guardar certificado",
+    "certificateLoaded": "Certificado cargado; vence el {date}",
+    "expired": "Vencido",
+    "expiresIn": "{days, plural, one {en # día} other {en # días}}",
+    "registerSoftware": "Registrar software",
+    "registerSoftwareBody": "Reemplaza el registro activo de ese ambiente. El PIN se guarda cifrado y no vuelve a mostrarse.",
+    "saveSoftware": "Guardar software",
+    "softwareSaved": "Software registrado",
+    "pinRegistered": "Registrado",
+    "addRange": "Agregar rango",
+    "addRangeBody": "Una numeración autorizada por la DIAN o un rango de contingencia (talonario o papel, tipo 03).",
+    "saveRange": "Guardar rango",
+    "rangeSaved": "Rango agregado",
+    "rangesSubtitle": "Uso y vigencia de cada resolución",
+    "productionRangesHint": "La numeración de producción se trae de la DIAN en el paso a producción, cuando el comercio ya la pidió en MUISCA."
   },
   "contingencies": {
     "title": "Contingencias",
@@ -352,7 +453,10 @@
       "issuer": "Del emisor (tipo 03)"
     },
     "hoursLeft": "{hours} h",
-    "overdue": "Vencido hace {hours} h"
+    "overdue": "Vencido hace {hours} h",
+    "emptyBody": "Cuando la DIAN no responda, las facturas esperan aquí con su plazo de 48 horas.",
+    "urgentNotice": "{count, plural, one {# factura vence en menos de 8 horas.} other {# facturas vencen en menos de 8 horas.}}",
+    "urgentNoticeBody": "Fiscal. las reintenta cada 30 minutos; si la DIAN sigue sin responder, revisa la carta de contingencia del emisor."
   },
   "alerts": {
     "title": "Alertas",
@@ -376,7 +480,13 @@
     "pageInfo": "Página {page} · {count} alertas",
     "previous": "Anterior",
     "next": "Siguiente",
-    "pagination": "Paginación de alertas"
+    "pagination": "Paginación de alertas",
+    "subtitle": "Lo que exige acción: certificados, numeración, plazos, rechazos y la cola.",
+    "emptyBody": "Fiscal. avisa aquí y por correo cuando algo necesite atención.",
+    "resolvedToast": "Alerta resuelta",
+    "fixCertificate": "Subir certificado",
+    "fixRange": "Ver numeración",
+    "fixContingency": "Ver contingencias"
   },
   "clientSystems": {
     "title": "Sistemas cliente",
@@ -394,7 +504,12 @@
     },
     "noWebhook": "Sin URL de avisos",
     "inactive": "Inactivo",
-    "noticesState": "{pending} pendientes · {failed} fallidos"
+    "noticesState": "{pending} pendientes · {failed} fallidos",
+    "subtitle": "Los sistemas que usan la API de Fiscal. (Waiter primero).",
+    "new": "Nuevo sistema cliente",
+    "newDescription": "Recibe un identificador de llave y un secreto para firmar sus llamadas.",
+    "emptyBody": "Crea el primero para que pueda inscribir emisores y emitir documentos.",
+    "created": "Sistema {name} creado"
   },
   "onboarding": {
     "title": "Inscribir un emisor",
@@ -423,7 +538,10 @@
       "keyId": "Identificador de llave",
       "secret": "Secreto",
       "secretSaved": "Ya lo guardé",
-      "useClient": "Usar este sistema"
+      "useClient": "Usar este sistema",
+      "namePlaceholder": "Por ejemplo, Waiter",
+      "webhookHint": "Opcional. Ahí llegan los avisos firmados de Fiscal. (https).",
+      "creating": "Creando…"
     },
     "issuer": {
       "title": "Datos del emisor tal como están en el RUT",
@@ -444,9 +562,22 @@
         "ZZ": "ZZ · No aplica"
       },
       "address": "Dirección",
-      "municipality": "Municipio (código DANE de 5 dígitos)",
+      "municipality": "Municipio",
       "email": "Correo para facturación",
-      "phone": "Teléfono (opcional)"
+      "phone": "Teléfono (opcional)",
+      "subtitle": "Tal como están en el RUT.",
+      "dvCalculated": "Calculado a partir del NIT.",
+      "dvMismatch": "No corresponde al NIT: debería ser {expected}.",
+      "municipalityPlaceholder": "Escribe el nombre o el código DANE",
+      "municipalityHint": "Busca por nombre; se guarda el código DANE.",
+      "municipalityCode": "Código DANE {code}",
+      "responsibilityNames": {
+        "O-13": "Gran contribuyente",
+        "O-15": "Autorretenedor",
+        "O-23": "Agente de retención IVA",
+        "O-47": "Régimen simple de tributación",
+        "R-99-PN": "No aplica (ninguna de las anteriores)"
+      }
     },
     "certificate": {
       "title": "Certificado digital del emisor",
@@ -469,24 +600,47 @@
       "body": "Los datos que entrega el portal de habilitación al registrar Fiscal. en el modo «Software propio».",
       "softwareId": "Identificador del software",
       "pin": "PIN del software",
-      "testSetId": "TestSetId"
+      "testSetId": "TestSetId",
+      "environment": "Ambiente",
+      "softwareIdHint": "Lo genera la DIAN al asociar Fiscal. en «Configurar modos de operación».",
+      "pinHint": "El que eligió el comercio. Se guarda cifrado.",
+      "testSetIdHint": "Aparece en el aviso «¡Importante!» de la página del set de pruebas."
     },
     "range": {
       "title": "Rango de numeración de habilitación",
-      "body": "Precargado con el rango del ejemplo oficial de la DIAN. Compáralo con el que muestra el catálogo de participantes y pega la clave técnica.",
+      "body": "Precargado con el rango de habilitación de la DIAN. Compáralo con la página «Set de pruebas Factura Electrónica» del portal y pega la clave técnica.",
       "resolution": "Número de resolución",
       "prefix": "Prefijo",
       "from": "Desde",
       "to": "Hasta",
       "validFrom": "Vigente desde",
       "validTo": "Vigente hasta",
-      "technicalKey": "Clave técnica"
+      "technicalKey": "Clave técnica",
+      "kind": "Tipo de rango",
+      "prefixHint": "Hasta 4 letras o números.",
+      "resolutionDate": "Fecha de la resolución",
+      "establishment": "Sede (opcional)",
+      "establishmentHint": "Si el comercio tiene varias sedes, el prefijo es obligatorio.",
+      "technicalKeyHint": "40 caracteres. En el portal: clic en el campo, Ctrl+A y Ctrl+C.",
+      "kinds": {
+        "invoice": {
+          "label": "Facturación",
+          "description": "Numeración autorizada por la DIAN; necesita su clave técnica."
+        },
+        "contingency": {
+          "label": "Contingencia",
+          "description": "Talonario o papel para cuando no hay sistema (tipo 03)."
+        }
+      }
     },
     "done": {
       "title": "Emisor inscrito",
       "body": "Ya puede correr el set de pruebas desde su ficha.",
-      "open": "Ir a la ficha del emisor"
-    }
+      "open": "Ir a la ficha y correr el set"
+    },
+    "back": "Atrás",
+    "issuerDone": "El emisor ya está inscrito. Sus datos se corrigen desde su ficha.",
+    "clientDone": "El sistema cliente ya quedó elegido."
   },
   "testSet": {
     "title": "Set de pruebas de la DIAN",
@@ -532,7 +686,14 @@
     "phases": {
       "invoices": "las facturas",
       "notes": "las notas"
-    }
+    },
+    "lastRun": "Última corrida: {date}",
+    "progress": "{accepted} de {total} documentos aceptados",
+    "sizeHint": "Usa el «Total de documentos requeridos» de la página del set en el portal de la DIAN.",
+    "rulesTitle": "Reglas de la DIAN",
+    "ruleCount": "{count, plural, one {en # documento} other {en # documentos}}",
+    "showDocuments": "Ver los {count} documentos",
+    "hideDocuments": "Ocultar los documentos"
   },
   "production": {
     "title": "Paso a producción",
@@ -548,6 +709,72 @@
     "fetchRanges": "Traer la numeración de la DIAN",
     "confirm": "Confirmo que el comercio ya quedó «Habilitado» en el portal de la DIAN y fijó su fecha de inicio. Desde ahora sus documentos tienen efecto fiscal.",
     "promote": "Pasar a producción",
-    "done": "En producción: sus documentos tienen efecto fiscal."
+    "done": "En producción: sus documentos tienen efecto fiscal.",
+    "readyCount": "{ready} de {total} requisitos listos",
+    "inProduction": "En producción: sus documentos tienen efecto fiscal.",
+    "outsideTitle": "Antes, por fuera de Fiscal.:",
+    "outsideBody": "el comercio marca «Habilitado» en el portal de la DIAN (fecha irreversible; habla antes con el contador) y pide su numeración en MUISCA.",
+    "hints": {
+      "test_set_accepted": "La DIAN debe aceptar el set de pruebas.",
+      "certificate": "Sube un certificado vigente.",
+      "software": "Normalmente es el mismo SoftwareID y PIN de habilitación.",
+      "range": "Tráela de la DIAN cuando el comercio la haya asociado al software.",
+      "gateway": "Es una configuración del servidor (DIAN_GATEWAY=soap), no algo del comercio."
+    },
+    "confirmHint": "Desde ese momento sus documentos tienen efecto fiscal.",
+    "promoteHint": "Se activa cuando todos los requisitos estén listos.",
+    "actionDone": {
+      "copy-software": "Software de producción registrado",
+      "fetch-ranges": "Numeración traída de la DIAN",
+      "promote": "El emisor pasó a producción"
+    }
+  },
+  "ui": {
+    "breadcrumb": "Ruta",
+    "loading": "Cargando…",
+    "retry": "Reintentar",
+    "errorBody": "El servicio no respondió a tiempo. Lo que ya cargó se queda en pantalla.",
+    "showPassword": "Mostrar contraseña",
+    "hidePassword": "Ocultar contraseña",
+    "copy": "Copiar",
+    "copied": "Copiado",
+    "download": "Descargar",
+    "show": "Ver",
+    "hide": "Ocultar",
+    "close": "Cerrar",
+    "cancel": "Cancelar",
+    "previous": "Anterior",
+    "next": "Siguiente"
+  },
+  "account": {
+    "title": "Tu cuenta",
+    "subtitle": "Quién está conectado y tu contraseña.",
+    "dataTitle": "Datos",
+    "name": "Nombre",
+    "email": "Correo",
+    "role": "Rol",
+    "passwordTitle": "Cambiar contraseña",
+    "passwordSubtitle": "No hace falta cerrar sesión.",
+    "current": "Contraseña actual",
+    "new": "Contraseña nueva",
+    "newHint": "Mínimo 8 caracteres.",
+    "confirm": "Confirma la contraseña nueva",
+    "save": "Cambiar contraseña",
+    "saving": "Guardando…",
+    "tooShort": "La contraseña nueva debe tener al menos 8 caracteres.",
+    "mismatch": "Las contraseñas nuevas no coinciden.",
+    "failed": "No se pudo cambiar la contraseña.",
+    "changed": "Contraseña cambiada"
+  },
+  "notFound": {
+    "title": "Esta página no existe",
+    "body": "Puede que el enlace esté mal o que la página se haya movido.",
+    "action": "Ir al tablero"
+  },
+  "errorPage": {
+    "title": "Algo salió mal",
+    "body": "La página tuvo un error inesperado. Lo demás de la consola sigue funcionando.",
+    "retry": "Reintentar",
+    "home": "Ir al tablero"
   }
 }

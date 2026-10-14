@@ -12,7 +12,6 @@ from rest_framework import status
 from django.contrib.auth.hashers import check_password, make_password
 from django.contrib.auth import get_user_model
 
-
 from fiscal_app.models import PasswordCode
 from fiscal_app.utils.auth_utils import (
     generate_auth_tokens, 
@@ -23,6 +22,10 @@ from fiscal_app.views.captcha_views import verify_recaptcha
 User = get_user_model()
 
 logger = logging.getLogger(__name__)
+
+
+# Same minimum as the password reset of the console.
+MIN_PASSWORD_LENGTH = 8
 
 
 @api_view(['POST'])
@@ -195,25 +198,32 @@ def update_password(request):
     current_password = request.data.get('current_password')
     new_password = request.data.get('new_password')
     
+    # The console shows these messages as they come: they are in Spanish.
     if not current_password or not new_password:
         return Response(
-            {'error': 'Current password and new password are required'},
+            {'error': 'Escribe la contraseña actual y la nueva.'},
             status=status.HTTP_400_BAD_REQUEST
         )
-    
+
+    if len(new_password) < MIN_PASSWORD_LENGTH:
+        return Response(
+            {'error': f'La contraseña nueva debe tener al menos {MIN_PASSWORD_LENGTH} caracteres.'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
     user = request.user
-    
+
     if not check_password(current_password, user.password):
         return Response(
-            {'error': 'Current password is incorrect'},
+            {'error': 'La contraseña actual no es correcta.'},
             status=status.HTTP_400_BAD_REQUEST
         )
-    
+
     user.password = make_password(new_password)
     user.save()
-    
+
     return Response(
-        {'message': 'Password updated successfully'},
+        {'message': 'Contraseña actualizada.'},
         status=status.HTTP_200_OK
     )
 

@@ -83,6 +83,6 @@ describe('HoursLeft', () => {
     renderWithIntl(<HoursLeft hours={hours} />);
 
     const label = screen.getByText(text);
-    expect(label.classList.contains('text-destructive')).toBe(urgent);
+    expect(label.classList.contains('text-danger-fg')).toBe(urgent);
   });
 });

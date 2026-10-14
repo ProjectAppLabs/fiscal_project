@@ -41,7 +41,7 @@ test.describe('Authentication', () => {
 
     const emailInput = page.getByLabel('Correo electrónico');
     await emailInput.fill(testOperator.email);
-    const passwordInput = page.getByLabel('Contraseña');
+    const passwordInput = page.getByLabel('Contraseña', { exact: true });
     await passwordInput.fill(testOperator.password);
 
     await expect(emailInput).toHaveValue(testOperator.email);
@@ -56,7 +56,7 @@ test.describe('Authentication', () => {
     await waitForPageLoad(page);
 
     await page.getByLabel('Correo electrónico').fill(testOperator.email);
-    await page.getByLabel('Contraseña').fill('clave-equivocada');
+    await page.getByLabel('Contraseña', { exact: true }).fill('clave-equivocada');
     await page.getByRole('button', { name: 'Iniciar sesión' }).click();
 
     await expect(page.getByText('Credenciales inválidas.')).toBeVisible();
@@ -70,11 +70,11 @@ test.describe('Authentication', () => {
     await waitForPageLoad(page);
 
     await page.getByLabel('Correo electrónico').fill(testOperator.email);
-    await page.getByLabel('Contraseña').fill(testOperator.password);
+    await page.getByLabel('Contraseña', { exact: true }).fill(testOperator.password);
     await page.getByRole('button', { name: 'Iniciar sesión' }).click();
 
     await page.waitForURL(/.*dashboard/);
-    await expect(page.getByText('Consola de operación')).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1, name: 'Tablero' })).toBeVisible();
   });
 
   test('redirects to sign-in when opening the dashboard without a session', { tag: [...AUTH_PROTECTED_REDIRECT, '@outcome:success'] }, async ({ page }) => {
@@ -90,7 +90,8 @@ test.describe('Authentication', () => {
     await page.goto('/dashboard');
     await waitForPageLoad(page);
 
-    await page.getByRole('banner').getByRole('button', { name: 'Cerrar sesión' }).click();
+    await page.getByRole('banner').getByRole('button', { name: 'Tu cuenta' }).click();
+    await page.getByRole('menuitem', { name: 'Cerrar sesión' }).click();
 
     await page.waitForURL(/.*sign-in/);
     await expect(page.getByRole('heading', { name: 'Iniciar sesión' })).toBeVisible();

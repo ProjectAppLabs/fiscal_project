@@ -3,20 +3,22 @@
 import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 
-import {
-  fetchProduction,
-  runProductionAction,
-  stepErrors,
-  type ProductionAction,
-  type ProductionStatus,
-} from '@/lib/services/onboarding';
+import { Button } from '@/components/ui/Button';
+import { Card, CardHeader } from '@/components/ui/Card';
+import { Choice } from '@/components/ui/Field';
+import { Notice } from '@/components/ui/Notice';
+import { RequirementList } from '@/components/ui/Steps';
+import { toast } from '@/components/ui/Toast';
+import { fetchProduction, runProductionAction, stepErrors, type ProductionAction, type ProductionStatus } from '@/lib/services/onboarding';
+import { StepErrors } from './ClientSystemForm';
 
-const CARD_CLASS = 'rounded-2xl border border-border bg-card p-6';
-const BUTTON_CLASS =
-  'rounded-full border border-border px-4 py-2 text-sm hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50';
 const READINESS_KEYS = ['test_set_accepted', 'certificate', 'software', 'range', 'gateway'] as const;
 
-export function ProductionPanel({ issuerId }: { issuerId: number }) {
+/**
+ * The move to production (H-18), guided: what happens outside Fiscal. (marking «Habilitado» in the DIAN portal and
+ * asking for the numbering in MUISCA), then each requirement with its own action, the confirmation and the switch.
+ */
+export function ProductionPanel({ issuerId, onChange }: { issuerId: number; onChange?: () => void }) {
   const t = useTranslations('production');
   const [status, setStatus] = useState<ProductionStatus | null>(null);
   const [confirmed, setConfirmed] = useState(false);
@@ -42,6 +44,8 @@ export function ProductionPanel({ issuerId }: { issuerId: number }) {
     setErrors(null);
     try {
       setStatus(await runProductionAction(issuerId, action));
+      toast(t(`actionDone.${action}`));
+      onChange?.();
     } catch (error) {
       setErrors(stepErrors(error));
     } finally {
@@ -49,58 +53,59 @@ export function ProductionPanel({ issuerId }: { issuerId: number }) {
     }
   };
 
-  if (!status?.readiness) return null;
+  if (!status?.readiness) return errors ? <StepErrors errors={errors} /> : null;
   const inProduction = status.environment === '1';
   const ready = READINESS_KEYS.every((key) => status.readiness[key]);
+  const readyCount = READINESS_KEYS.filter((key) => status.readiness[key]).length;
 
   return (
-    <section aria-labelledby="issuer-production" className={CARD_CLASS}>
-      <h2 className="text-lg font-semibold" id="issuer-production">
-        {t('title')}
-      </h2>
+    <Card aria-labelledby="issuer-production">
+      <CardHeader
+        id="issuer-production"
+        subtitle={inProduction ? undefined : t('readyCount', { ready: readyCount, total: READINESS_KEYS.length })}
+        title={t('title')}
+      />
       {inProduction ? (
-        <p className="mt-3 text-sm font-semibold text-success">{t('done')}</p>
+        <Notice tone="success">{t('inProduction')}</Notice>
       ) : (
-        <>
-          <p className="mt-2 text-sm text-muted-foreground">{t('body')}</p>
-          <ul className="mt-4 grid gap-1 text-sm sm:grid-cols-2">
-            {READINESS_KEYS.map((key) => (
-              <li className={status.readiness[key] ? 'text-success' : 'text-destructive'} key={key}>
-                {status.readiness[key] ? '✓' : '✗'} {t(`readiness.${key}`)}
-              </li>
-            ))}
-          </ul>
-          <div className="mt-4 flex flex-wrap gap-3">
-            <button className={BUTTON_CLASS} disabled={busy !== null} onClick={() => void act('copy-software')} type="button">
-              {t('copySoftware')}
-            </button>
-            <button className={BUTTON_CLASS} disabled={busy !== null || !status.readiness.software} onClick={() => void act('fetch-ranges')} type="button">
-              {t('fetchRanges')}
-            </button>
+        <div className="flex flex-col gap-4">
+          <Notice title={t('outsideTitle')} tone="info">
+            {t('outsideBody')}
+          </Notice>
+          <RequirementList
+            items={READINESS_KEYS.map((key) => ({
+              key,
+              ok: status.readiness[key],
+              label: t(`readiness.${key}`),
+              detail: status.readiness[key] ? undefined : t(`hints.${key}`),
+              action:
+                key === 'software' && !status.readiness.software ? (
+                  <Button loading={busy === 'copy-software'} onClick={() => void act('copy-software')} size="sm" variant="soft">
+                    {t('copySoftware')}
+                  </Button>
+                ) : key === 'range' && !status.readiness.range ? (
+                  <Button disabled={busy !== null || !status.readiness.software} loading={busy === 'fetch-ranges'} onClick={() => void act('fetch-ranges')} size="sm" variant="soft">
+                    {t('fetchRanges')}
+                  </Button>
+                ) : undefined,
+            }))}
+          />
+          <Choice
+            checked={confirmed}
+            className="rounded-lg bg-surface-sunk/70 px-4 py-3"
+            description={t('confirmHint')}
+            label={t('confirm')}
+            onChange={(e) => setConfirmed(e.target.checked)}
+          />
+          {errors ? <StepErrors errors={errors} /> : null}
+          <div className="flex flex-wrap items-center gap-3">
+            <Button disabled={!ready || !confirmed || busy !== null} loading={busy === 'promote'} onClick={() => void act('promote')} variant="danger">
+              {t('promote')}
+            </Button>
+            {ready ? null : <span className="text-[13px] text-ink-3">{t('promoteHint')}</span>}
           </div>
-          <label className="mt-6 flex items-start gap-2 text-sm">
-            <input checked={confirmed} className="mt-1" onChange={(e) => setConfirmed(e.target.checked)} type="checkbox" />
-            {t('confirm')}
-          </label>
-          <button
-            className="mt-3 rounded-full bg-destructive px-5 py-2 text-sm text-white hover:bg-destructive/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
-            disabled={!ready || !confirmed || busy !== null}
-            onClick={() => void act('promote')}
-            type="button"
-          >
-            {t('promote')}
-          </button>
-        </>
-      )}
-      {errors ? (
-        <div className="mt-3 text-sm text-destructive" role="alert">
-          <ul className="list-disc pl-5">
-            {errors.map((message) => (
-              <li key={message}>{message}</li>
-            ))}
-          </ul>
         </div>
-      ) : null}
-    </section>
+      )}
+    </Card>
   );
 }

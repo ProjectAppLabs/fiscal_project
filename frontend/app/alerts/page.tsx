@@ -4,19 +4,24 @@ import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 
-import { ConsoleLoadError, ConsoleLoading } from '@/components/console/ConsoleStatus';
-import { documentDetailRoute, issuerDetailRoute } from '@/lib/constants';
-import { formatDateTime } from '@/lib/format';
+import { ConsoleLoadError } from '@/components/console/ConsoleStatus';
+import { Page } from '@/components/layout/Page';
+import { Badge, type BadgeTone } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
+import { DataTable } from '@/components/ui/DataTable';
+import { Choice } from '@/components/ui/Field';
+import { PageHeader } from '@/components/ui/PageHeader';
+import { Pagination } from '@/components/ui/Pagination';
+import { EmptyState, SkeletonTable } from '@/components/ui/States';
+import { toast } from '@/components/ui/Toast';
+import { ROUTES, documentDetailRoute, issuerDetailRoute } from '@/lib/constants';
+import { formatDateTime, formatRelative } from '@/lib/format';
 import { useRequireAuth } from '@/lib/hooks/useRequireAuth';
 import { isAlertKind, type Alert } from '@/lib/services/operations';
+import { useConsoleStore } from '@/lib/stores/consoleStore';
 import { useOperationsStore } from '@/lib/stores/operationsStore';
 
-const PAGER_BUTTON_CLASS =
-  'rounded-full border border-border px-4 py-2 text-sm hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50';
-const SEVERITY_TONE = {
-  critical: 'bg-destructive/15 text-foreground',
-  warning: 'bg-warning/15 text-foreground',
-} as const;
+const SEVERITY_TONE: Record<Alert['severity'], BadgeTone> = { critical: 'danger', warning: 'warning' };
 
 export default function AlertsPage() {
   const t = useTranslations('alerts');
@@ -32,14 +37,15 @@ export default function AlertsPage() {
   if (!isAuthenticated) return null;
 
   return (
-    <main className="mx-auto max-w-6xl px-6 py-10">
-      <h1 className="text-3xl font-semibold tracking-tight">{t('title')}</h1>
-      <label className="mt-6 inline-flex items-center gap-2 text-sm">
-        <input checked={includeResolved} onChange={(e) => void showResolvedAlerts(e.target.checked)} type="checkbox" />
-        {t('showResolved')}
-      </label>
+    <Page>
+      <PageHeader
+        actions={<Choice checked={includeResolved} label={t('showResolved')} onChange={(e) => void showResolvedAlerts(e.target.checked)} />}
+        emoji="alerts"
+        subtitle={t('subtitle')}
+        title={t('title')}
+      />
       <AlertResults />
-    </main>
+    </Page>
   );
 }
 
@@ -53,39 +59,25 @@ function AlertResults() {
   const goToAlertsPage = useOperationsStore((s) => s.goToAlertsPage);
 
   if (status === 'error') return <ConsoleLoadError message={t('error')} onRetry={() => void loadAlerts()} />;
-  if (!alerts) return <ConsoleLoading />;
+  if (!alerts) return <SkeletonTable />;
   if (alerts.results.length === 0) {
-    return (
-      <p className="mt-10 rounded-2xl border border-dashed border-border bg-card px-6 py-12 text-center text-sm">
-        {includeResolved ? t('emptyAll') : t('empty')}
-      </p>
-    );
+    return <EmptyState body={t('emptyBody')} emoji="success" title={includeResolved ? t('emptyAll') : t('empty')} />;
   }
 
   return (
     <>
       <AlertTable alerts={alerts.results} />
-      <nav aria-label={t('pagination')} className="mt-6 flex flex-wrap items-center justify-between gap-4">
-        <p className="text-sm text-muted-foreground">{t('pageInfo', { page, count: alerts.count })}</p>
-        <div className="flex gap-2">
-          <button
-            className={PAGER_BUTTON_CLASS}
-            disabled={!alerts.previous || status === 'loading'}
-            onClick={() => void goToAlertsPage(alerts.previous)}
-            type="button"
-          >
-            {t('previous')}
-          </button>
-          <button
-            className={PAGER_BUTTON_CLASS}
-            disabled={!alerts.next || status === 'loading'}
-            onClick={() => void goToAlertsPage(alerts.next)}
-            type="button"
-          >
-            {t('next')}
-          </button>
-        </div>
-      </nav>
+      <Pagination
+        busy={status === 'loading'}
+        hasNext={Boolean(alerts.next)}
+        hasPrevious={Boolean(alerts.previous)}
+        label={t('pagination')}
+        nextLabel={t('next')}
+        onNext={() => void goToAlertsPage(alerts.next)}
+        onPrevious={() => void goToAlertsPage(alerts.previous)}
+        previousLabel={t('previous')}
+        summary={t('pageInfo', { page, count: alerts.count })}
+      />
     </>
   );
 }
@@ -97,54 +89,59 @@ function AlertTable({ alerts }: { alerts: Alert[] }) {
   const locale = useLocale();
 
   return (
-    <div className="mt-6 overflow-x-auto rounded-2xl border border-border bg-card">
-      <table className="w-full text-left text-sm">
-        <caption className="sr-only">{t('tableCaption')}</caption>
-        <thead className="border-b border-border text-xs text-muted-foreground">
-          <tr>
-            <th className="px-4 py-3 font-medium" scope="col">{t('columns.severity')}</th>
-            <th className="px-4 py-3 font-medium" scope="col">{t('columns.kind')}</th>
-            <th className="px-4 py-3 font-medium" scope="col">{t('columns.message')}</th>
-            <th className="px-4 py-3 font-medium" scope="col">{t('columns.issuer')}</th>
-            <th className="px-4 py-3 font-medium" scope="col">{t('columns.created')}</th>
-            <th className="px-4 py-3 font-medium" scope="col">{t('columns.actions')}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {alerts.map((alert) => (
-            <tr className="border-b border-border last:border-0" key={alert.id}>
-              <td className="px-4 py-3">
-                <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${SEVERITY_TONE[alert.severity]}`}>
-                  {tSeverities(alert.severity)}
-                </span>
-              </td>
-              <td className="px-4 py-3">{isAlertKind(alert.kind) ? tKinds(alert.kind) : alert.kind}</td>
-              <td className="px-4 py-3">
-                {alert.message}
-                {alert.document ? (
-                  <Link className="mt-1 block font-mono text-xs hover:underline" href={documentDetailRoute(alert.document.id)}>
-                    {alert.document.full_number}
-                  </Link>
-                ) : null}
-              </td>
-              <td className="px-4 py-3">
-                {alert.issuer ? (
-                  <Link className="hover:underline" href={issuerDetailRoute(alert.issuer.id)}>
-                    {alert.issuer.legal_name}
-                  </Link>
-                ) : (
-                  <span className="text-muted-foreground">{t('service')}</span>
-                )}
-              </td>
-              <td className="px-4 py-3 whitespace-nowrap">{formatDateTime(alert.created_at, locale)}</td>
-              <td className="px-4 py-3">
-                <ResolveAction alert={alert} />
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+    <DataTable<Alert>
+      caption={t('tableCaption')}
+      columns={[
+        {
+          key: 'severity',
+          header: t('columns.severity'),
+          mobile: 'badge',
+          cell: (alert) => (
+            <Badge size="sm" tone={alert.resolved_at ? 'neutral' : SEVERITY_TONE[alert.severity]}>
+              {tSeverities(alert.severity)}
+            </Badge>
+          ),
+        },
+        { key: 'kind', header: t('columns.kind'), mobile: 'title', className: 'font-semibold text-ink', cell: (alert) => (isAlertKind(alert.kind) ? tKinds(alert.kind) : alert.kind) },
+        {
+          key: 'message',
+          header: t('columns.message'),
+          mobile: 'body',
+          className: 'max-w-md',
+          cell: (alert) => (
+            <>
+              <span className="block font-normal text-ink">{alert.message}</span>
+              {alert.document ? (
+                <Link className="mt-1 block font-mono text-[12px] text-primary-text hover:underline" href={documentDetailRoute(alert.document.id)}>
+                  {alert.document.full_number}
+                </Link>
+              ) : null}
+            </>
+          ),
+        },
+        {
+          key: 'issuer',
+          header: t('columns.issuer'),
+          cell: (alert) =>
+            alert.issuer ? (
+              <Link className="font-medium text-ink hover:text-primary-text hover:underline" href={issuerDetailRoute(alert.issuer.id)}>
+                {alert.issuer.legal_name}
+              </Link>
+            ) : (
+              <span className="text-ink-3">{t('service')}</span>
+            ),
+        },
+        {
+          key: 'created',
+          header: t('columns.created'),
+          className: 'whitespace-nowrap',
+          cell: (alert) => <span title={formatDateTime(alert.created_at, locale)}>{formatRelative(alert.created_at, locale)}</span>,
+        },
+        { key: 'actions', header: t('columns.actions'), mobile: 'action', align: 'end', cell: (alert) => <ResolveAction alert={alert} /> },
+      ]}
+      rowKey={(alert) => alert.id}
+      rows={alerts}
+    />
   );
 }
 
@@ -153,33 +150,49 @@ function ResolveAction({ alert }: { alert: Alert }) {
   const locale = useLocale();
   const resolvingAlertId = useOperationsStore((s) => s.resolvingAlertId);
   const resolve = useOperationsStore((s) => s.resolve);
+  const loadSummary = useConsoleStore((s) => s.loadSummary);
   const [failed, setFailed] = useState(false);
 
   if (alert.resolved_at) {
-    return <span className="text-xs text-muted-foreground">{t('resolved', { date: formatDateTime(alert.resolved_at, locale) })}</span>;
+    return <span className="text-[13px] text-ink-3">{t('resolved', { date: formatDateTime(alert.resolved_at, locale) })}</span>;
   }
 
   const onResolve = async () => {
     setFailed(false);
-    setFailed(!(await resolve(alert.id)));
+    const resolved = await resolve(alert.id);
+    setFailed(!resolved);
+    if (resolved) {
+      toast(t('resolvedToast'));
+      void loadSummary();
+    }
   };
 
+  const fix = fixLink(alert);
   return (
-    <span className="inline-flex flex-col gap-1">
-      <button
-        aria-label={`${t('resolve')}: ${alert.message}`}
-        className="rounded-full border border-border px-3 py-1 text-xs hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
-        disabled={resolvingAlertId === alert.id}
-        onClick={() => void onResolve()}
-        type="button"
-      >
+    <span className="inline-flex flex-wrap items-center justify-end gap-2">
+      {fix ? (
+        <Link className="text-[13px] font-semibold text-primary-text hover:underline" href={fix.href}>
+          {t(fix.label)}
+        </Link>
+      ) : null}
+      <Button aria-label={`${t('resolve')}: ${alert.message}`} loading={resolvingAlertId === alert.id} onClick={() => void onResolve()} size="sm" variant="soft">
         {t('resolve')}
-      </button>
+      </Button>
       {failed ? (
-        <span className="text-xs text-destructive" role="alert">
+        <span className="w-full text-right text-[13px] font-semibold text-danger-fg" role="alert">
           {t('resolveError')}
         </span>
       ) : null}
     </span>
   );
+}
+
+/** Where each kind of alert gets fixed (H-30). */
+function fixLink(alert: Alert): { href: string; label: 'fixCertificate' | 'fixRange' | 'fixContingency' } | null {
+  if (!alert.issuer) return null;
+  const issuer = issuerDetailRoute(alert.issuer.id);
+  if (alert.kind === 'certificate_expiring') return { href: `${issuer}?tab=certificates`, label: 'fixCertificate' };
+  if (alert.kind === 'range_low' || alert.kind === 'resolution_expiring') return { href: `${issuer}?tab=numbering`, label: 'fixRange' };
+  if (alert.kind === 'contingency_deadline') return { href: ROUTES.CONTINGENCIES, label: 'fixContingency' };
+  return null;
 }

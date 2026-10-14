@@ -12,7 +12,7 @@ import {
   waitForPageLoad,
   waiterClient,
 } from '../fixtures';
-import { CONSOLE_ALERTS_RESOLVE, CONSOLE_CLIENT_SYSTEMS, CONSOLE_CONTINGENCIES } from '../helpers/flow-tags';
+import { CONSOLE_ALERTS_RESOLVE, CONSOLE_CLIENT_SYSTEM_CREATE, CONSOLE_CLIENT_SYSTEMS, CONSOLE_CONTINGENCIES } from '../helpers/flow-tags';
 
 test.describe('Console operations', () => {
   test.beforeEach(async ({ context, page, baseURL }) => {
@@ -61,5 +61,19 @@ test.describe('Console operations', () => {
     const table = page.getByRole('table', { name: 'Sistemas cliente' });
     await expect(table).toContainText(waiterClient.key_id);
     await expect(table).toContainText('0 pendientes · 1 fallidos');
+  });
+
+  test('creates a client system and shows its secret once', { tag: [...CONSOLE_CLIENT_SYSTEM_CREATE, '@outcome:success'] }, async ({ page }) => {
+    await page.route('**/api/console/client-systems/create/', (route) =>
+      route.fulfill({ status: 201, contentType: 'application/json', body: JSON.stringify({ id: 8, name: 'Caja POS', key_id: 'fk_caja', secret: 'secreto-de-una-vez' }) }),
+    );
+    await page.getByRole('banner').getByRole('link', { name: 'Sistemas cliente' }).click();
+
+    await page.getByRole('main').getByRole('button', { name: 'Nuevo sistema cliente' }).click();
+    const dialog = page.getByRole('dialog', { name: 'Nuevo sistema cliente' });
+    await dialog.getByLabel('Nombre del sistema nuevo').fill('Caja POS');
+    await dialog.getByRole('button', { name: 'Crear sistema cliente' }).click();
+
+    await expect(dialog.getByText('secreto-de-una-vez')).toBeVisible();
   });
 });

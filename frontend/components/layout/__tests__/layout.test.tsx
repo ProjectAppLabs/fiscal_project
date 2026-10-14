@@ -1,27 +1,48 @@
 import { describe, it, expect, beforeEach } from '@jest/globals';
-import { screen } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import Footer from '../Footer';
 import Header from '../Header';
+import { buildSummary } from '../../../lib/__tests__/consoleFactories';
 import { renderWithIntl } from '../../../lib/__tests__/intl';
 import { useAuthStore } from '../../../lib/stores/authStore';
+import { useConsoleStore } from '../../../lib/stores/consoleStore';
 
 jest.mock('../../../lib/stores/authStore', () => ({
   useAuthStore: jest.fn(),
 }));
 
+const mockPathname = jest.fn(() => '/dashboard');
+
 jest.mock('next/navigation', () => ({
   useRouter: () => ({ refresh: jest.fn() }),
+  usePathname: () => mockPathname(),
 }));
 
 const mockUseAuthStore = useAuthStore as unknown as jest.Mock;
 
-type AuthState = { isAuthenticated: boolean; signOut: jest.Mock };
+type AuthState = { isAuthenticated: boolean; signOut: jest.Mock; user: { first_name: string; last_name: string; email: string; role: string } | null };
 
-const renderHeader = (authState: AuthState) => {
-  mockUseAuthStore.mockImplementation((selector: (state: AuthState) => unknown) => selector(authState));
+const ANA = { first_name: 'Ana', last_name: 'Mejía', email: 'ana@projectapp.co', role: 'operator' };
+
+const renderHeader = (authState: Partial<AuthState>) => {
+  const state: AuthState = { isAuthenticated: false, signOut: jest.fn(), user: null, ...authState };
+  mockUseAuthStore.mockImplementation((selector: (current: AuthState) => unknown) => selector(state));
   return renderWithIntl(<Header />);
+};
+
+const setNarrowScreen = (narrow: boolean) => {
+  (window.matchMedia as jest.Mock).mockImplementation((query: string) => ({
+    matches: narrow,
+    media: query,
+    onchange: null,
+    addListener: jest.fn(),
+    removeListener: jest.fn(),
+    addEventListener: jest.fn(),
+    removeEventListener: jest.fn(),
+    dispatchEvent: jest.fn(),
+  }));
 };
 
 describe('Footer', () => {
@@ -35,24 +56,26 @@ describe('Footer', () => {
 describe('Header', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockPathname.mockReturnValue('/dashboard');
+    setNarrowScreen(false);
+    useConsoleStore.setState({ summary: buildSummary({ alerts: { total: 3, critical: 1 } }), summaryStatus: 'ready' });
   });
 
   it('links the Fiscal. wordmark to the home page', () => {
-    renderHeader({ isAuthenticated: false, signOut: jest.fn() });
+    renderHeader({ isAuthenticated: false });
 
     expect(screen.getByRole('link', { name: 'Fiscal.' })).toHaveAttribute('href', '/');
   });
 
   it('offers the sign-in link to visitors without a session', () => {
-    renderHeader({ isAuthenticated: false, signOut: jest.fn() });
+    renderHeader({ isAuthenticated: false });
 
     expect(screen.getByRole('link', { name: 'Iniciar sesión' })).toHaveAttribute('href', '/sign-in');
   });
 
   it.each(['Tablero', 'Documentos', 'Emisores', 'Contingencias', 'Alertas', 'Sistemas cliente'])('hides the %s link from visitors without a session', (name) => {
-    renderHeader({ isAuthenticated: false, signOut: jest.fn() });
+    renderHeader({ isAuthenticated: false });
 
-    expect(screen.getByRole('link', { name: 'Fiscal.' })).toBeInTheDocument();
     expect(screen.queryByRole('link', { name })).not.toBeInTheDocument();
   });
 
@@ -64,17 +87,69 @@ describe('Header', () => {
     ['Alertas', '/alerts'],
     ['Sistemas cliente', '/client-systems'],
   ])('links signed-in users to the %s page at %s', (name, href) => {
-    renderHeader({ isAuthenticated: true, signOut: jest.fn() });
+    renderHeader({ isAuthenticated: true, user: ANA });
 
-    expect(screen.getByRole('link', { name })).toHaveAttribute('href', href);
+    expect(within(screen.getByRole('navigation', { name: 'Navegación principal' })).getByRole('link', { name })).toHaveAttribute('href', href);
   });
 
-  it('signs the user out from the header button', async () => {
-    const signOut = jest.fn();
-    renderHeader({ isAuthenticated: true, signOut });
+  it('marks the page the operator is on', () => {
+    mockPathname.mockReturnValue('/issuers/3');
+    renderHeader({ isAuthenticated: true, user: ANA });
 
-    await userEvent.click(screen.getByRole('button', { name: 'Cerrar sesión' }));
+    expect(screen.getByRole('link', { name: 'Emisores' })).toHaveAttribute('aria-current', 'page');
+  });
+
+  it('counts the open alerts next to Alertas', () => {
+    renderHeader({ isAuthenticated: true, user: ANA });
+
+    expect(screen.getByRole('link', { name: 'Alertas' })).toHaveAccessibleDescription('3 abiertas');
+  });
+
+  it('offers the enrolment of a new issuer', () => {
+    renderHeader({ isAuthenticated: true, user: ANA });
+
+    expect(screen.getByRole('link', { name: 'Inscribir emisor' })).toHaveAttribute('href', '/onboarding');
+  });
+
+  it('shows who is signed in', async () => {
+    renderHeader({ isAuthenticated: true, user: ANA });
+
+    await userEvent.click(screen.getByRole('button', { name: 'Tu cuenta' }));
+
+    expect(screen.getByRole('menu')).toHaveTextContent('ana@projectapp.co · Operador');
+  });
+
+  it('signs the user out from the account menu', async () => {
+    const signOut = jest.fn();
+    renderHeader({ isAuthenticated: true, user: ANA, signOut });
+
+    await userEvent.click(screen.getByRole('button', { name: 'Tu cuenta' }));
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Cerrar sesión' }));
 
     expect(signOut).toHaveBeenCalledTimes(1);
+  });
+
+  it('stays out of the sign-in screen', () => {
+    mockPathname.mockReturnValue('/sign-in');
+    renderHeader({ isAuthenticated: false });
+
+    // quality: allow-negation-only (the sign-in screen draws its own header-less layout)
+    expect(screen.queryByRole('banner')).not.toBeInTheDocument();
+  });
+
+  it('moves the menu to a bottom bar on narrow screens', () => {
+    setNarrowScreen(true);
+    renderHeader({ isAuthenticated: true, user: ANA });
+
+    expect(screen.getByRole('button', { name: 'Más' })).toBeInTheDocument();
+  });
+
+  it('keeps Contingencias under «Más» on narrow screens', async () => {
+    setNarrowScreen(true);
+    renderHeader({ isAuthenticated: true, user: ANA });
+
+    await userEvent.click(screen.getByRole('button', { name: 'Más' }));
+
+    expect(screen.getByRole('link', { name: 'Contingencias' })).toHaveAttribute('href', '/contingencies');
   });
 });

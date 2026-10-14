@@ -17,11 +17,13 @@ jest.mock('../../../lib/hooks/useRequireAuth', () => ({
 jest.mock('../../../lib/services/http', () => ({
   api: {
     get: jest.fn(),
+    post: jest.fn(),
   },
 }));
 
 const mockUseRequireAuth = useRequireAuth as unknown as jest.Mock;
 const mockGet = api.get as unknown as jest.Mock;
+const mockPost = api.post as unknown as jest.Mock;
 const initialState = useOperationsStore.getState();
 
 function renderSignedIn() {
@@ -51,7 +53,7 @@ describe('ClientSystemsPage', () => {
 
     expect(within(table).getByText('Waiter')).toBeInTheDocument();
     expect(within(table).getByText('fk_waiter')).toBeInTheDocument();
-    expect(within(table).getByText('0 pendientes · 1 fallidos')).toHaveClass('text-destructive');
+    expect(within(table).getByText('0 pendientes · 1 fallidos')).toHaveClass('text-danger-fg');
   });
 
   it('flags a system without notice URL, secret or activity', async () => {
@@ -59,7 +61,7 @@ describe('ClientSystemsPage', () => {
 
     renderSignedIn();
 
-    expect(await screen.findByText('Sin URL de avisos')).toHaveClass('text-destructive');
+    expect(await screen.findByText('Sin URL de avisos')).toHaveClass('text-warning-fg');
     expect(screen.getByText('Inactivo')).toBeInTheDocument();
   });
 
@@ -78,5 +80,16 @@ describe('ClientSystemsPage', () => {
     await userEvent.click(await screen.findByRole('button', { name: 'Reintentar' }));
 
     expect(await screen.findByRole('table', { name: 'Sistemas cliente' })).toBeInTheDocument();
+  });
+
+  it('shows the secret of a new client system once', async () => {
+    mockPost.mockResolvedValueOnce({ data: { id: 5, name: 'Caja POS', key_id: 'fk_caja', secret: 'secreto-de-una-vez' } });
+    renderSignedIn();
+
+    await userEvent.click((await screen.findAllByRole('button', { name: 'Nuevo sistema cliente' }))[0]);
+    await userEvent.type(screen.getByLabelText('Nombre del sistema nuevo'), 'Caja POS');
+    await userEvent.click(screen.getByRole('button', { name: 'Crear sistema cliente' }));
+
+    expect(await screen.findByText('secreto-de-una-vez')).toBeInTheDocument();
   });
 });

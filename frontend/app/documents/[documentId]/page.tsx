@@ -3,9 +3,20 @@
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useState } from 'react';
+import { Download, ExternalLink } from 'lucide-react';
 
-import { ConsoleLoadError, ConsoleLoading, DocumentStateBadge } from '@/components/console/ConsoleStatus';
+import { ConsoleLoadError, DocumentStateBadge } from '@/components/console/ConsoleStatus';
+import { Page } from '@/components/layout/Page';
+import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
+import { Card, CardHeader, DataItem, DataList } from '@/components/ui/Card';
+import { CodeValue } from '@/components/ui/Copy';
+import { DataTable } from '@/components/ui/DataTable';
+import { JsonViewer } from '@/components/ui/JsonViewer';
+import { PageHeader } from '@/components/ui/PageHeader';
+import { NotFoundState, SkeletonCard } from '@/components/ui/States';
+import { toast } from '@/components/ui/Toast';
 import { ROUTES, documentDetailRoute } from '@/lib/constants';
 import { formatBytes, formatDateTime, shortHash } from '@/lib/format';
 import { useRequireAuth } from '@/lib/hooks/useRequireAuth';
@@ -13,13 +24,12 @@ import {
   describeDianError,
   eventDetailParts,
   isDianNotification,
+  type DocumentArtifact,
   type DocumentDetail,
   type DocumentEvent,
 } from '@/lib/services/console';
 import { ARTIFACT_KINDS, artifactFileName, downloadArtifact, type ArtifactKind } from '@/lib/services/operations';
 import { useConsoleStore, type DetailStatus } from '@/lib/stores/consoleStore';
-
-const CARD_CLASS = 'rounded-2xl border border-border bg-card p-6';
 
 export default function DocumentDetailPage() {
   const t = useTranslations('documentDetail');
@@ -36,55 +46,55 @@ export default function DocumentDetailPage() {
   if (!isAuthenticated) return null;
 
   return (
-    <main className="mx-auto max-w-6xl px-6 py-10">
-      <Link className="text-sm hover:underline" href={ROUTES.DOCUMENTS}>
+    <Page>
+      <Link className="mb-4 inline-flex items-center gap-1 text-[13px] font-semibold text-ink-2 hover:text-primary-text" href={ROUTES.DOCUMENTS}>
         ← {t('back')}
       </Link>
-      <DetailBody
-        document={document}
-        status={status}
-        onRetry={() => void loadDocument(documentId)}
-      />
-    </main>
+      <DetailBody document={document} onRetry={() => void loadDocument(documentId)} status={status} />
+    </Page>
   );
 }
 
-function DetailBody({
-  document,
-  status,
-  onRetry,
-}: {
-  document: DocumentDetail | null;
-  status: DetailStatus;
-  onRetry: () => void;
-}) {
+function DetailBody({ document, status, onRetry }: { document: DocumentDetail | null; status: DetailStatus; onRetry: () => void }) {
   const t = useTranslations('documentDetail');
+  const tKinds = useTranslations('console.kinds');
 
-  if (status === 'not-found') {
+  if (status === 'not-found') return <NotFoundState body={t('notFoundBody')} title={t('notFoundTitle')} />;
+  if (status === 'error') return <ConsoleLoadError message={t('error')} onRetry={onRetry} />;
+  if (!document) {
     return (
-      <section className="mt-10 rounded-2xl border border-dashed border-border bg-card px-6 py-16 text-center">
-        <h1 className="text-lg font-semibold">{t('notFoundTitle')}</h1>
-        <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">{t('notFoundBody')}</p>
-      </section>
+      <div className="grid gap-4 lg:grid-cols-2">
+        <SkeletonCard lines={6} />
+        <SkeletonCard />
+      </div>
     );
   }
-  if (status === 'error') return <ConsoleLoadError message={t('error')} onRetry={onRetry} />;
-  if (!document) return <ConsoleLoading />;
 
   return (
-    <div className="mt-6 space-y-6">
-      <div className="flex flex-wrap items-center gap-3">
-        <h1 className="font-mono text-3xl font-semibold tracking-tight">{document.full_number}</h1>
-        <DocumentStateBadge state={document.state} />
+    <div className="appear">
+      <PageHeader
+        badge={<DocumentStateBadge size="lg" state={document.state} />}
+        breadcrumb={[{ label: t('breadcrumb'), href: ROUTES.DOCUMENTS }, { label: tKinds(document.kind) }]}
+        emoji="documents"
+        subtitle={`${document.issuer.legal_name} · NIT ${document.issuer.nit}`}
+        title={<span className="font-mono tracking-[-0.03em]">{document.full_number}</span>}
+      />
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]">
+        <DocumentData document={document} />
+        <div className="flex flex-col gap-4">
+          <DianAnswer document={document} />
+          <Events document={document} />
+        </div>
       </div>
-      <DocumentData document={document} />
-      <DianErrors document={document} />
-      <Artifacts document={document} />
-      <Events document={document} />
-      <details className={CARD_CLASS}>
-        <summary className="cursor-pointer text-lg font-semibold">{t('payloadTitle')}</summary>
-        <pre className="mt-4 overflow-x-auto rounded-xl bg-muted p-4 text-xs">{JSON.stringify(document.payload, null, 2)}</pre>
-      </details>
+      <div className="mt-4 flex flex-col gap-4">
+        <Artifacts document={document} />
+        <JsonViewer
+          fileName={`${document.full_number}.json`}
+          subtitle={t('payloadSubtitle', { client: document.client })}
+          title={t('payloadTitle')}
+          value={document.payload}
+        />
+      </div>
     </div>
   );
 }
@@ -97,83 +107,88 @@ function DocumentData({ document }: { document: DocumentDetail }) {
   const locale = useLocale();
 
   return (
-    <section className={CARD_CLASS} aria-labelledby="document-data">
-      <h2 className="text-lg font-semibold" id="document-data">
-        {t('dataTitle')}
-      </h2>
-      <dl className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <Field label={t('fields.kind')}>{tKinds(document.kind)}</Field>
-        <Field label={t('fields.state')}>{tStates(document.state)}</Field>
-        <Field label={t('fields.issuer')}>
-          {tConsole('issuer', { name: document.issuer.legal_name, nit: document.issuer.nit })}
-        </Field>
-        <Field label={t('fields.client')}>{document.client}</Field>
-        <Field label={t('fields.attempts')}>{document.attempts}</Field>
-        <Field label={t('fields.idempotencyKey')}>
-          <span className="font-mono break-all">{document.idempotency_key}</span>
-        </Field>
-        <Field label={t('fields.issued')}>{formatDateTime(document.issue_datetime, locale)}</Field>
-        <Field label={t('fields.created')}>{formatDateTime(document.created_at, locale)}</Field>
-        <Field label={t('fields.validated')}>{formatDateTime(document.validated_at, locale)}</Field>
+    <Card aria-labelledby="document-data">
+      <CardHeader
+        action={
+          document.qr_url ? (
+            <a className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary-text hover:underline" href={document.qr_url} rel="noopener noreferrer" target="_blank">
+              {t('qr')}
+              <ExternalLink aria-hidden className="size-3.5" />
+            </a>
+          ) : null
+        }
+        id="document-data"
+        title={t('dataTitle')}
+      />
+      <DataList>
+        <DataItem label={t('fields.kind')}>{tKinds(document.kind)}</DataItem>
+        <DataItem label={t('fields.state')}>{tStates(document.state)}</DataItem>
+        <DataItem label={t('fields.issuer')}>{tConsole('issuer', { name: document.issuer.legal_name, nit: document.issuer.nit })}</DataItem>
+        <DataItem label={t('fields.client')}>{document.client}</DataItem>
+        <DataItem label={t('fields.attempts')}>{document.attempts}</DataItem>
+        <DataItem label={t('fields.idempotencyKey')}>
+          <span className="break-all font-mono text-[13px]">{document.idempotency_key}</span>
+        </DataItem>
+        <DataItem label={t('fields.issued')}>{formatDateTime(document.issue_datetime, locale)}</DataItem>
+        <DataItem label={t('fields.created')}>{formatDateTime(document.created_at, locale)}</DataItem>
+        <DataItem label={t('fields.validated')}>{formatDateTime(document.validated_at, locale)}</DataItem>
         {document.original ? (
-          <Field label={t('fields.original')}>
-            <Link className="hover:underline" href={documentDetailRoute(document.original)}>
+          <DataItem label={t('fields.original')}>
+            <Link className="font-semibold text-primary-text hover:underline" href={documentDetailRoute(document.original)}>
               {t('viewOriginal', { id: document.original })}
             </Link>
-          </Field>
+          </DataItem>
         ) : null}
-        {document.invoice_type ? (
-          <Field label={t('fields.invoiceType')}>{invoiceTypeLabel(document.invoice_type, t)}</Field>
-        ) : null}
+        {document.invoice_type ? <DataItem label={t('fields.invoiceType')}>{invoiceTypeLabel(document.invoice_type, t)}</DataItem> : null}
         {document.contingency_started_at ? (
-          <Field label={t('fields.contingencyStarted')}>{formatDateTime(document.contingency_started_at, locale)}</Field>
+          <DataItem label={t('fields.contingencyStarted')}>{formatDateTime(document.contingency_started_at, locale)}</DataItem>
         ) : null}
         {document.cufe ? (
-          <Field label={t('fields.cufe')}>
-            <span className="font-mono text-xs break-all">{document.cufe}</span>
-          </Field>
+          <DataItem label={t('fields.cufe')}>
+            <CodeValue label={t('copyCufe')} value={document.cufe} />
+          </DataItem>
         ) : null}
-      </dl>
-      {document.qr_url ? (
-        <a
-          className="mt-4 inline-block text-sm hover:underline"
-          href={document.qr_url}
-          rel="noopener noreferrer"
-          target="_blank"
-        >
-          {t('qr')}
-        </a>
-      ) : null}
-    </section>
+      </DataList>
+    </Card>
   );
 }
 
-function DianErrors({ document }: { document: DocumentDetail }) {
+/** Rejections in rose and notifications in grey, apart: a notification never stops a document. */
+function DianAnswer({ document }: { document: DocumentDetail }) {
   const t = useTranslations('documentDetail');
+  const rejections = document.errors.filter((error) => !isDianNotification(error));
+  const notifications = document.errors.filter(isDianNotification);
 
   return (
-    <section className={CARD_CLASS} aria-labelledby="document-errors">
-      <h2 className="text-lg font-semibold" id="document-errors">
-        {t('errorsTitle')}
-      </h2>
-      {document.errors.length === 0 ? (
-        <p className="mt-3 text-sm text-muted-foreground">{t('noErrors')}</p>
-      ) : (
-        <ul className="mt-3 list-disc space-y-1 pl-5 text-sm">
-          {document.errors.map((error, index) =>
-            isDianNotification(error) ? (
-              <li className="text-muted-foreground" key={index}>
-                {t('notification')}: {describeDianError(error)}
-              </li>
-            ) : (
-              <li className="text-destructive" key={index}>
+    <Card aria-labelledby="document-errors">
+      <CardHeader id="document-errors" title={t('errorsTitle')} />
+      {document.errors.length === 0 ? <p className="text-[15px] text-ink-2">{t('noErrors')}</p> : null}
+      {rejections.length ? (
+        <div>
+          <p className="text-label mb-2">{t('rejections')}</p>
+          <ul className="flex flex-col gap-2">
+            {rejections.map((error, index) => (
+              <li className="rounded-lg bg-danger-bg px-4 py-2.5 font-mono text-[13px] text-danger-fg" key={index}>
                 {describeDianError(error)}
               </li>
-            ),
-          )}
-        </ul>
-      )}
-    </section>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+      {notifications.length ? (
+        <div className={rejections.length ? 'mt-4' : undefined}>
+          <p className="text-label mb-2">{t('notifications')}</p>
+          <ul className="flex flex-col gap-2">
+            {notifications.map((error, index) => (
+              <li className="rounded-lg bg-neutral-bg px-4 py-2.5 font-mono text-[13px] text-neutral-fg" key={index}>
+                <span className="sr-only">{t('notification')}: </span>
+                {describeDianError(error)}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+    </Card>
   );
 }
 
@@ -183,46 +198,42 @@ function Artifacts({ document }: { document: DocumentDetail }) {
   const locale = useLocale();
 
   return (
-    <section className={CARD_CLASS} aria-labelledby="document-artifacts">
-      <h2 className="text-lg font-semibold" id="document-artifacts">
-        {t('artifactsTitle')}
-      </h2>
+    <Card aria-labelledby="document-artifacts">
+      <CardHeader id="document-artifacts" subtitle={t('artifactsSubtitle')} title={t('artifactsTitle')} />
       {document.artifacts.length === 0 ? (
-        <p className="mt-3 text-sm text-muted-foreground">{t('noArtifacts')}</p>
+        <p className="text-[15px] text-ink-2">{t('noArtifacts')}</p>
       ) : (
-        <div className="mt-3 overflow-x-auto">
-          <table className="w-full text-left text-sm">
-            <caption className="sr-only">{t('artifactsCaption')}</caption>
-            <thead className="border-b border-border text-xs text-muted-foreground">
-              <tr>
-                <th className="py-2 pr-4 font-medium" scope="col">{t('artifactColumns.kind')}</th>
-                <th className="py-2 pr-4 font-medium" scope="col">{t('artifactColumns.size')}</th>
-                <th className="py-2 pr-4 font-medium" scope="col">{t('artifactColumns.sha256')}</th>
-                <th className="py-2 pr-4 font-medium" scope="col">{t('artifactColumns.created')}</th>
-                <th className="py-2 font-medium" scope="col">{t('artifactColumns.actions')}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {document.artifacts.map((artifact) => (
-                <tr className="border-b border-border last:border-0" key={`${artifact.kind}-${artifact.sha256}`}>
-                  <td className="py-2 pr-4">{isArtifactKind(artifact.kind) ? tArtifacts(artifact.kind) : artifact.kind}</td>
-                  <td className="py-2 pr-4 tabular-nums">{formatBytes(artifact.size, locale)}</td>
-                  <td className="py-2 pr-4 font-mono" title={artifact.sha256}>
-                    {shortHash(artifact.sha256)}
-                  </td>
-                  <td className="py-2 pr-4 whitespace-nowrap">{formatDateTime(artifact.created_at, locale)}</td>
-                  <td className="py-2">
-                    {isArtifactKind(artifact.kind) ? (
-                      <DownloadButton documentId={document.id} fullNumber={document.full_number} kind={artifact.kind} />
-                    ) : null}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <DataTable<DocumentArtifact>
+          caption={t('artifactsCaption')}
+          columns={[
+            { key: 'kind', header: t('artifactColumns.kind'), mobile: 'body', cell: (artifact) => (isArtifactKind(artifact.kind) ? tArtifacts(artifact.kind) : artifact.kind) },
+            { key: 'size', header: t('artifactColumns.size'), className: 'tabular-nums', cell: (artifact) => formatBytes(artifact.size, locale) },
+            {
+              key: 'sha256',
+              header: t('artifactColumns.sha256'),
+              mobile: 'hidden',
+              cell: (artifact) => (
+                <span className="font-mono text-[13px] text-ink-2" title={artifact.sha256}>
+                  {shortHash(artifact.sha256)}
+                </span>
+              ),
+            },
+            { key: 'created', header: t('artifactColumns.created'), className: 'whitespace-nowrap', cell: (artifact) => formatDateTime(artifact.created_at, locale) },
+            {
+              key: 'actions',
+              header: t('artifactColumns.actions'),
+              mobile: 'action',
+              align: 'end',
+              cell: (artifact) =>
+                isArtifactKind(artifact.kind) ? <DownloadButton documentId={document.id} fullNumber={document.full_number} kind={artifact.kind} /> : null,
+            },
+          ]}
+          framed={false}
+          rowKey={(artifact) => `${artifact.kind}-${artifact.sha256}`}
+          rows={document.artifacts}
+        />
       )}
-    </section>
+    </Card>
   );
 }
 
@@ -231,26 +242,27 @@ function Events({ document }: { document: DocumentDetail }) {
   const locale = useLocale();
 
   return (
-    <section className={CARD_CLASS} aria-labelledby="document-events">
-      <h2 className="text-lg font-semibold" id="document-events">
-        {t('eventsTitle')}
-      </h2>
+    <Card aria-labelledby="document-events">
+      <CardHeader id="document-events" title={t('eventsTitle')} />
       {document.events.length === 0 ? (
-        <p className="mt-3 text-sm text-muted-foreground">{t('noEvents')}</p>
+        <p className="text-[15px] text-ink-2">{t('noEvents')}</p>
       ) : (
-        <ol className="mt-3 space-y-3">
+        <ol className="relative flex flex-col gap-4 border-l-2 border-line pl-5">
           {document.events.map((event, index) => (
-            <li className="flex flex-wrap items-baseline gap-3 text-sm" key={`${event.created_at}-${index}`}>
-              <DocumentStateBadge state={event.state} />
-              <time className="text-muted-foreground" dateTime={event.created_at}>
-                {formatDateTime(event.created_at, locale)}
-              </time>
+            <li className="relative" key={`${event.created_at}-${index}`}>
+              <span aria-hidden className="absolute -left-[27px] top-1.5 size-3 rounded-full bg-surface shadow-[0_0_0_3px_var(--focus)]" />
+              <div className="flex flex-wrap items-center gap-2">
+                <DocumentStateBadge state={event.state} />
+                <time className="text-[13px] text-ink-3" dateTime={event.created_at}>
+                  {formatDateTime(event.created_at, locale)}
+                </time>
+              </div>
               <EventDetail detail={event.detail} />
             </li>
           ))}
         </ol>
       )}
-    </section>
+    </Card>
   );
 }
 
@@ -260,13 +272,11 @@ function EventDetail({ detail }: { detail: DocumentEvent['detail'] }) {
   if (parts.length === 0) return null;
 
   return (
-    <span className="flex flex-wrap gap-x-3 gap-y-1">
+    <p className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[13px] text-ink-2">
       {parts.map((part) => (
-        <span key={part.key}>
-          {part.key === 'text' ? part.value : `${t(part.key)}: ${part.value}`}
-        </span>
+        <span key={part.key}>{part.key === 'text' ? part.value : `${t(part.key)}: ${part.value}`}</span>
       ))}
-    </span>
+    </p>
   );
 }
 
@@ -281,22 +291,20 @@ function DownloadButton({ documentId, fullNumber, kind }: { documentId: number; 
       setStatus('idle');
     } catch {
       setStatus('error');
+      toast(t('downloadError'), 'error');
     }
   };
 
   return (
     <span className="inline-flex items-center gap-2">
-      <button
-        className="rounded-full border border-border px-3 py-1 text-xs hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
-        disabled={status === 'loading'}
-        onClick={() => void onClick()}
-        type="button"
-      >
+      <Button icon={<Download aria-hidden className="size-3.5" />} loading={status === 'loading'} onClick={() => void onClick()} size="sm" variant="secondary">
         {t('download')}
-      </button>
+      </Button>
       {status === 'error' ? (
-        <span className="text-xs text-destructive" role="alert">
-          {t('downloadError')}
+        <span role="alert">
+          <Badge size="sm" tone="danger">
+            {t('downloadError')}
+          </Badge>
         </span>
       ) : null}
     </span>
@@ -312,12 +320,3 @@ function isArtifactKind(kind: string): kind is ArtifactKind {
 }
 
 const INVOICE_TYPES = ['01', '03', '04'] as const;
-
-function Field({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <div role="group" aria-label={label}>
-      <dt className="text-xs text-muted-foreground">{label}</dt>
-      <dd className="mt-1 text-sm">{children}</dd>
-    </div>
-  );
-}

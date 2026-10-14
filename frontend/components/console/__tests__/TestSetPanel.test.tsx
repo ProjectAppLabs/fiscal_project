@@ -38,13 +38,13 @@ describe('TestSetPanel', () => {
 
     renderWithIntl(<TestSetPanel issuerId={3} />);
 
-    expect(await screen.findByText(/✗ TestSetId/)).toHaveClass('text-destructive');
+    expect((await screen.findByText('TestSetId')).closest('li')).toHaveTextContent('✗ TestSetId');
     expect(screen.getByRole('button', { name: 'Iniciar set de pruebas' })).toBeDisabled();
   });
 
   it('starts the set with the size of the TestSetId', async () => {
     renderWithIntl(<TestSetPanel issuerId={3} />);
-    await screen.findByText(/✓ TestSetId/);
+    await screen.findByText('TestSetId');
     mockPost.mockResolvedValueOnce({ data: RUN });
 
     await userEvent.clear(screen.getByLabelText('Notas débito'));
@@ -65,15 +65,16 @@ describe('TestSetPanel', () => {
     const check = await screen.findByRole('button', { name: 'Consultar a la DIAN' });
     expect(screen.getByRole('button', { name: 'Iniciar set de pruebas' })).toBeDisabled();
     await userEvent.click(check);
+    await userEvent.click(await screen.findByRole('button', { name: 'Ver los 1 documentos' }));
 
-    const table = await screen.findByRole('table', { name: 'Documentos del set de pruebas' });
-    expect(within(table).getByText('Rechazado')).toHaveClass('text-destructive');
+    const table = screen.getByRole('table', { name: 'Documentos del set de pruebas' });
+    expect(within(table).getByText('Rechazado')).toHaveClass('text-danger-fg');
     expect(within(table).getByText('FAJ43b: Nombre')).toBeInTheDocument();
   });
 
   it('explains why the set could not start', async () => {
     renderWithIntl(<TestSetPanel issuerId={3} />);
-    await screen.findByText(/✓ TestSetId/);
+    await screen.findByText('TestSetId');
     mockPost.mockRejectedValueOnce({ response: { data: { detail: 'El rango de habilitación no tiene números suficientes.' } } });
 
     await userEvent.click(screen.getByRole('button', { name: 'Iniciar set de pruebas' }));

@@ -64,12 +64,21 @@ describe('IssuersPage', () => {
     expect(mockGet).toHaveBeenLastCalledWith('console/issuers/', { params: { q: 'Casa' } });
   });
 
-  it('says when no issuer matches', async () => {
+  it('says when there are no issuers yet', async () => {
     mockGet.mockResolvedValue({ data: buildPage([]) });
 
     renderSignedIn();
 
-    expect(await screen.findByText('No hay emisores con esa búsqueda.')).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'No hay emisores' })).toBeInTheDocument();
+  });
+
+  it('says when no issuer matches the search', async () => {
+    useOperationsStore.setState({ issuerQuery: 'Espiga' });
+    mockGet.mockResolvedValue({ data: buildPage([]) });
+
+    renderSignedIn();
+
+    expect(await screen.findByText('Ningún emisor coincide con esa búsqueda.')).toBeInTheDocument();
   });
 
   it('retries after a failed load', async () => {
@@ -98,7 +107,7 @@ describe('CertificateExpiry', () => {
   ])('shows %s as %s', (expires, text) => {
     renderWithIntl(<CertificateExpiry expires={expires} />);
 
-    expect(screen.getByText(text)).toHaveClass('text-destructive');
+    expect(screen.getByText(text)).toHaveClass('text-danger-fg');
   });
 
   it('counts the days left of a valid certificate', () => {
@@ -106,6 +115,6 @@ describe('CertificateExpiry', () => {
 
     renderWithIntl(<CertificateExpiry expires={inTenDays} />);
 
-    expect(screen.getByText('en 10 días')).toHaveClass('text-destructive');
+    expect(screen.getByText('en 10 días')).toHaveClass('text-warning-fg');
   });
 });

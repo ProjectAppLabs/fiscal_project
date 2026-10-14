@@ -6,13 +6,13 @@ import { useTranslations } from 'next-intl';
 import { FormEvent, useEffect, useRef, useState } from 'react';
 import ReCAPTCHA from 'react-google-recaptcha';
 
+import { AuthScreen } from '@/components/layout/AuthScreen';
+import { Button } from '@/components/ui/Button';
+import { Field, Input, PasswordInput } from '@/components/ui/Field';
 import { API_ENDPOINTS, ROUTES } from '@/lib/constants';
 import { getApiErrorMessage } from '@/lib/services/errors';
 import { api } from '@/lib/services/http';
 import { useAuthStore } from '@/lib/stores/authStore';
-
-const INPUT_CLASS =
-  'w-full rounded-xl border border-border bg-card px-3 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring';
 
 export default function SignInPage() {
   const t = useTranslations('signIn');
@@ -58,76 +58,62 @@ export default function SignInPage() {
   };
 
   return (
-    <main className="flex min-h-[calc(100vh-72px)] items-center justify-center px-6 py-12">
-      <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-sm">
-        <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
-        <p className="mt-1 text-sm text-muted-foreground">{t('subtitle')}</p>
+    <AuthScreen emoji="sign-in" subtitle={t('subtitle')} title={t('title')}>
+      <form className="flex flex-col gap-4" onSubmit={onSubmit}>
+        <Field id="sign-in-email" label={t('email')}>
+          <Input
+            aria-invalid={error ? true : undefined}
+            autoComplete="email"
+            id="sign-in-email"
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder={t('emailPlaceholder')}
+            required
+            type="email"
+            value={email}
+          />
+        </Field>
 
-        <form className="mt-6 space-y-4" onSubmit={onSubmit}>
-          <div>
-            <label className="sr-only" htmlFor="sign-in-email">
-              {t('email')}
-            </label>
-            <input
-              id="sign-in-email"
-              className={INPUT_CLASS}
-              placeholder={t('email')}
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              autoComplete="email"
-              required
+        <Field
+          id="sign-in-password"
+          label={t('password')}
+          labelAction={
+            <Link className="text-[13px] font-semibold text-primary-text hover:underline" href={ROUTES.FORGOT_PASSWORD}>
+              {t('forgotPassword')}
+            </Link>
+          }
+        >
+          <PasswordInput
+            aria-invalid={error ? true : undefined}
+            autoComplete="current-password"
+            id="sign-in-password"
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder={t('passwordPlaceholder')}
+            required
+            value={password}
+          />
+        </Field>
+
+        {siteKey ? (
+          <div className="flex justify-center">
+            <ReCAPTCHA
+              ref={recaptchaRef}
+              sitekey={siteKey}
+              onChange={(token) => setCaptchaToken(token)}
+              onExpired={() => setCaptchaToken(null)}
             />
           </div>
+        ) : null}
 
-          <div>
-            <label className="sr-only" htmlFor="sign-in-password">
-              {t('password')}
-            </label>
-            <input
-              id="sign-in-password"
-              className={INPUT_CLASS}
-              placeholder={t('password')}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              type="password"
-              autoComplete="current-password"
-              required
-            />
-          </div>
+        {error ? (
+          <p className="rounded-sm bg-danger-bg px-4 py-2.5 text-[13px] font-semibold text-danger-fg" role="alert">
+            {error}
+          </p>
+        ) : null}
 
-          {siteKey ? (
-            <div className="flex justify-center">
-              <ReCAPTCHA
-                ref={recaptchaRef}
-                sitekey={siteKey}
-                onChange={(token) => setCaptchaToken(token)}
-                onExpired={() => setCaptchaToken(null)}
-              />
-            </div>
-          ) : null}
-
-          <button
-            className="w-full rounded-full bg-primary px-5 py-3 text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-            type="submit"
-            disabled={loading}
-          >
-            {loading ? t('submitting') : t('submit')}
-          </button>
-
-          {error ? (
-            <p className="text-sm text-destructive" role="alert">
-              {error}
-            </p>
-          ) : null}
-        </form>
-
-        <div className="mt-4 text-center">
-          <Link href={ROUTES.FORGOT_PASSWORD} className="text-sm text-foreground hover:underline">
-            {t('forgotPassword')}
-          </Link>
-        </div>
-      </div>
-    </main>
+        <Button className="mt-1 w-full" loading={loading} loadingLabel={t('submitting')} size="lg" type="submit" variant="primary">
+          {t('submit')}
+        </Button>
+      </form>
+    </AuthScreen>
   );
 }

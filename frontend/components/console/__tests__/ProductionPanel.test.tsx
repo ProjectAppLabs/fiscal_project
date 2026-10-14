@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from '@jest/globals';
-import { screen } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { ProductionPanel } from '../ProductionPanel';
@@ -26,8 +26,8 @@ describe('ProductionPanel', () => {
   it('lists what production still needs', async () => {
     renderWithIntl(<ProductionPanel issuerId={3} />);
 
-    expect(await screen.findByText(/✗ Software de producción/)).toHaveClass('text-destructive');
-    expect(screen.getByText(/✓ Set de pruebas aceptado/)).toHaveClass('text-success');
+    expect((await screen.findByText('Software de producción')).closest('li')).toHaveTextContent('✗ Software de producción');
+    expect(screen.getByText('Set de pruebas aceptado').closest('li')).toHaveTextContent('✓ Set de pruebas aceptado');
   });
 
   it('copies the habilitación software', async () => {
@@ -37,7 +37,7 @@ describe('ProductionPanel', () => {
     await userEvent.click(await screen.findByRole('button', { name: 'Usar el software de habilitación' }));
 
     expect(mockPost).toHaveBeenCalledWith('console/issuers/3/production/copy-software/', {});
-    expect(await screen.findByText(/✓ Software de producción/)).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText('Software de producción').closest('li')).toHaveTextContent('✓ Software de producción'));
   });
 
   it('keeps the switch disabled until everything is ready and confirmed', async () => {

@@ -49,15 +49,18 @@ export interface IssuerForm {
 }
 
 export interface SoftwareForm {
-  environment: '2';
+  environment: '1' | '2';
   software_id: string;
   software_pin: string;
   test_set_id: string;
 }
 
 export interface RangeForm {
-  kind: 'invoice';
+  /** invoice: authorized numbering (needs its technical key); contingency: paper or booklet, type 03 (D5). */
+  kind: 'invoice' | 'contingency';
   resolution_number: string;
+  resolution_date?: string;
+  establishment?: string;
   prefix: string;
   number_from: number;
   number_to: number;

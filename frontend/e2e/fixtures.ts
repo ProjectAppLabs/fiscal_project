@@ -93,6 +93,8 @@ export async function signInWithCookies(context: BrowserContext, page: Page, bas
   ]);
   await stubValidToken(page);
   await stubHiddenStagingBanner(page);
+  // The header counts open alerts and contingencies on every page; a spec can stub its own summary afterwards.
+  await page.route('**/api/console/summary/', (route) => fulfillJson(route, 200, consoleSummary));
 }
 
 /** Start the test without any session or stored user. */
@@ -358,6 +360,8 @@ export async function stubIssuerList(page: Page) {
 
 /** Stub `console/issuers/<id>/` (and its production status): the test issuer exists, anything else is a 404. */
 export async function stubIssuerDetail(page: Page) {
+  // The life cycle on the issuer's page reads the test set; stubTestSet can override it afterwards.
+  await page.route(/\/api\/console\/issuers\/\d+\/test-set\/$/, (route) => fulfillJson(route, 200, { readiness: readyIssuer, run: null }));
   await page.route(/\/api\/console\/issuers\/\d+\/production\/$/, (route) =>
     fulfillJson(route, 200, {
       environment: '2',
