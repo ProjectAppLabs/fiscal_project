@@ -21,6 +21,8 @@ import { useQueryParams } from '@/lib/hooks/useQueryParams';
 import { useRequireAuth } from '@/lib/hooks/useRequireAuth';
 import { createIssuer, fetchTestSet, type LoadedCertificate } from '@/lib/services/onboarding';
 import { useOperationsStore } from '@/lib/stores/operationsStore';
+import { HandoffCard } from '@/components/console/HandoffCard';
+import type { HandoffId } from '@/lib/handoff';
 
 const STEPS = ['client', 'issuer', 'certificate', 'software', 'range'] as const;
 const DONE = STEPS.length;
@@ -113,7 +115,7 @@ function ClientStep({ onDone }: { onDone: (clientId: number) => void }) {
   }, [loadClientSystems]);
 
   return (
-    <StepCard title={t('title')}>
+    <StepCard guides={['client-system']} title={t('title')}>
       <div className="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
         <Field id="client-existing" label={t('existing')}>
           <Select id="client-existing" onChange={(e) => setChosen(e.target.value)} value={chosen}>
@@ -144,7 +146,7 @@ function IssuerStep({ clientId, onDone }: { clientId: number; onDone: (issuerId:
   const tStep = useTranslations('onboarding');
 
   return (
-    <StepCard subtitle={t('subtitle')} title={t('title')}>
+    <StepCard guides={['enrolment']} subtitle={t('subtitle')} title={t('title')}>
       <IssuerForm
         mode="create"
         onSubmit={async (data) => {
@@ -163,7 +165,7 @@ function CertificateStep({ issuerId, onDone }: { issuerId: number; onDone: () =>
   const [loaded, setLoaded] = useState<LoadedCertificate | null>(null);
 
   return (
-    <StepCard subtitle={t('body')} title={t('title')}>
+    <StepCard guides={['certificate']} issuerId={issuerId} subtitle={t('body')} title={t('title')}>
       {loaded ? (
         <div className="flex flex-col gap-4">
           <LoadedCertificateNotice certificate={loaded} />
@@ -185,7 +187,7 @@ function SoftwareStep({ issuerId, onDone }: { issuerId: number; onDone: () => vo
   const tStep = useTranslations('onboarding');
 
   return (
-    <StepCard subtitle={t('body')} title={t('title')}>
+    <StepCard guides={['dian-registration', 'software']} issuerId={issuerId} subtitle={t('body')} title={t('title')}>
       <SoftwareFormFields environment="2" issuerId={issuerId} onSaved={onDone} submitLabel={tStep('next')} />
     </StepCard>
   );
@@ -196,7 +198,7 @@ function RangeStep({ issuerId, onDone }: { issuerId: number; onDone: () => void 
   const tStep = useTranslations('onboarding');
 
   return (
-    <StepCard subtitle={t('body')} title={t('title')}>
+    <StepCard guides={['software']} issuerId={issuerId} subtitle={t('body')} title={t('title')}>
       <RangeFormFields issuerId={issuerId} onSaved={onDone} preset={WIZARD_RANGE} submitLabel={tStep('next')} />
     </StepCard>
   );
@@ -234,11 +236,21 @@ function AlreadyDone({ title, body, onContinue }: { title: string; body: string;
   );
 }
 
-function StepCard({ title, subtitle, children }: { title: string; subtitle?: string; children: ReactNode }) {
+/** A wizard step; `guides` adds, under the form, the Claude in Chrome guides for what the step needs from outside. */
+function StepCard({ title, subtitle, guides, issuerId, children }: StepCardProps) {
   return (
     <Card aria-label={title} className="appear">
       <CardHeader subtitle={subtitle} title={title} />
       {children}
+      {guides ? <HandoffCard className="mt-6" guides={guides} issuer={issuerId ? { id: issuerId } : null} /> : null}
     </Card>
   );
+}
+
+interface StepCardProps {
+  title: string;
+  subtitle?: string;
+  guides?: HandoffId[];
+  issuerId?: number;
+  children: ReactNode;
 }

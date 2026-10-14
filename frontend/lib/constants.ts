@@ -11,6 +11,7 @@ export const ROUTES = {
   ONBOARDING: '/onboarding',
   ACCOUNT: '/account',
   USERS: '/users',
+  HELP: '/help',
   HEALTH: '/health',
 } as const;
 

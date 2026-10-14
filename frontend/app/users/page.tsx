@@ -22,6 +22,7 @@ import { useRequireAuth } from '@/lib/hooks/useRequireAuth';
 import { stepErrors } from '@/lib/services/onboarding';
 import { fetchUsers, inviteUser, resendInvitation, updateUser, type ConsoleRole, type ConsoleUser } from '@/lib/services/users';
 import { useAuthStore } from '@/lib/stores/authStore';
+import { HelpTip } from '@/components/console/HelpTip';
 
 /**
  * The people who use the console (H-03), for administrators: invite by e-mail (the invitation carries a code to set
@@ -112,8 +113,11 @@ function InviteForm({ onInvited }: { onInvited: (user: ConsoleUser, sent: boolea
       <Field className="sm:col-span-2" hint={t('emailHint')} id="invite-email" label={t('email')}>
         <Input autoComplete="off" id="invite-email" onChange={(e) => set('email')(e.target.value)} required type="email" value={form.email} />
       </Field>
-      <fieldset className="flex flex-col gap-2 sm:col-span-2">
-        <legend className="mb-2 text-[13px] font-semibold text-ink">{t('role')}</legend>
+      <fieldset aria-labelledby="invite-role-legend" className="flex flex-col gap-2 sm:col-span-2">
+        <legend className="mb-2 flex items-center gap-1 text-[13px] font-semibold text-ink">
+          <span id="invite-role-legend">{t('role')}</span>
+          <HelpTip label={t('role')} topic="users.role" />
+        </legend>
         {(['operator', 'admin'] as const).map((role) => (
           <Choice
             checked={form.role === role}

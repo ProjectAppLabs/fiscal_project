@@ -47,6 +47,8 @@ import {
 import { stepErrors } from '@/lib/services/onboarding';
 import type { DetailStatus } from '@/lib/stores/consoleStore';
 import { useOperationsStore } from '@/lib/stores/operationsStore';
+import { HandoffCard } from '@/components/console/HandoffCard';
+import { HelpTip } from '@/components/console/HelpTip';
 
 const TABS = ['summary', 'habilitation', 'certificates', 'numbering', 'contingency'] as const;
 type Tab = (typeof TABS)[number];
@@ -229,15 +231,22 @@ function IssuerView({ issuer }: { issuer: IssuerDetail }) {
                 <ProductionPanel issuerId={issuer.id} onChange={refresh} />
               </div>
               <TestSetRuns issuerId={issuer.id} version={lifecycle.version} />
+              <HandoffCard guides={issuer.environment === '1' ? ['production', 'rejection'] : ['test-set', 'production', 'rejection']} issuer={issuer} />
             </div>
           ) : null}
           {tab === 'certificates' ? (
             <div className="flex flex-col gap-4">
               <Certificates issuer={issuer} onChange={refresh} />
               <Software issuer={issuer} onChange={refresh} />
+              <HandoffCard guides={['certificate', 'software']} issuer={issuer} />
             </div>
           ) : null}
-          {tab === 'numbering' ? <Ranges issuer={issuer} onChange={refresh} /> : null}
+          {tab === 'numbering' ? (
+            <div className="flex flex-col gap-4">
+              <Ranges issuer={issuer} onChange={refresh} />
+              <HandoffCard guides={issuer.environment === '1' ? ['production'] : ['software', 'production']} issuer={issuer} />
+            </div>
+          ) : null}
           {tab === 'contingency' ? <ContingencyLetter issuerId={issuer.id} /> : null}
         </TabPanel>
       </div>
@@ -657,7 +666,7 @@ function ContingencyLetter({ issuerId }: { issuerId: number }) {
 
   return (
     <Card aria-labelledby="issuer-letter">
-      <CardHeader id="issuer-letter" subtitle={t('letterBody')} title={t('letterTitle')} />
+      <CardHeader help={<HelpTip label={t('letterTitle')} topic="contingency.letter" />} id="issuer-letter" subtitle={t('letterBody')} title={t('letterTitle')} />
       <form className="grid gap-4 sm:grid-cols-[1fr_1fr_auto] sm:items-end" onSubmit={(e) => void onSubmit(e)}>
         <Field id="letter-from" label={t('letterFrom')}>
           <Input id="letter-from" onChange={(e) => setFrom(e.target.value)} required type="date" value={from} />

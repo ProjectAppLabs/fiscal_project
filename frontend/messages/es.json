@@ -24,7 +24,8 @@
     "more": "Más",
     "closeMore": "Cerrar el menú",
     "openCount": "{count, plural, one {# abierta} other {# abiertas}}",
-    "users": "Usuarios de la consola"
+    "users": "Usuarios de la consola",
+    "help": "Guías y ayuda"
   },
   "footer": {
     "tagline": "Consola interna de facturación electrónica de ProjectApp."
@@ -831,7 +832,8 @@
     "close": "Cerrar",
     "cancel": "Cancelar",
     "previous": "Anterior",
-    "next": "Siguiente"
+    "next": "Siguiente",
+    "helpAbout": "Ayuda: {label}"
   },
   "account": {
     "title": "Tu cuenta",
@@ -1065,5 +1067,251 @@
     },
     "noticesPending": "Avisos por entregar",
     "noticesFailed": "Avisos fallidos"
+  },
+  "help": {
+    "what": "Qué es",
+    "where": "Dónde se obtiene",
+    "openPage": "Abrir la página",
+    "tips": {
+      "client": {
+        "name": {
+          "what": "El nombre con el que el equipo reconoce el sistema que manda las facturas, por ejemplo Waiter.",
+          "where": "Lo eliges tú. Sale en los avisos, la bitácora y los reportes."
+        },
+        "webhook": {
+          "what": "La dirección https donde Fiscal. avisa a ese sistema cada cambio de estado de un documento (validado, rechazado, en contingencia). Los avisos van firmados.",
+          "where": "Te la da el equipo técnico del sistema cliente. Puedes dejarla vacía y ponerla después en la página del sistema cliente."
+        },
+        "secret": {
+          "what": "La llave con la que el sistema cliente firma sus llamadas a Fiscal. Va con el identificador de llave.",
+          "where": "Fiscal. la muestra una sola vez: al crear el sistema cliente o al rotar el secreto.",
+          "secret": "Guárdala en un gestor de contraseñas y entrégala al equipo técnico por un canal seguro. Nunca por chat ni correo."
+        },
+        "grace": {
+          "what": "Horas en que el secreto anterior sigue sirviendo, para cambiarlo en el sistema cliente sin cortar el servicio.",
+          "where": "Con 24 horas suele bastar. Con 0 deja de servir ya: úsalo si el secreto se expuso."
+        }
+      },
+      "issuer": {
+        "nit": {
+          "what": "El número de identificación tributaria del comercio. Para una persona natural es su cédula.",
+          "where": "RUT, casilla 5. Se escribe sin el dígito de verificación."
+        },
+        "dv": {
+          "what": "El último dígito del NIT, calculado por la DIAN.",
+          "where": "RUT, casilla 6. Fiscal. lo calcula a partir del NIT; si no coincide con el RUT, revisa el NIT."
+        },
+        "personType": {
+          "what": "Si el comercio es una empresa (persona jurídica) o una persona (persona natural).",
+          "where": "RUT, casilla 24: 1 es persona jurídica y 2 es persona natural."
+        },
+        "legalName": {
+          "what": "El nombre legal del comercio, tal cual en el RUT. Va en cada factura.",
+          "where": "RUT, casilla 35 (razón social) o casillas 31 a 34 (apellidos y nombres de una persona natural)."
+        },
+        "tradeName": {
+          "what": "El nombre del negocio, si es distinto del legal.",
+          "where": "RUT, casilla 36. Es opcional."
+        },
+        "responsibilities": {
+          "what": "Las obligaciones tributarias del comercio. Si no coinciden con el RUT, la DIAN rechaza las facturas (regla FAJ26).",
+          "where": "RUT, casilla 53: el 13 es O-13, el 15 es O-15, el 23 es O-23 y el 47 es O-47. Si no tiene ninguno, «No aplica» (R-99-PN). En duda, pregúntale al contador."
+        },
+        "taxScheme": {
+          "what": "El impuesto principal que cobra el comercio en sus ventas: IVA, impuesto nacional al consumo (INC) o ninguno.",
+          "where": "RUT, casilla 53: el 48 es IVA; el 33 es INC (común en restaurantes); el 49 «No responsable de IVA» es «No aplica». Lo confirma el contador."
+        },
+        "address": {
+          "what": "La dirección principal del comercio. Va en las facturas.",
+          "where": "RUT, casilla 41."
+        },
+        "municipality": {
+          "what": "El municipio de la dirección. Fiscal. guarda su código DANE, que es el que pide la DIAN.",
+          "where": "RUT, casilla 40. Escribe el nombre y elígelo de la lista."
+        },
+        "email": {
+          "what": "El correo del comercio que aparece en las facturas.",
+          "where": "RUT, casilla 42, o el que el comercio prefiera para facturación."
+        },
+        "phone": {
+          "what": "Un teléfono de contacto que va en las facturas.",
+          "where": "RUT, casilla 44. Es opcional."
+        }
+      },
+      "certificate": {
+        "kind": {
+          "what": "Las entidades entregan el certificado de dos formas: un solo archivo protegido con contraseña (.p12 o .pfx), o el certificado y la llave privada en archivos separados.",
+          "where": "Revisa el correo o el portal de la entidad que lo emitió."
+        },
+        "file": {
+          "what": "El certificado de firma digital del comercio. Con él, Fiscal. firma cada factura. Lo emite una entidad acreditada por la ONAC.",
+          "where": "El comercio lo descarga del portal de su entidad de certificación. Debe ser un archivo, no un token USB.",
+          "link": "https://onac.org.co",
+          "linkLabel": "Entidades acreditadas (ONAC)"
+        },
+        "password": {
+          "what": "La contraseña que protege el archivo .p12 o .pfx.",
+          "where": "La define el comercio al descargar el certificado, o se la envía la entidad.",
+          "secret": "Escríbela tú directamente aquí. Fiscal. la usa una vez para abrir el archivo y guarda el certificado cifrado."
+        },
+        "keyFile": {
+          "what": "La llave privada que acompaña al certificado (.key). Sin ella no se puede firmar.",
+          "where": "La entrega la entidad junto con el certificado, o se generó en el equipo al pedirlo.",
+          "secret": "Es la parte secreta del certificado: no la mandes por correo ni la subas a otro sitio."
+        }
+      },
+      "software": {
+        "environment": {
+          "what": "Habilitación es el ambiente de pruebas de la DIAN, sin efecto fiscal. Producción es el real.",
+          "where": "Mientras la DIAN no acepte el set de pruebas, va en habilitación."
+        },
+        "softwareId": {
+          "what": "El identificador que la DIAN le da a Fiscal. dentro del registro de este comercio. No es secreto.",
+          "where": "Portal de habilitación → Registro y habilitación → Documentos electrónicos → Factura electrónica → Configurar modos de operación → fila «Software propio», columna ID. También está en la página del set de pruebas.",
+          "link": "https://catalogo-vpfe-hab.dian.gov.co/User/Login",
+          "linkLabel": "Portal de habilitación DIAN"
+        },
+        "pin": {
+          "what": "El PIN que el comercio eligió al asociar Fiscal. como software propio. Va en el código de seguridad de cada documento.",
+          "where": "Lo escribió el comercio en el campo «Pin del SW» de «Configurar modos de operación».",
+          "secret": "Es secreto: escríbelo tú, nunca en un chat, correo o ticket. El portal lo muestra en pantalla, así que no compartas pantalla en esas páginas."
+        },
+        "testSetId": {
+          "what": "El identificador del set de pruebas que la DIAN asignó a este registro. No es secreto.",
+          "where": "Portal de habilitación → listado de modos de operación → fila de Fiscal., columna «Acciones» → aviso «¡Importante!» arriba de la página del set.",
+          "link": "https://catalogo-vpfe-hab.dian.gov.co/User/Login",
+          "linkLabel": "Portal de habilitación DIAN"
+        }
+      },
+      "range": {
+        "resolution": {
+          "what": "El número de la resolución de la DIAN que autoriza esta numeración.",
+          "where": "Habilitación: página del set de pruebas → «Rango de numeración asignado» (18760000001). Producción: la resolución que expidió MUISCA."
+        },
+        "prefix": {
+          "what": "Las letras que van antes del número de la factura, como SETP en SETP990000001. Hasta 4 caracteres.",
+          "where": "En la misma resolución o página del set. En habilitación es SETP."
+        },
+        "numbers": {
+          "what": "El primer y el último número autorizados del rango.",
+          "where": "En la resolución o la página del set. Habilitación: 990000000 a 995000000."
+        },
+        "validity": {
+          "what": "Las fechas entre las que la resolución permite facturar con este rango.",
+          "where": "En la resolución o la página del set. Habilitación: 2019-01-19 a 2030-01-19."
+        },
+        "technicalKey": {
+          "what": "La clave de 40 caracteres de este rango. Fiscal. la usa para calcular el CUFE de cada factura; si está mal, la DIAN rechaza con FAD06.",
+          "where": "Habilitación: página del set → «Información del software» (clic en el campo, Ctrl+A y Ctrl+C). Producción: Fiscal. la trae sola con «Traer la numeración de la DIAN».",
+          "secret": "Es secreta: cópiala directo del portal a este campo. Nunca la pegues en un chat."
+        },
+        "kind": {
+          "what": "Facturación: la numeración autorizada para facturas electrónicas. Contingencia: el talonario de papel (tipo 03) para cuando no hay sistema.",
+          "where": "Las dos las autoriza la DIAN por resolución."
+        },
+        "resolutionDate": {
+          "what": "La fecha en que la DIAN expidió la resolución.",
+          "where": "En el PDF de la resolución."
+        },
+        "establishment": {
+          "what": "La sede o caja que usa este rango.",
+          "where": "Si el comercio tiene varias sedes, cada una tiene su prefijo en la resolución."
+        }
+      },
+      "testSet": {
+        "size": {
+          "what": "Cuántas facturas, notas crédito y notas débito pide la DIAN para aceptar el set.",
+          "where": "Página del set de pruebas en el portal → «Total de documentos requeridos». El típico es 30, 10 y 10.",
+          "link": "https://catalogo-vpfe-hab.dian.gov.co/User/Login",
+          "linkLabel": "Portal de habilitación DIAN"
+        }
+      },
+      "production": {
+        "habilitado": {
+          "what": "El último paso del portal de habilitación: el comercio fija la fecha desde la que factura electrónicamente.",
+          "where": "Lo marca el comercio en el portal, después de hablar con su contador. Es irreversible y agrega la responsabilidad 52 al RUT."
+        },
+        "numbering": {
+          "what": "La numeración de producción la autoriza la DIAN por resolución, y su prefijo se asocia a Fiscal. antes de traerla.",
+          "where": "Servicios en línea de la DIAN (MUISCA) → solicitud de numeración de facturación. Después, en el portal de factura electrónica de producción, se asocia el prefijo al software."
+        }
+      },
+      "contingency": {
+        "letter": {
+          "what": "El borrador de la carta con la que el comercio informa a la DIAN las facturas que hizo en contingencia en un periodo.",
+          "where": "Fiscal. la arma con las contingencias de las fechas elegidas. El representante legal la firma y el comercio la envía a contingencia.facturadorvp@dian.gov.co."
+        }
+      },
+      "users": {
+        "role": {
+          "what": "Operador: ve y opera documentos, emisores, contingencias y alertas. Administrador: además invita usuarios, rota secretos, activa o desactiva emisores y rangos y pasa emisores a producción.",
+          "where": "Elígelo según lo que la persona necesita hacer. Se puede cambiar después."
+        }
+      }
+    }
+  },
+  "handoff": {
+    "title": "Hazlo con Claude en Chrome",
+    "body": "Copia la guía y pégala en Claude en Chrome con el portal abierto. Te acompaña paso a paso; tú inicias sesión y escribes el PIN, la clave técnica y las contraseñas.",
+    "allGuides": "Ver todas las guías",
+    "copy": "Copiar guía",
+    "download": "Descargar .md",
+    "copied": "Guía «{title}» copiada. Pégala en Claude en Chrome.",
+    "copyFailed": "No se pudo copiar. Descarga el .md y pégalo desde el archivo.",
+    "downloadFailed": "No se pudo descargar la guía. Intenta de nuevo.",
+    "noIssuer": "por definir (pregúntale a la persona qué emisor es)",
+    "guides": {
+      "dian-registration": {
+        "title": "Registrarse como facturador en la DIAN",
+        "description": "Portal de habilitación: iniciar sesión y registrar al comercio como facturador electrónico."
+      },
+      "software": {
+        "title": "Configurar Fiscal. como software propio y leer el set",
+        "description": "Asociar Fiscal. con su PIN, leer SoftwareID, TestSetId y la numeración, y guardarlos en Fiscal."
+      },
+      "certificate": {
+        "title": "Conseguir y cargar el certificado digital",
+        "description": "Qué certificado sirve, dónde se compra y cómo se carga en Fiscal."
+      },
+      "enrolment": {
+        "title": "Inscribir un emisor en Fiscal.",
+        "description": "El asistente de cinco pasos, con los datos del emisor sacados del RUT casilla por casilla."
+      },
+      "test-set": {
+        "title": "Correr el set de pruebas de la DIAN",
+        "description": "Enviar el set, esperar el resultado y entender los rechazos conocidos."
+      },
+      "production": {
+        "title": "Pasar un emisor a producción",
+        "description": "«Habilitado» en el portal, numeración en MUISCA, prefijo asociado y el paso en Fiscal."
+      },
+      "client-system": {
+        "title": "Conectar un sistema cliente",
+        "description": "Crear el sistema cliente, guardar sus credenciales y probar la conexión."
+      },
+      "rejection": {
+        "title": "Revisar un documento rechazado",
+        "description": "Leer las reglas de la DIAN, encontrar el origen del error y quién lo corrige."
+      }
+    }
+  },
+  "helpPage": {
+    "title": "Guías y ayuda",
+    "subtitle": "Cada proceso, paso a paso, para hacerlo solo o con Claude en Chrome.",
+    "groups": {
+      "dian": "En los portales de la DIAN",
+      "fiscal": "En Fiscal."
+    },
+    "howTitle": "Cómo se usa una guía con Claude en Chrome",
+    "howSteps": {
+      "1": "Abre el portal o la página de Fiscal. donde vas a trabajar.",
+      "2": "Copia la guía con «Copiar guía» y pégala en Claude en Chrome; escribe «empecemos».",
+      "3": "Claude te dice qué hacer y llena los datos que no son secretos. Tú inicias sesión, eliges los archivos y escribes PIN, clave técnica y contraseñas.",
+      "4": "Antes de cada paso irreversible, Claude para y te pide confirmación. Al final te entrega un resumen sin secretos."
+    },
+    "safetyTitle": "Lo que nunca le das a Claude ni a nadie",
+    "safetyBody": "El PIN del software, la clave técnica, la contraseña del certificado, el secreto de un sistema cliente y los tokens de la DIAN. Las guías se lo dicen a Claude; si una pantalla los muestra, cópialos tú.",
+    "tipsTitle": "En cada campo, el «?»",
+    "tipsBody": "Junto a los campos que piden datos de la DIAN, del RUT o del certificado hay un «?» que explica qué es el dato y de dónde sale."
   }
 }

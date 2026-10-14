@@ -12,6 +12,7 @@ import { toast } from '@/components/ui/Toast';
 import { useIsAdmin } from '@/lib/hooks/useIsAdmin';
 import { fetchProduction, runProductionAction, stepErrors, type ProductionAction, type ProductionStatus } from '@/lib/services/onboarding';
 import { StepErrors } from './ClientSystemForm';
+import { HelpTip } from './HelpTip';
 
 const READINESS_KEYS = ['test_set_accepted', 'certificate', 'software', 'range', 'gateway'] as const;
 
@@ -63,6 +64,7 @@ export function ProductionPanel({ issuerId, onChange }: { issuerId: number; onCh
   return (
     <Card aria-labelledby="issuer-production">
       <CardHeader
+        help={<HelpTip label={t('title')} topic="production.habilitado" />}
         id="issuer-production"
         subtitle={inProduction ? undefined : t('readyCount', { ready: readyCount, total: READINESS_KEYS.length })}
         title={t('title')}
@@ -72,7 +74,7 @@ export function ProductionPanel({ issuerId, onChange }: { issuerId: number; onCh
       ) : (
         <div className="flex flex-col gap-4">
           <Notice title={t('outsideTitle')} tone="info">
-            {t('outsideBody')}
+            {t('outsideBody')} <HelpTip className="ml-0.5" label={t('outsideTitle')} topic="production.numbering" />
           </Notice>
           <RequirementList
             items={READINESS_KEYS.map((key) => ({

@@ -102,11 +102,11 @@ test.describe('Console issuers', () => {
     await page.getByRole('button', { name: 'Agregar rango' }).click();
     const dialog = page.getByRole('dialog', { name: 'Agregar rango' });
     await dialog.getByRole('radio', { name: /Contingencia/ }).check();
-    await dialog.getByLabel('Número de resolución').fill('18764000009');
-    await dialog.getByLabel('Prefijo').fill('pap');
+    await dialog.getByLabel('Número de resolución', { exact: true }).fill('18764000009');
+    await dialog.getByLabel('Prefijo', { exact: true }).fill('pap');
     await dialog.getByLabel('Hasta', { exact: true }).fill('500');
-    await dialog.getByLabel('Vigente desde').fill('2026-10-01');
-    await dialog.getByLabel('Vigente hasta').fill('2028-10-01');
+    await dialog.getByLabel('Vigente desde', { exact: true }).fill('2026-10-01');
+    await dialog.getByLabel('Vigente hasta', { exact: true }).fill('2028-10-01');
     await dialog.getByRole('button', { name: 'Guardar rango' }).click();
 
     await expect(page.getByRole('status').filter({ hasText: 'Rango agregado' })).toBeVisible();
@@ -126,8 +126,8 @@ test.describe('Console issuers', () => {
 
     await page.getByRole('button', { name: 'Reemplazar certificado' }).click();
     const dialog = page.getByRole('dialog', { name: 'Reemplazar certificado' });
-    await dialog.getByLabel('Archivo del certificado').setInputFiles({ name: 'nuevo.p12', mimeType: 'application/x-pkcs12', buffer: Buffer.from('p12') });
-    await dialog.getByLabel('Contraseña del certificado').fill('clave-del-certificado');
+    await dialog.getByLabel('Archivo del certificado', { exact: true }).setInputFiles({ name: 'nuevo.p12', mimeType: 'application/x-pkcs12', buffer: Buffer.from('p12') });
+    await dialog.getByLabel('Contraseña del certificado', { exact: true }).fill('clave-del-certificado');
     await dialog.getByRole('button', { name: 'Guardar certificado' }).click();
 
     await expect(page.getByRole('status').filter({ hasText: 'Certificado cargado' })).toBeVisible();
@@ -138,8 +138,8 @@ test.describe('Console issuers', () => {
 
     await page.getByRole('button', { name: 'Editar datos' }).click();
     const dialog = page.getByRole('dialog', { name: 'Editar datos' });
-    await expect(dialog.getByLabel('NIT (sin dígito de verificación)')).toBeDisabled();
-    await dialog.getByLabel('Nombre comercial (opcional)').fill('La Casa de la Prueba');
+    await expect(dialog.getByLabel('NIT (sin dígito de verificación)', { exact: true })).toBeDisabled();
+    await dialog.getByLabel('Nombre comercial (opcional)', { exact: true }).fill('La Casa de la Prueba');
     await dialog.getByRole('button', { name: 'Guardar datos' }).click();
 
     await expect(page.getByRole('status').filter({ hasText: 'Datos del emisor guardados' })).toBeVisible();

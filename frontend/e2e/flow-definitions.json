@@ -517,6 +517,32 @@
       "outcomes": [
         "success"
       ]
+    },
+    "console-help-guides": {
+      "name": "Guides for Claude in Chrome",
+      "module": "console",
+      "roles": [
+        "operator"
+      ],
+      "priority": "P2",
+      "description": "/help (account menu) lists the step-by-step guides; each one is copied or downloaded as .md with the console address filled in",
+      "expectedSpecs": 1,
+      "outcomes": [
+        "success"
+      ]
+    },
+    "console-field-help": {
+      "name": "Field help bubbles",
+      "module": "console",
+      "roles": [
+        "operator"
+      ],
+      "priority": "P3",
+      "description": "The «?» next to a field explains what the data is and where it comes from (RUT, DIAN portal, certificate entity)",
+      "expectedSpecs": 1,
+      "outcomes": [
+        "success"
+      ]
     }
   }
 }

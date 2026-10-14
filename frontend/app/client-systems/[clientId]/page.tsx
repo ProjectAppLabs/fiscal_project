@@ -44,6 +44,8 @@ import {
 import { isNotFoundError } from '@/lib/services/console';
 import { stepErrors } from '@/lib/services/onboarding';
 import { isAlertKind } from '@/lib/services/operations';
+import { HandoffCard } from '@/components/console/HandoffCard';
+import { HelpTip } from '@/components/console/HelpTip';
 
 const STATE_TONE: Record<DeliveryState, BadgeTone> = { pending: 'pending', failed: 'danger', delivered: 'success' };
 const GRACE_OPTIONS = [0, 12, 24, 48, 72];
@@ -253,6 +255,7 @@ function ConnectionGuide({ client, onEdit, onPinged }: { client: ClientSystemDet
         ]}
       />
       <p className="mt-4 text-[13px] text-ink-3">{t('docsHint')}</p>
+      <HandoffCard className="mt-4" guides={['client-system']} />
     </Card>
   );
 }
@@ -279,7 +282,7 @@ function WebhookForm({ client, onSaved }: { client: ClientSystemDetail; onSaved:
 
   return (
     <form className="flex flex-col gap-4" onSubmit={(e) => void onSubmit(e)}>
-      <Field error={errors?.[0]} hint={t('webhookHint')} id="client-webhook-url" label={t('webhookUrl')}>
+      <Field error={errors?.[0]} help={<HelpTip label={t('webhookUrl')} topic="client.webhook" />} hint={t('webhookHint')} id="client-webhook-url" label={t('webhookUrl')}>
         <Input id="client-webhook-url" onChange={(e) => setUrl(e.target.value)} placeholder="https://" type="url" value={url} />
       </Field>
       <div>
@@ -365,7 +368,7 @@ function Secrets({ client, onChange }: { client: ClientSystemDetail; onChange: (
           </div>
         ) : (
           <div className="flex flex-col gap-4">
-            <Field hint={t('graceHint')} id="rotate-grace" label={t('grace')}>
+            <Field help={<HelpTip label={t('grace')} topic="client.grace" />} hint={t('graceHint')} id="rotate-grace" label={t('grace')}>
               <Select id="rotate-grace" onChange={(e) => setGrace(Number(e.target.value))} value={grace}>
                 {GRACE_OPTIONS.map((hours) => (
                   <option key={hours} value={hours}>

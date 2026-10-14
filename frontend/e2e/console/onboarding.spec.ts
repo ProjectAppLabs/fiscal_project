@@ -28,32 +28,32 @@ test.describe('Console onboarding', () => {
   test('enrols ProjectApp step by step', { tag: [...CONSOLE_ONBOARDING, '@outcome:success'] }, async ({ page }) => {
     await page.getByRole('main').getByRole('link', { name: 'Inscribir emisor' }).click();
 
-    await page.getByLabel('Nombre del sistema nuevo').fill('ProjectApp');
+    await page.getByLabel('Nombre del sistema nuevo', { exact: true }).fill('ProjectApp');
     await page.getByRole('button', { name: 'Crear sistema cliente' }).click();
     await expect(page.getByText('secreto-que-solo-se-ve-una-vez')).toBeVisible();
     await page.getByRole('button', { name: 'Ya lo guardé' }).click();
 
-    await page.getByLabel('NIT (sin dígito de verificación)').fill('900373115');
+    await page.getByLabel('NIT (sin dígito de verificación)', { exact: true }).fill('900373115');
     await page.getByLabel('Dígito de verificación', { exact: true }).fill('3');
-    await page.getByLabel('Razón social o nombre').fill('ProjectApp');
-    await page.getByLabel('Dirección').fill('Calle 10 #43-12');
+    await page.getByLabel('Razón social o nombre', { exact: true }).fill('ProjectApp');
+    await page.getByLabel('Dirección', { exact: true }).fill('Calle 10 #43-12');
     await page.getByLabel('Municipio', { exact: true }).fill('05001');
-    await page.getByLabel('Correo para facturación').fill('facturas@projectapp.co');
+    await page.getByLabel('Correo para facturación', { exact: true }).fill('facturas@projectapp.co');
     await page.getByRole('button', { name: 'Continuar' }).click();
 
-    await page.getByLabel('Archivo del certificado').setInputFiles({ name: 'projectapp.p12', mimeType: 'application/x-pkcs12', buffer: Buffer.from('p12') });
-    await page.getByLabel('Contraseña del certificado').fill('clave-del-certificado');
+    await page.getByLabel('Archivo del certificado', { exact: true }).setInputFiles({ name: 'projectapp.p12', mimeType: 'application/x-pkcs12', buffer: Buffer.from('p12') });
+    await page.getByLabel('Contraseña del certificado', { exact: true }).fill('clave-del-certificado');
     await page.getByRole('button', { name: 'Continuar' }).click();
     await expect(page.getByRole('status')).toContainText('Certificado de CN=ProjectApp');
     await page.getByRole('button', { name: 'Continuar' }).click();
 
-    await page.getByLabel('Identificador del software').fill('sw-123');
-    await page.getByLabel('PIN del software').fill('12345');
-    await page.getByLabel('TestSetId').fill('4de36cb4-9973-4ea4-a156-34e909aa24dc');
+    await page.getByLabel('Identificador del software', { exact: true }).fill('sw-123');
+    await page.getByLabel('PIN del software', { exact: true }).fill('12345');
+    await page.getByLabel('TestSetId', { exact: true }).fill('4de36cb4-9973-4ea4-a156-34e909aa24dc');
     await page.getByRole('button', { name: 'Continuar' }).click();
 
-    await expect(page.getByLabel('Prefijo')).toHaveValue('SETP');
-    await page.getByLabel('Clave técnica').fill('clave-tecnica-del-catalogo');
+    await expect(page.getByLabel('Prefijo', { exact: true })).toHaveValue('SETP');
+    await page.getByLabel('Clave técnica', { exact: true }).fill('clave-tecnica-del-catalogo');
     await page.getByRole('button', { name: 'Continuar' }).click();
 
     await expect(page.getByRole('link', { name: 'Ir a la ficha y correr el set' })).toHaveAttribute('href', '/issuers/3?tab=habilitation');

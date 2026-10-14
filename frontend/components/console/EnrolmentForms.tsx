@@ -18,6 +18,7 @@ import {
   type RangeForm,
 } from '@/lib/services/onboarding';
 import { StepErrors } from './ClientSystemForm';
+import { HelpTip } from './HelpTip';
 
 /**
  * The enrolment forms, shared by the wizard and the issuer's page (replace the certificate H-12, register the
@@ -48,30 +49,33 @@ export function CertificateForm({ issuerId, onLoaded, submitLabel }: { issuerId:
 
   return (
     <form className="flex flex-col gap-4" onSubmit={onSubmit}>
-      <fieldset className="flex flex-col gap-2">
-        <legend className="mb-2 text-[13px] font-semibold text-ink">{t('kind')}</legend>
+      <fieldset aria-labelledby="certificate-kind-legend" className="flex flex-col gap-2">
+        <legend className="mb-2 flex items-center gap-1 text-[13px] font-semibold text-ink">
+          <span id="certificate-kind-legend">{t('kind')}</span>
+          <HelpTip label={t('kind')} topic="certificate.kind" />
+        </legend>
         {(['p12', 'pair'] as const).map((value) => (
           <Choice checked={kind === value} key={value} label={t(`kinds.${value}`)} name="certificate-kind" onChange={() => setKind(value)} type="radio" />
         ))}
       </fieldset>
       {kind === 'p12' ? (
         <>
-          <Field id="certificate-file" label={t('file')}>
+          <Field help={<HelpTip label={t('file')} topic="certificate.file" />} id="certificate-file" label={t('file')}>
             <Input accept=".p12,.pfx" className="pt-2.5" id="certificate-file" onChange={(e) => setFile(e.target.files?.[0] ?? null)} required type="file" />
           </Field>
-          <Field id="certificate-password" label={t('password')}>
+          <Field help={<HelpTip label={t('password')} topic="certificate.password" />} id="certificate-password" label={t('password')}>
             <PasswordInput autoComplete="off" id="certificate-password" onChange={(e) => setPassword(e.target.value)} required value={password} />
           </Field>
         </>
       ) : (
         <>
-          <Field id="certificate-public" label={t('certificateFile')}>
+          <Field help={<HelpTip label={t('certificateFile')} topic="certificate.file" />} id="certificate-public" label={t('certificateFile')}>
             <Input accept=".cer,.crt,.pem,.der,.zip" className="pt-2.5" id="certificate-public" onChange={(e) => setCertificate(e.target.files?.[0] ?? null)} required type="file" />
           </Field>
-          <Field id="certificate-key" label={t('keyFile')}>
+          <Field help={<HelpTip label={t('keyFile')} topic="certificate.keyFile" />} id="certificate-key" label={t('keyFile')}>
             <Input accept=".key,.pem" className="pt-2.5" id="certificate-key" onChange={(e) => setPrivateKey(e.target.files?.[0] ?? null)} required type="file" />
           </Field>
-          <Field id="certificate-key-password" label={t('keyPassword')}>
+          <Field help={<HelpTip label={t('keyPassword')} topic="certificate.password" />} id="certificate-key-password" label={t('keyPassword')}>
             <PasswordInput autoComplete="off" id="certificate-key-password" onChange={(e) => setKeyPassword(e.target.value)} value={keyPassword} />
           </Field>
         </>
@@ -116,21 +120,21 @@ export function SoftwareFormFields({ issuerId, environment, onSaved, submitLabel
   return (
     <form className="flex flex-col gap-4" onSubmit={onSubmit}>
       {environment ? null : (
-        <Field id="software-environment" label={t('environment')}>
+        <Field help={<HelpTip label={t('environment')} topic="software.environment" />} id="software-environment" label={t('environment')}>
           <Select id="software-environment" onChange={(e) => setEnv(e.target.value as '1' | '2')} value={env}>
             <option value="2">{tEnvironments('2')}</option>
             <option value="1">{tEnvironments('1')}</option>
           </Select>
         </Field>
       )}
-      <Field hint={t('softwareIdHint')} id="software-id" label={t('softwareId')}>
+      <Field help={<HelpTip label={t('softwareId')} topic="software.softwareId" />} hint={t('softwareIdHint')} id="software-id" label={t('softwareId')}>
         <Input className="font-mono" id="software-id" onChange={(e) => setSoftwareId(e.target.value)} placeholder="00000000-0000-0000-0000-000000000000" required value={softwareId} />
       </Field>
-      <Field hint={t('pinHint')} id="software-pin" label={t('pin')}>
+      <Field help={<HelpTip label={t('pin')} topic="software.pin" />} hint={t('pinHint')} id="software-pin" label={t('pin')}>
         <PasswordInput autoComplete="off" id="software-pin" onChange={(e) => setPin(e.target.value)} required value={pin} />
       </Field>
       {env === '2' ? (
-        <Field hint={t('testSetIdHint')} id="software-test-set" label={t('testSetId')}>
+        <Field help={<HelpTip label={t('testSetId')} topic="software.testSetId" />} hint={t('testSetIdHint')} id="software-test-set" label={t('testSetId')}>
           <Input className="font-mono" id="software-test-set" onChange={(e) => setTestSetId(e.target.value)} required value={testSetId} />
         </Field>
       ) : null}
@@ -162,8 +166,11 @@ export function RangeFormFields({ issuerId, preset, allowKind = false, onSaved, 
   return (
     <form className="grid gap-4 sm:grid-cols-2" onSubmit={onSubmit}>
       {allowKind ? (
-        <fieldset className="flex flex-col gap-2 sm:col-span-2">
-          <legend className="mb-2 text-[13px] font-semibold text-ink">{t('kind')}</legend>
+        <fieldset aria-labelledby="range-kind-legend" className="flex flex-col gap-2 sm:col-span-2">
+          <legend className="mb-2 flex items-center gap-1 text-[13px] font-semibold text-ink">
+            <span id="range-kind-legend">{t('kind')}</span>
+            <HelpTip label={t('kind')} topic="range.kind" />
+          </legend>
           {(['invoice', 'contingency'] as const).map((value) => (
             <Choice
               checked={form.kind === value}
@@ -177,19 +184,19 @@ export function RangeFormFields({ issuerId, preset, allowKind = false, onSaved, 
           ))}
         </fieldset>
       ) : null}
-      <Field id="range-resolution" label={t('resolution')}>
+      <Field help={<HelpTip label={t('resolution')} topic="range.resolution" />} id="range-resolution" label={t('resolution')}>
         <Input className="font-mono" id="range-resolution" onChange={(e) => set('resolution_number')(e.target.value)} required value={form.resolution_number} />
       </Field>
-      <Field hint={t('prefixHint')} id="range-prefix" label={t('prefix')}>
+      <Field help={<HelpTip label={t('prefix')} topic="range.prefix" />} hint={t('prefixHint')} id="range-prefix" label={t('prefix')}>
         <Input className="font-mono uppercase" id="range-prefix" maxLength={4} onChange={(e) => set('prefix')(e.target.value)} value={form.prefix} />
       </Field>
-      <Field id="range-from" label={t('from')}>
+      <Field help={<HelpTip label={t('from')} topic="range.numbers" />} id="range-from" label={t('from')}>
         <Input className="font-mono" id="range-from" min={1} onChange={(e) => set('number_from')(e.target.value)} required type="number" value={form.number_from || ''} />
       </Field>
       <Field id="range-to" label={t('to')}>
         <Input className="font-mono" id="range-to" min={1} onChange={(e) => set('number_to')(e.target.value)} required type="number" value={form.number_to || ''} />
       </Field>
-      <Field id="range-valid-from" label={t('validFrom')}>
+      <Field help={<HelpTip label={t('validFrom')} topic="range.validity" />} id="range-valid-from" label={t('validFrom')}>
         <Input id="range-valid-from" onChange={(e) => set('valid_from')(e.target.value)} required type="date" value={form.valid_from} />
       </Field>
       <Field id="range-valid-to" label={t('validTo')}>
@@ -197,16 +204,16 @@ export function RangeFormFields({ issuerId, preset, allowKind = false, onSaved, 
       </Field>
       {allowKind ? (
         <>
-          <Field id="range-resolution-date" label={t('resolutionDate')}>
+          <Field help={<HelpTip label={t('resolutionDate')} topic="range.resolutionDate" />} id="range-resolution-date" label={t('resolutionDate')}>
             <Input id="range-resolution-date" onChange={(e) => set('resolution_date')(e.target.value)} type="date" value={form.resolution_date ?? ''} />
           </Field>
-          <Field hint={t('establishmentHint')} id="range-establishment" label={t('establishment')}>
+          <Field help={<HelpTip label={t('establishment')} topic="range.establishment" />} hint={t('establishmentHint')} id="range-establishment" label={t('establishment')}>
             <Input id="range-establishment" onChange={(e) => set('establishment')(e.target.value)} value={form.establishment ?? ''} />
           </Field>
         </>
       ) : null}
       {invoice ? (
-        <Field className="sm:col-span-2" hint={t('technicalKeyHint')} id="range-key" label={t('technicalKey')}>
+        <Field className="sm:col-span-2" help={<HelpTip label={t('technicalKey')} topic="range.technicalKey" />} hint={t('technicalKeyHint')} id="range-key" label={t('technicalKey')}>
           <PasswordInput autoComplete="off" className="font-mono" id="range-key" onChange={(e) => set('technical_key')(e.target.value)} required value={form.technical_key} />
         </Field>
       ) : null}
