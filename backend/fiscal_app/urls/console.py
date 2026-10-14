@@ -24,4 +24,9 @@ urlpatterns = [
     path('issuers/<int:issuer_id>/ranges/', console_onboarding.console_create_range, name='console-create-range'),
     path('issuers/<int:issuer_id>/test-set/', console_onboarding.console_test_set, name='console-test-set'),
     path('test-sets/<int:run_id>/check/', console_onboarding.console_check_test_set, name='console-check-test-set'),
+    path('issuers/<int:issuer_id>/production/', console_onboarding.console_production, name='console-production'),
+    path(
+        'issuers/<int:issuer_id>/production/<slug:action>/', console_onboarding.console_production_action,
+        name='console-production-action',
+    ),
 ]

@@ -23,7 +23,7 @@ from fiscal_app.serializers import (
     NumberingRangeCreateUpdateSerializer,
     SoftwareRegistrationCreateUpdateSerializer,
 )
-from fiscal_app.services import test_set
+from fiscal_app.services import production, test_set
 from fiscal_app.services.certificates import set_certificate
 from fiscal_app.services.client_systems import create_client_system
 from fiscal_app.services.software import register_software
@@ -178,3 +178,35 @@ def _run(run):
                     'dian_status': phase.get('dian_status', '')}
                    for phase in run.phases],
     }
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated, IsConsoleOperator])
+def console_production(request, issuer_id):
+    """What the issuer still lacks to move to production, and its environment."""
+    issuer = get_object_or_404(Issuer, pk=issuer_id)
+    return Response({'environment': issuer.environment, 'readiness': production.readiness(issuer)})
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated, IsConsoleOperator])
+def console_production_action(request, issuer_id, action):
+    """copy-software · fetch-ranges · promote (the last one needs {"confirm": true})."""
+    issuer = get_object_or_404(Issuer, pk=issuer_id)
+    try:
+        if action == 'copy-software':
+            production.copy_habilitation_software(issuer)
+        elif action == 'fetch-ranges':
+            production.fetch_ranges(issuer)
+        elif action == 'promote':
+            if request.data.get('confirm') is not True:
+                return Response({'confirm': ['Confirma que el comercio ya quedó «Habilitado» en el portal de la DIAN.']},
+                                status=status.HTTP_400_BAD_REQUEST)
+            issuer = production.promote(issuer)
+            logger.warning('Emisor %s pasó a producción (operador %s)', issuer.pk, request.user.pk)
+        else:
+            return Response({'detail': 'Acción desconocida.'}, status=status.HTTP_404_NOT_FOUND)
+    except production.ProductionError as error:
+        return Response({'code': 'not_ready', 'detail': str(error)}, status=status.HTTP_409_CONFLICT)
+    issuer.refresh_from_db()
+    return Response({'environment': issuer.environment, 'readiness': production.readiness(issuer)})

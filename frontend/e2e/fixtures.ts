@@ -356,8 +356,14 @@ export async function stubIssuerList(page: Page) {
   });
 }
 
-/** Stub `console/issuers/<id>/`: the test issuer exists, anything else is a 404. */
+/** Stub `console/issuers/<id>/` (and its production status): the test issuer exists, anything else is a 404. */
 export async function stubIssuerDetail(page: Page) {
+  await page.route(/\/api\/console\/issuers\/\d+\/production\/$/, (route) =>
+    fulfillJson(route, 200, {
+      environment: '2',
+      readiness: { test_set_accepted: false, certificate: true, software: false, range: false, gateway: true },
+    }),
+  );
   await page.route(/\/api\/console\/issuers\/\d+\/$/, (route) => {
     const id = Number(route.request().url().match(/issuers\/(\d+)/)?.[1]);
     return id === testIssuerDetail.id
