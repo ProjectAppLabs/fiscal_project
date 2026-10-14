@@ -450,10 +450,19 @@
     },
     "certificate": {
       "title": "Issuer's digital certificate",
-      "body": "A .p12 or .pfx file with its password, from an ONAC-accredited entity, with digital signature and non-repudiation. It is validated on upload and stored encrypted.",
+      "body": "The business's certificate, from an ONAC-accredited entity, with digital signature and non-repudiation. It is validated on upload and stored encrypted.",
       "file": "Certificate file",
       "password": "Certificate password",
-      "loaded": "Certificate of {subject}, expires on {date}."
+      "loaded": "Certificate of {subject}, expires on {date}.",
+      "kind": "How was the certificate delivered?",
+      "kinds": {
+        "p12": "A .p12 or .pfx file with a password",
+        "pair": "The certificate (.cer, .crt, .pem or .zip) and the private key (.key) as separate files"
+      },
+      "certificateFile": "Certificate (.cer, .crt, .pem or the entity's .zip)",
+      "keyFile": "Private key (.key)",
+      "keyPassword": "Key password (if any)",
+      "chainIncomplete": "The entity's chain (intermediate and root) could not be downloaded. The certificate still signs; if the DIAN objects, upload it again when the entity's site is available."
     },
     "software": {
       "title": "Software registered with the DIAN",

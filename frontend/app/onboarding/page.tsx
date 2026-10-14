@@ -17,7 +17,9 @@ import {
   registerSoftware,
   stepErrors,
   uploadCertificate,
+  type CertificateUpload,
   type CreatedClientSystem,
+  type LoadedCertificate,
   type IssuerForm,
 } from '@/lib/services/onboarding';
 import { useOperationsStore } from '@/lib/stores/operationsStore';
@@ -232,17 +234,26 @@ function CertificateStep({ issuerId, onDone }: { issuerId: number; onDone: () =>
   const t = useTranslations('onboarding.certificate');
   const tStep = useTranslations('onboarding');
   const locale = useLocale();
+  const [kind, setKind] = useState<'p12' | 'pair'>('p12');
   const [file, setFile] = useState<File | null>(null);
   const [password, setPassword] = useState('');
-  const [loaded, setLoaded] = useState<{ subject: string; not_after: string } | null>(null);
+  const [certificate, setCertificate] = useState<File | null>(null);
+  const [privateKey, setPrivateKey] = useState<File | null>(null);
+  const [keyPassword, setKeyPassword] = useState('');
+  const [loaded, setLoaded] = useState<LoadedCertificate | null>(null);
   const { errors, saving, run } = useStep();
 
   const onSubmit = (e: FormEvent) => {
     e.preventDefault();
-    if (!file) return;
+    const upload: CertificateUpload | null =
+      kind === 'p12'
+        ? file && { kind, file, password }
+        : certificate && privateKey && { kind, certificate, privateKey, keyPassword };
+    if (!upload) return;
     void run(async () => {
-      setLoaded(await uploadCertificate(issuerId, file, password));
+      setLoaded(await uploadCertificate(issuerId, upload));
       setPassword('');
+      setKeyPassword('');
     });
   };
 
@@ -254,18 +265,46 @@ function CertificateStep({ issuerId, onDone }: { issuerId: number; onDone: () =>
           <p className="mt-4 text-sm text-success" role="status">
             {t('loaded', { subject: loaded.subject, date: formatDateTime(loaded.not_after, locale) })}
           </p>
+          {loaded.chain_complete ? null : <p className="mt-2 text-sm text-destructive">{t('chainIncomplete')}</p>}
           <button className={`${PRIMARY_BUTTON_CLASS} mt-6`} onClick={onDone} type="button">
             {tStep('next')}
           </button>
         </>
       ) : (
         <form className="mt-4 grid gap-4" onSubmit={onSubmit}>
-          <Field id="certificate-file" label={t('file')}>
-            <input id="certificate-file" accept=".p12,.pfx" className={INPUT_CLASS} required type="file" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
-          </Field>
-          <Field id="certificate-password" label={t('password')}>
-            <input id="certificate-password" autoComplete="off" className={INPUT_CLASS} required type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
-          </Field>
+          <fieldset>
+            <legend className="mb-2 text-sm">{t('kind')}</legend>
+            <div className="flex flex-wrap gap-4 text-sm">
+              {(['p12', 'pair'] as const).map((value) => (
+                <label className="inline-flex items-center gap-2" key={value}>
+                  <input checked={kind === value} name="certificate-kind" onChange={() => setKind(value)} type="radio" />
+                  {t(`kinds.${value}`)}
+                </label>
+              ))}
+            </div>
+          </fieldset>
+          {kind === 'p12' ? (
+            <>
+              <Field id="certificate-file" label={t('file')}>
+                <input id="certificate-file" accept=".p12,.pfx" className={INPUT_CLASS} required type="file" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
+              </Field>
+              <Field id="certificate-password" label={t('password')}>
+                <input id="certificate-password" autoComplete="off" className={INPUT_CLASS} required type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
+              </Field>
+            </>
+          ) : (
+            <>
+              <Field id="certificate-public" label={t('certificateFile')}>
+                <input id="certificate-public" accept=".cer,.crt,.pem,.der,.zip" className={INPUT_CLASS} required type="file" onChange={(e) => setCertificate(e.target.files?.[0] ?? null)} />
+              </Field>
+              <Field id="certificate-key" label={t('keyFile')}>
+                <input id="certificate-key" accept=".key,.pem" className={INPUT_CLASS} required type="file" onChange={(e) => setPrivateKey(e.target.files?.[0] ?? null)} />
+              </Field>
+              <Field id="certificate-key-password" label={t('keyPassword')}>
+                <input id="certificate-key-password" autoComplete="off" className={INPUT_CLASS} type="password" value={keyPassword} onChange={(e) => setKeyPassword(e.target.value)} />
+              </Field>
+            </>
+          )}
           <StepActions errors={errors} label={tStep('next')} saving={saving} />
         </form>
       )}

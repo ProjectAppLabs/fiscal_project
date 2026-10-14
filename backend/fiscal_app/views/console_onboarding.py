@@ -23,7 +23,7 @@ from fiscal_app.serializers import (
     NumberingRangeCreateUpdateSerializer,
     SoftwareRegistrationCreateUpdateSerializer,
 )
-from fiscal_app.services import test_set
+from fiscal_app.services import certificate_assembly, test_set
 from fiscal_app.services.certificates import set_certificate
 from fiscal_app.services.client_systems import create_client_system
 from fiscal_app.services.software import register_software
@@ -87,22 +87,33 @@ def console_create_issuer(request):
 @permission_classes([IsAuthenticated, IsConsoleOperator])
 @parser_classes([MultiPartParser, FormParser])
 def console_upload_certificate(request, issuer_id):
-    """The .p12/.pfx as a file and its password; validated (§10.14) and stored encrypted."""
+    """The issuer's certificate: a .p12/.pfx with its password, or the certificate and its private key as separate
+    files (the key's password is optional). Validated (§10.14) and stored encrypted."""
     issuer = get_object_or_404(Issuer, pk=issuer_id)
-    upload = request.FILES.get('p12')
-    password = request.data.get('password', '')
-    if upload is None or not password:
-        return Response({'p12': ['Sube el archivo .p12 o .pfx y escribe su contraseña.']}, status=status.HTTP_400_BAD_REQUEST)
-    if upload.size > MAX_CERTIFICATE_BYTES:
+    files = request.FILES
+    if any(upload.size > MAX_CERTIFICATE_BYTES for upload in files.values()):
         return Response({'p12': ['El archivo es demasiado grande para ser un certificado.']}, status=status.HTTP_400_BAD_REQUEST)
+    chain_complete = True
     try:
-        certificate = set_certificate(issuer, base64.b64encode(upload.read()).decode(), password)
+        if 'certificate' in files or 'private_key' in files:
+            if 'certificate' not in files or 'private_key' not in files:
+                return Response({'p12': ['Sube el certificado y su llave privada.']}, status=status.HTTP_400_BAD_REQUEST)
+            assembled = certificate_assembly.assemble(
+                files['certificate'].read(), files['private_key'].read(), request.data.get('key_password', ''),
+            )
+            p12_base64, password, chain_complete = assembled.p12_base64, assembled.password, assembled.chain_complete
+        else:
+            password = request.data.get('password', '')
+            if 'p12' not in files or not password:
+                return Response({'p12': ['Sube el archivo .p12 o .pfx y escribe su contraseña.']}, status=status.HTTP_400_BAD_REQUEST)
+            p12_base64 = base64.b64encode(files['p12'].read()).decode()
+        certificate = set_certificate(issuer, p12_base64, password)
     except DjangoValidationError as error:
-        # The message never repeats the password or the file (fiscal_app.services.certificates).
+        # The messages never repeat a password or the files (fiscal_app.services.certificates and certificate_assembly).
         return Response({'p12': error.messages, 'code': error.code}, status=status.HTTP_400_BAD_REQUEST)
     logger.info('Certificado nuevo para el emisor %s (operador %s)', issuer.pk, request.user.pk)
-    return Response({'id': certificate.pk, 'subject': certificate.subject, 'not_after': certificate.not_after},
-                    status=status.HTTP_201_CREATED)
+    return Response({'id': certificate.pk, 'subject': certificate.subject, 'not_after': certificate.not_after,
+                     'chain_complete': chain_complete}, status=status.HTTP_201_CREATED)
 
 
 @api_view(['POST'])

@@ -48,12 +48,26 @@ describe('onboarding service', () => {
   it('uploads the certificate as a file with its password', async () => {
     const file = new File(['p12'], 'certificado.p12');
 
-    await uploadCertificate(3, file, 'clave');
+    await uploadCertificate(3, { kind: 'p12', file, password: 'clave' });
 
     const [url, form] = mockPost.mock.calls[0] as [string, FormData];
     expect(url).toBe('console/issuers/3/certificate/');
     expect(form.get('p12')).toBeInstanceOf(File);
     expect(form.get('password')).toBe('clave');
+  });
+
+  it('uploads the certificate and its key as separate files', async () => {
+    await uploadCertificate(3, {
+      kind: 'pair',
+      certificate: new File(['cer'], '7674.cer'),
+      privateKey: new File(['key'], 'private.key'),
+      keyPassword: '',
+    });
+
+    const [, form] = mockPost.mock.calls[0] as [string, FormData];
+    expect(form.get('certificate')).toBeInstanceOf(File);
+    expect(form.get('private_key')).toBeInstanceOf(File);
+    expect(form.has('key_password')).toBe(false);
   });
 
   it('registers the software and the habilitación range', async () => {

@@ -127,4 +127,23 @@ describe('OnboardingPage', () => {
     expect(await screen.findByRole('link', { name: 'Ir a la ficha del emisor' })).toHaveAttribute('href', '/issuers/3');
     expect(mockPost).toHaveBeenLastCalledWith('console/issuers/3/ranges/', expect.objectContaining({ technical_key: 'clave-tecnica', number_from: 990000000 }));
   });
+
+  it('accepts the certificate and the key as separate files', async () => {
+    renderSignedIn();
+    await chooseWaiter();
+    mockPost
+      .mockResolvedValueOnce({ data: { id: 3 } })
+      .mockResolvedValueOnce({ data: { id: 1, subject: 'CN=ProjectApp', not_after: '2027-10-05T00:00:00Z', chain_complete: false } });
+    await fillIssuer();
+
+    await userEvent.click(await screen.findByLabelText(/El certificado \(.cer/));
+    fireEvent.change(screen.getByLabelText('Certificado (.cer, .crt, .pem o el .zip de la entidad)'), {
+      target: { files: [new File(['cer'], '7674.cer')] },
+    });
+    fireEvent.change(screen.getByLabelText('Llave privada (.key)'), { target: { files: [new File(['key'], 'private.key')] } });
+    fireEvent.submit(screen.getByLabelText('Llave privada (.key)').closest('form') as HTMLFormElement);
+
+    expect(await screen.findByRole('status')).toHaveTextContent('Certificado de CN=ProjectApp');
+    expect(screen.getByText(/No se pudo descargar la cadena de la entidad/)).toBeInTheDocument();
+  });
 });
