@@ -55,8 +55,8 @@ test.describe('Console issuers', () => {
 
   test('downloads the contingency letter for a period', { tag: [...CONSOLE_CONTINGENCY_LETTER, '@outcome:success'] }, async ({ page }) => {
     await page.getByRole('link', { name: testIssuerRow.legal_name }).click();
-    await page.getByLabel('Desde').fill('2026-10-01');
-    await page.getByLabel('Hasta').fill('2026-10-03');
+    await page.getByLabel('Desde', { exact: true }).fill('2026-10-01');
+    await page.getByLabel('Hasta', { exact: true }).fill('2026-10-03');
 
     const [download] = await Promise.all([
       page.waitForEvent('download'),
@@ -68,8 +68,8 @@ test.describe('Console issuers', () => {
 
   test('explains when the letter period is reversed', { tag: [...CONSOLE_CONTINGENCY_LETTER, '@outcome:error'] }, async ({ page }) => {
     await page.getByRole('link', { name: testIssuerRow.legal_name }).click();
-    await page.getByLabel('Desde').fill('2026-10-05');
-    await page.getByLabel('Hasta').fill('2026-10-01');
+    await page.getByLabel('Desde', { exact: true }).fill('2026-10-05');
+    await page.getByLabel('Hasta', { exact: true }).fill('2026-10-01');
 
     await page.getByRole('button', { name: 'Descargar borrador' }).click();
 

@@ -533,5 +533,21 @@
       "invoices": "the invoices",
       "notes": "the notes"
     }
+  },
+  "production": {
+    "title": "Move to production",
+    "body": "Once the DIAN accepts the set and the business is «Habilitado» in the portal (and has requested its numbering in MUISCA), its documents take fiscal effect.",
+    "readiness": {
+      "test_set_accepted": "Test set accepted",
+      "certificate": "Active certificate",
+      "software": "Production software",
+      "range": "Production numbering with technical key",
+      "gateway": "Real connection to the DIAN"
+    },
+    "copySoftware": "Use the habilitación software",
+    "fetchRanges": "Fetch numbering from the DIAN",
+    "confirm": "I confirm the business is already «Habilitado» in the DIAN portal and set its start date. From now on its documents have fiscal effect.",
+    "promote": "Move to production",
+    "done": "In production: its documents have fiscal effect."
   }
 }

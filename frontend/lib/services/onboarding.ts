@@ -151,3 +151,21 @@ export function stepErrors(error: unknown): string[] {
     .filter(([key]) => key !== 'code')
     .flatMap(([, value]) => (Array.isArray(value) ? value.map(String) : typeof value === 'string' ? [value] : []));
 }
+
+export type ProductionReadiness = Record<'test_set_accepted' | 'certificate' | 'software' | 'range' | 'gateway', boolean>;
+
+export interface ProductionStatus {
+  environment: '1' | '2';
+  readiness: ProductionReadiness;
+}
+
+export type ProductionAction = 'copy-software' | 'fetch-ranges' | 'promote';
+
+export async function fetchProduction(issuerId: number): Promise<ProductionStatus> {
+  return (await api.get<ProductionStatus>(`${API_ENDPOINTS.CONSOLE_ISSUERS}${issuerId}/production/`)).data;
+}
+
+export async function runProductionAction(issuerId: number, action: ProductionAction): Promise<ProductionStatus> {
+  const body = action === 'promote' ? { confirm: true } : {};
+  return (await api.post<ProductionStatus>(`${API_ENDPOINTS.CONSOLE_ISSUERS}${issuerId}/production/${action}/`, body)).data;
+}

@@ -177,6 +177,42 @@ def test_test_set_notes_are_bounded_by_one_zip(authenticated_client, ready_issue
 
 
 @pytest.mark.django_db
+def test_production_status_lists_what_is_missing(authenticated_client, ready_issuer):
+    """Fails if the console cannot tell an operator what an issuer still lacks for production."""
+    data = authenticated_client.get(f'/api/console/issuers/{ready_issuer.pk}/production/').json()
+
+    assert data['environment'] == '2'
+    assert data['readiness']['test_set_accepted'] is False
+
+
+@pytest.mark.django_db
+def test_promotion_needs_an_explicit_confirmation(authenticated_client, ready_issuer):
+    """Fails if a single click moves a business to production without confirming it is enabled in the DIAN portal."""
+    response = authenticated_client.post(f'/api/console/issuers/{ready_issuer.pk}/production/promote/', {}, format='json')
+
+    assert response.status_code == 400
+    assert 'confirm' in response.json()
+
+
+@pytest.mark.django_db
+def test_promotion_of_an_issuer_not_ready_is_refused(authenticated_client, ready_issuer):
+    """Fails if an issuer missing the accepted set or production numbering is switched to production."""
+    response = authenticated_client.post(
+        f'/api/console/issuers/{ready_issuer.pk}/production/promote/', {'confirm': True}, format='json'
+    )
+
+    assert response.status_code == 409
+    assert 'set de pruebas aceptado' in response.json()['detail']
+
+
+@pytest.mark.django_db
+def test_production_software_is_copied_from_the_console(authenticated_client, ready_issuer):
+    """Fails if the operator cannot reuse the habilitación software for production."""
+    response = authenticated_client.post(f'/api/console/issuers/{ready_issuer.pk}/production/copy-software/', format='json')
+
+    assert response.json()['readiness']['software'] is True
+
+
 def test_certificate_and_key_can_be_uploaded_separately(authenticated_client, issuer):
     """Fails if a certificate delivered as .cer plus .key cannot be loaded without assembling the .p12 by hand."""
     from cryptography.hazmat.primitives import serialization

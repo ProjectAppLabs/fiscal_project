@@ -533,5 +533,21 @@
       "invoices": "las facturas",
       "notes": "las notas"
     }
+  },
+  "production": {
+    "title": "Paso a producción",
+    "body": "Cuando la DIAN acepte el set y el comercio quede «Habilitado» en el portal (y haya pedido su numeración en MUISCA), sus documentos pasan a tener efecto fiscal.",
+    "readiness": {
+      "test_set_accepted": "Set de pruebas aceptado",
+      "certificate": "Certificado activo",
+      "software": "Software de producción",
+      "range": "Numeración de producción con clave técnica",
+      "gateway": "Conexión real con la DIAN"
+    },
+    "copySoftware": "Usar el software de habilitación",
+    "fetchRanges": "Traer la numeración de la DIAN",
+    "confirm": "Confirmo que el comercio ya quedó «Habilitado» en el portal de la DIAN y fijó su fecha de inicio. Desde ahora sus documentos tienen efecto fiscal.",
+    "promote": "Pasar a producción",
+    "done": "En producción: sus documentos tienen efecto fiscal."
   }
 }
