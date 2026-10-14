@@ -102,9 +102,9 @@ def start(issuer: Issuer, invoices: int = SET_INVOICES, credit_notes: int = SET_
     if missing:
         raise TestSetError(f'Al emisor le falta: {", ".join(MISSING_LABELS[name] for name in missing)}.')
     # A second run would spend range numbers while the DIAN still validates the first. A run the DIAN never answered
-    # stops blocking after a day so the business is not stuck.
+    # stops blocking a day after it started (checks touch updated_at every 2 minutes) so the business is not stuck.
     if issuer.test_set_runs.filter(state=TestSetRun.State.PROCESSING,
-                                   updated_at__gte=timezone.now() - STALE_RUN).exists():
+                                   created_at__gte=timezone.now() - STALE_RUN).exists():
         raise TestSetError('Ya hay un set de pruebas en proceso: consulta su resultado antes de iniciar otro.')
     software, numbering = _software(issuer), _range(issuer)
     credentials = credentials_of(active_certificate(issuer))

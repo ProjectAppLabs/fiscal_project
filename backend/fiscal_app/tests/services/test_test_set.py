@@ -3,8 +3,10 @@
 import base64
 import io
 import zipfile
+from datetime import timedelta
 
 import pytest
+from django.db.models import F
 from lxml import etree
 
 from dian import signing, soap
@@ -149,6 +151,18 @@ def test_second_run_waits_for_the_first(habilitation_issuer):
 
     with pytest.raises(test_set.TestSetError, match='Ya hay un set de pruebas en proceso'):
         test_set.start(habilitation_issuer, credit_notes=0, debit_notes=0, invoices=1, client_factory=factory)
+
+
+@pytest.mark.django_db
+def test_run_unanswered_for_a_day_stops_blocking(habilitation_issuer):
+    """Fails if a run the DIAN never answered keeps the business from starting a new set forever."""
+    factory, _session = client_with(receipt(), receipt('otro'))
+    first = test_set.start(habilitation_issuer, credit_notes=0, debit_notes=0, invoices=1, client_factory=factory)
+    TestSetRun.objects.filter(pk=first.pk).update(created_at=F('created_at') - timedelta(hours=25))
+
+    second = test_set.start(habilitation_issuer, credit_notes=0, debit_notes=0, invoices=1, client_factory=factory)
+
+    assert second.pk != first.pk
 
 
 @pytest.mark.django_db

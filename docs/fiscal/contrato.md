@@ -270,7 +270,7 @@ Envía las facturas en un ZIP y responde `201` con la corrida en `processing`. L
 factura aceptada, en una consulta posterior, cuando la DIAN acepta las facturas.
 
 `409 test_set_not_ready` si al emisor le falta algo o si ya tiene una corrida en proceso (una corrida sin respuesta de
-la DIAN deja de bloquear a las 24 horas).
+la DIAN deja de bloquear 24 horas después de iniciada).
 
 ### `POST /api/v1/issuers/{nit}/test-set/check/`
 
@@ -290,8 +290,9 @@ Consulta a la DIAN la última corrida y la devuelve. Si ya terminó, la devuelve
 | `rejected` | Algún documento rechazado; `messages` trae las reglas. Corregir y empezar otra corrida |
 | `failed` | No se pudo enviar (`error` dice por qué) |
 
-No hay aviso por webhook del set: el sistema cliente consulta, por ejemplo cada 5 minutos mientras esté en
-`processing`.
+Con el trabajador de tareas encendido, Fiscal. consulta solo las corridas en `processing` cada 2 minutos; el sistema
+cliente puede leer el resultado con el `GET` (sin ir a la DIAN) y usar `check` para forzar una consulta. No hay aviso
+por webhook del set.
 
 ## Paso a producción
 
