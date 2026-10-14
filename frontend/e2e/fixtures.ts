@@ -362,6 +362,10 @@ export async function stubIssuerList(page: Page) {
 export async function stubIssuerDetail(page: Page) {
   // The life cycle on the issuer's page reads the test set; stubTestSet can override it afterwards.
   await page.route(/\/api\/console\/issuers\/\d+\/test-set\/$/, (route) => fulfillJson(route, 200, { readiness: readyIssuer, run: null }));
+  await page.route(/\/api\/console\/issuers\/\d+\/test-set\/runs\/$/, (route) => fulfillJson(route, 200, { count: 0, results: [] }));
+  await page.route(/\/api\/console\/issuers\/\d+\/activation\/$/, (route) =>
+    fulfillJson(route, 200, { id: testIssuerDetail.id, ...route.request().postDataJSON() }),
+  );
   await page.route(/\/api\/console\/issuers\/\d+\/production\/$/, (route) =>
     fulfillJson(route, 200, {
       environment: '2',
@@ -370,9 +374,10 @@ export async function stubIssuerDetail(page: Page) {
   );
   await page.route(/\/api\/console\/issuers\/\d+\/$/, (route) => {
     const id = Number(route.request().url().match(/issuers\/(\d+)/)?.[1]);
-    return id === testIssuerDetail.id
-      ? fulfillJson(route, 200, testIssuerDetail)
-      : fulfillJson(route, 404, { detail: 'No encontrado.' });
+    if (id !== testIssuerDetail.id) return fulfillJson(route, 404, { detail: 'No encontrado.' });
+    return route.request().method() === 'PATCH'
+      ? fulfillJson(route, 200, { ...testIssuerDetail, ...route.request().postDataJSON() })
+      : fulfillJson(route, 200, testIssuerDetail);
   });
 }
 
@@ -428,22 +433,72 @@ export const queueAlert = {
   document: null,
 };
 
-/** Stub the alerts like the backend: resolving one removes it from the open list. */
+/**
+ * Stub the alerts like the backend: resolving one (or several, with a note) removes it from the open list, and
+ * `severity`/`kind` filter the list.
+ */
 export async function stubAlerts(page: Page) {
-  const resolved = new Set<number>();
+  const resolved = new Map<number, string>();
+  const closed = (alert: typeof rejectionAlert) =>
+    resolved.has(alert.id) ? { ...alert, resolved_at: '2026-10-05T13:00:00Z', resolved_by: 'Ana Mejía', resolution_note: resolved.get(alert.id) } : alert;
   await page.route(/\/api\/console\/alerts\/(\d+)\/resolve\/$/, (route) => {
     const id = Number(route.request().url().match(/alerts\/(\d+)/)?.[1]);
-    resolved.add(id);
+    resolved.set(id, route.request().postDataJSON()?.note ?? '');
     const alert = [rejectionAlert, queueAlert].find((item) => item.id === id);
-    return fulfillJson(route, 200, { ...alert, resolved_at: '2026-10-05T13:00:00Z' });
+    return fulfillJson(route, 200, alert ? closed(alert) : {});
   });
+  await page.route(/\/api\/console\/alerts\/resolve\/$/, (route) => {
+    const { ids, note } = route.request().postDataJSON() as { ids: number[]; note: string };
+    for (const id of ids) resolved.set(id, note);
+    return fulfillJson(route, 200, { resolved: ids.length });
+  });
+  await page.route(/\/api\/console\/alerts\/export\/(\?.*)?$/, (route) =>
+    route.fulfill({ status: 200, contentType: 'text/csv', body: 'severidad,tipo\ncritical,rejection\n' }),
+  );
   await page.route(/\/api\/console\/alerts\/?(\?.*)?$/, (route) => {
-    const all = new URL(route.request().url()).searchParams.get('state') === 'all';
+    const params = new URL(route.request().url()).searchParams;
+    const all = params.get('state') === 'all';
     const results = [rejectionAlert, queueAlert]
-      .map((alert) => (resolved.has(alert.id) ? { ...alert, resolved_at: '2026-10-05T13:00:00Z' } : alert))
-      .filter((alert) => all || !alert.resolved_at);
+      .map(closed)
+      .filter((alert) => all || !alert.resolved_at)
+      .filter((alert) => !params.get('severity') || alert.severity === params.get('severity'))
+      .filter((alert) => !params.get('kind') || alert.kind === params.get('kind'));
     return fulfillJson(route, 200, { count: results.length, next: null, previous: null, results });
   });
+}
+
+// ── Console (support) ──
+
+export const serviceHealthDetail = {
+  ...healthyService,
+  status: 'degraded',
+  worker: { last_beat_at: '2026-10-05T11:00:00Z', ok: false },
+  queue: { due: 3, oldest_due_seconds: 1800, ok: false },
+  documents: { queued: 3, transmitting: 0, contingency_dian: 1, contingency_issuer: 0 },
+  notices: { pending: 2, failed: 1 },
+  checked_at: '2026-10-05T12:00:00Z',
+};
+
+export const dianStatusAnswer = {
+  is_valid: false,
+  status_code: '99',
+  status_description: 'Validación contiene errores en campos mandatorios.',
+  status_message: '',
+  messages: [{ rule: 'FAD06', message: 'El CUFE no corresponde.', severity: 'error' }],
+};
+
+/** Stub the support actions on a document, the CSV export of documents and the detailed health. */
+export async function stubSupport(page: Page) {
+  await page.route(/\/api\/console\/documents\/\d+\/actions\/(transmit|check-dian|resend-notice)\/$/, (route) => {
+    const action = route.request().url().match(/actions\/([a-z-]+)\//)?.[1];
+    if (action === 'check-dian') return fulfillJson(route, 200, dianStatusAnswer);
+    if (action === 'resend-notice') return fulfillJson(route, 200, { delivered: true, last_status: 200, last_error: '' });
+    return fulfillJson(route, 200, { state: 'contingency_dian', next_attempt_at: '2026-10-05T12:00:00Z' });
+  });
+  await page.route(/\/api\/console\/documents\/export\/(\?.*)?$/, (route) =>
+    route.fulfill({ status: 200, contentType: 'text/csv', body: 'numero,tipo\nSETP990000007,invoice\n' }),
+  );
+  await page.route('**/api/console/health/', (route) => fulfillJson(route, 200, serviceHealthDetail));
 }
 
 export const waiterClient = {
@@ -463,6 +518,55 @@ export const waiterClient = {
 /** Stub `console/client-systems/` with Waiter and one failed notice. */
 export async function stubClientSystems(page: Page) {
   await page.route('**/api/console/client-systems/', (route) => fulfillJson(route, 200, { count: 1, results: [waiterClient] }));
+}
+
+export const waiterClientDetail = {
+  id: 1,
+  name: 'Waiter',
+  key_id: 'fk_waiter',
+  webhook_url: 'https://waiter.local/fiscal/avisos/',
+  active: true,
+  created_at: '2026-10-01T00:00:00Z',
+  secrets: [{ id: 1, created_at: '2026-10-01T00:00:00Z', expires_at: null, current: true }],
+  issuers: [{ id: 3, nit: testIssuer.nit, dv: '3', legal_name: testIssuer.legal_name, environment: '2', active: true }],
+  notices: { pending: 0, failed: 1, delivered: 12 },
+  last_delivered_at: '2026-10-05T11:00:00Z',
+};
+
+export const failedAlertNotice = {
+  id: 41,
+  event: 'issuer.alert',
+  state: 'failed',
+  attempts: 30,
+  document: null,
+  alert_kind: 'range_low',
+  last_status: 502,
+  last_error: 'HTTP 502',
+  next_attempt_at: null,
+  delivered_at: null,
+  created_at: '2026-10-05T10:00:00Z',
+  payload: { event: 'issuer.alert', alert: { kind: 'range_low', issuer: testIssuer.nit } },
+};
+
+/** Stub a client system's page: its detail, its notices, the test notice, secret rotation and resending. */
+export async function stubClientSystemDetail(page: Page) {
+  await page.route(/\/api\/console\/client-systems\/1\/$/, (route) =>
+    route.request().method() === 'PATCH'
+      ? fulfillJson(route, 200, { ...waiterClientDetail, ...route.request().postDataJSON() })
+      : fulfillJson(route, 200, waiterClientDetail),
+  );
+  await page.route(/\/api\/console\/client-systems\/1\/deliveries\/(\?.*)?$/, (route) =>
+    fulfillJson(route, 200, { count: 1, next: null, previous: null, results: [failedAlertNotice] }),
+  );
+  await page.route('**/api/console/client-systems/1/ping/', (route) =>
+    fulfillJson(route, 200, { ...failedAlertNotice, id: 42, event: 'ping', state: 'delivered', attempts: 1, last_status: 204, last_error: '', alert_kind: '', delivered_at: '2026-10-14T12:00:00Z' }),
+  );
+  await page.route('**/api/console/client-systems/1/rotate-secret/', (route) =>
+    fulfillJson(route, 201, { secret: 'secreto-nuevo-de-una-vez', grace_hours: 24 }),
+  );
+  await page.route('**/api/console/deliveries/41/retry/', (route) =>
+    fulfillJson(route, 200, { ...failedAlertNotice, state: 'delivered', attempts: 31, last_status: 200, last_error: '', delivered_at: '2026-10-14T12:00:00Z' }),
+  );
 }
 
 // ── Console (onboarding and test set) ──
@@ -506,4 +610,27 @@ export async function stubTestSet(page: Page) {
       documents: runningTestSet.documents.map((document) => ({ ...document, status: 'accepted' })),
     }),
   );
+}
+
+// ── Console (users) ──
+
+export const consoleUsers = [
+  { id: 1, email: testOperator.email, first_name: 'Ana', last_name: 'Operadora', role: 'admin', is_active: true, invited: false, last_login: '2026-10-14T12:00:00Z', date_joined: '2026-10-01T05:00:00Z' },
+  { id: 2, email: 'luis@projectapp.co', first_name: 'Luis', last_name: '', role: 'operator', is_active: true, invited: true, last_login: null, date_joined: '2026-10-10T05:00:00Z' },
+];
+
+/** Sign in as an administrator (users, secrets, deactivations and production are theirs). */
+export async function stubAdminSession(page: Page) {
+  await page.route('**/api/validate_token/', (route) => fulfillJson(route, 200, { user: { ...operatorPayload(), role: 'admin' } }));
+}
+
+/** Stub the console users: the list, an invitation, a role change and resending an invitation. */
+export async function stubUsers(page: Page) {
+  await page.route(/\/api\/console\/users\/$/, (route) =>
+    route.request().method() === 'POST'
+      ? fulfillJson(route, 201, { ...consoleUsers[1], id: 3, ...route.request().postDataJSON(), invited: true, invitation_sent: true })
+      : fulfillJson(route, 200, { count: consoleUsers.length, results: consoleUsers }),
+  );
+  await page.route(/\/api\/console\/users\/2\/$/, (route) => fulfillJson(route, 200, { ...consoleUsers[1], ...route.request().postDataJSON() }));
+  await page.route('**/api/console/users/2/resend-invitation/', (route) => fulfillJson(route, 200, { ...consoleUsers[1], invitation_sent: true }));
 }

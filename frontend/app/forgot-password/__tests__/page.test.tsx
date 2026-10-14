@@ -210,4 +210,14 @@ describe('ForgotPasswordPage', () => {
 
     expect(screen.getByPlaceholderText('Correo electrónico')).toBeInTheDocument();
   });
+
+  it('opens an invitation link on the code step with the e-mail filled in', () => {
+    window.history.replaceState(null, '', '/forgot-password?invite=1&email=sara%40projectapp.co');
+
+    renderWithIntl(<ForgotPasswordPage />);
+
+    expect(screen.getByRole('heading', { name: 'Activa tu cuenta' })).toBeInTheDocument();
+    expect(screen.getByText('sara@projectapp.co')).toBeInTheDocument();
+    window.history.replaceState(null, '', '/forgot-password');
+  });
 });

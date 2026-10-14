@@ -5,6 +5,7 @@ import userEvent from '@testing-library/user-event';
 import { ProductionPanel } from '../ProductionPanel';
 import { renderWithIntl } from '../../../lib/__tests__/intl';
 import { api } from '../../../lib/services/http';
+import { useAuthStore } from '../../../lib/stores/authStore';
 
 jest.mock('../../../lib/services/http', () => ({
   api: {
@@ -20,6 +21,8 @@ const READY = { test_set_accepted: true, certificate: true, software: true, rang
 describe('ProductionPanel', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    // Moving an issuer to production is for administrators.
+    useAuthStore.setState({ user: { id: 1, email: 'ana@projectapp.co', first_name: 'Ana', last_name: '', role: 'admin', is_staff: true } });
     mockGet.mockResolvedValue({ data: { environment: '2', readiness: { ...READY, software: false, range: false } } });
   });
 
@@ -71,5 +74,14 @@ describe('ProductionPanel', () => {
     await userEvent.click(await screen.findByRole('button', { name: 'Traer la numeración de la DIAN' }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent('La DIAN no entregó la numeración: sin permiso');
+  });
+
+  it('tells an operator that only an administrator moves the issuer', async () => {
+    useAuthStore.setState({ user: { id: 2, email: 'luis@projectapp.co', first_name: 'Luis', last_name: '', role: 'operator', is_staff: false } });
+    mockGet.mockResolvedValue({ data: { environment: '2', readiness: READY } });
+
+    renderWithIntl(<ProductionPanel issuerId={3} />);
+
+    expect(await screen.findByText('Solo un administrador puede pasar el emisor a producción.')).toBeInTheDocument();
   });
 });

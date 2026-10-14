@@ -23,7 +23,8 @@
     "changePassword": "Cambiar contraseña",
     "more": "Más",
     "closeMore": "Cerrar el menú",
-    "openCount": "{count, plural, one {# abierta} other {# abiertas}}"
+    "openCount": "{count, plural, one {# abierta} other {# abiertas}}",
+    "users": "Usuarios de la consola"
   },
   "footer": {
     "tagline": "Consola interna de facturación electrónica de ProjectApp."
@@ -75,7 +76,10 @@
     "resetSuccess": "Contraseña restablecida. Redirigiendo…",
     "resetFailed": "No se pudo restablecer la contraseña.",
     "backToEmail": "Volver al correo",
-    "backToSignIn": "Volver a iniciar sesión"
+    "backToSignIn": "Volver a iniciar sesión",
+    "inviteTitle": "Activa tu cuenta",
+    "inviteIntro": "Escribe el código de la invitación que llegó a <strong>{email}</strong> y elige tu contraseña.",
+    "inviteSuccess": "Cuenta activada. Ya puedes entrar."
   },
   "console": {
     "states": {
@@ -149,7 +153,8 @@
     "criticalNoticeBody": "Revísalas antes de que detengan la facturación.",
     "contingencyNotice": "{count, plural, one {# factura en contingencia.} other {# facturas en contingencia.}}",
     "contingencyNoticeBody": "Hay que transmitirlas dentro de las 48 horas.",
-    "viewClientSystems": "Ver sistemas cliente"
+    "viewClientSystems": "Ver sistemas cliente",
+    "viewHealth": "Ver salud en detalle"
   },
   "documents": {
     "title": "Documentos",
@@ -179,7 +184,21 @@
     "subtitle": "{count} documentos de todos los emisores",
     "issuerPlaceholder": "Sin puntos ni dígito de verificación",
     "emptyBody": "Prueba con otro estado u otro NIT.",
-    "attemptsValue": "{count, plural, one {# intento} other {# intentos}}"
+    "attemptsValue": "{count, plural, one {# intento} other {# intentos}}",
+    "export": "Exportar CSV",
+    "exportFailed": "No se pudo exportar. Intenta de nuevo.",
+    "filterSearch": "Número o CUFE",
+    "searchPlaceholder": "SETP990000001 o parte del CUFE",
+    "filterKind": "Tipo",
+    "allKinds": "Todos los tipos",
+    "filterClient": "Sistema cliente",
+    "allClients": "Todos los sistemas",
+    "filterFrom": "Emitido desde",
+    "filterTo": "Emitido hasta",
+    "moreFilters": "Más filtros",
+    "moreFiltersCount": "{count, plural, one {Más filtros (# activo)} other {Más filtros (# activos)}}",
+    "lessFilters": "Menos filtros",
+    "clearFilters": "Quitar filtros"
   },
   "documentDetail": {
     "back": "Volver a documentos",
@@ -200,7 +219,8 @@
       "original": "Documento original",
       "cufe": "CUFE",
       "invoiceType": "Tipo de factura DIAN",
-      "contingencyStarted": "En contingencia desde"
+      "contingencyStarted": "En contingencia desde",
+      "notes": "Notas sobre esta factura"
     },
     "viewOriginal": "Ver documento {id}",
     "qr": "Ver código QR",
@@ -242,7 +262,20 @@
     "copyCufe": "Copiar el CUFE",
     "rejections": "Rechazos",
     "notifications": "Notificaciones (no detienen el documento)",
-    "artifactsSubtitle": "Se conservan 10 años; Fiscal. verifica su huella antes de entregarlos."
+    "artifactsSubtitle": "Se conservan 10 años; Fiscal. verifica su huella antes de entregarlos.",
+    "actions": {
+      "transmit": "Transmitir ahora",
+      "transmitted": "Listo: el documento pasó al primer lugar de la cola y Fiscal. lo está transmitiendo.",
+      "checkDian": "Consultar a la DIAN",
+      "resendNotice": "Reenviar aviso",
+      "noticeDelivered": "Aviso entregado al sistema cliente.",
+      "noticeFailed": "El sistema cliente no recibió el aviso: {error}. Fiscal. lo reintentará solo.",
+      "failed": "No se pudo hacer la acción.",
+      "dianTitle": "Lo que dice la DIAN",
+      "dianBody": "La respuesta de la DIAN a esta consulta. Solo informa: el estado del documento en Fiscal. no cambia.",
+      "dianValid": "La DIAN tiene el documento como válido.",
+      "dianNotValid": "La DIAN no lo tiene como válido."
+    }
   },
   "staging": {
     "remainsOne": "queda",
@@ -366,7 +399,8 @@
       "numbers": "Números",
       "validity": "Vigencia",
       "used": "Usado",
-      "last": "Último número"
+      "last": "Último número",
+      "actions": "Acción"
     },
     "alertsTitle": "Alertas abiertas",
     "noAlerts": "Sin alertas abiertas.",
@@ -431,7 +465,37 @@
     "saveRange": "Guardar rango",
     "rangeSaved": "Rango agregado",
     "rangesSubtitle": "Uso y vigencia de cada resolución",
-    "productionRangesHint": "La numeración de producción se trae de la DIAN en el paso a producción, cuando el comercio ya la pidió en MUISCA."
+    "productionRangesHint": "La numeración de producción se trae de la DIAN en el paso a producción, cuando el comercio ya la pidió en MUISCA.",
+    "editData": "Editar datos",
+    "editBody": "Corrige los datos tal como están en el RUT. Aplican a los documentos nuevos; los ya emitidos no cambian.",
+    "saveData": "Guardar datos",
+    "dataSaved": "Datos del emisor guardados",
+    "actionFailed": "No se pudo completar la acción.",
+    "activateIssuer": "Activar emisor",
+    "deactivateIssuer": "Desactivar emisor",
+    "activateIssuerTitle": "¿Activar {name}?",
+    "deactivateIssuerTitle": "¿Desactivar {name}?",
+    "activateIssuerBody": "Su sistema cliente vuelve a poder emitir documentos para este NIT.",
+    "deactivateIssuerBody": "Su sistema cliente deja de poder emitir para este NIT. Los documentos y archivos se conservan 10 años.",
+    "issuerActivated": "Emisor activado",
+    "issuerDeactivated": "Emisor desactivado",
+    "inactiveNotice": "Este emisor está desactivado: su sistema cliente no puede emitir documentos para él.",
+    "activateRange": "Activar",
+    "deactivateRange": "Desactivar",
+    "rangeConfirmTitle": "¿Cambiar el rango {range}?",
+    "activateRangeBody": "Vuelve a poder numerar documentos mientras esté vigente.",
+    "deactivateRangeBody": "Deja de numerar documentos. No se borra: los documentos ya emitidos siguen apuntando a él.",
+    "rangeActivated": "Rango activado",
+    "rangeDeactivated": "Rango desactivado",
+    "runsTitle": "Corridas anteriores del set",
+    "runsSubtitle": "Cada vez que se envió el set de pruebas a la DIAN.",
+    "runColumns": {
+      "date": "Fecha",
+      "state": "Resultado",
+      "result": "Documentos",
+      "error": "Error"
+    },
+    "runResult": "{accepted} de {total} aceptados{rejected, plural, =0 {} one { · # rechazado} other { · # rechazados}}"
   },
   "contingencies": {
     "title": "Contingencias",
@@ -446,7 +510,8 @@
       "started": "Desde",
       "deadline": "Plazo",
       "left": "Tiempo restante",
-      "attempts": "Intentos"
+      "attempts": "Intentos",
+      "actions": "Acción"
     },
     "kinds": {
       "dian": "DIAN (tipo 04)",
@@ -456,7 +521,10 @@
     "overdue": "Vencido hace {hours} h",
     "emptyBody": "Cuando la DIAN no responda, las facturas esperan aquí con su plazo de 48 horas.",
     "urgentNotice": "{count, plural, one {# factura vence en menos de 8 horas.} other {# facturas vencen en menos de 8 horas.}}",
-    "urgentNoticeBody": "Fiscal. las reintenta cada 30 minutos; si la DIAN sigue sin responder, revisa la carta de contingencia del emisor."
+    "urgentNoticeBody": "Fiscal. las reintenta cada 30 minutos; si la DIAN sigue sin responder, revisa la carta de contingencia del emisor.",
+    "transmit": "Transmitir ahora",
+    "transmitted": "{number} pasó al primer lugar de la cola.",
+    "transmitFailed": "No se pudo transmitir. Intenta de nuevo."
   },
   "alerts": {
     "title": "Alertas",
@@ -486,7 +554,24 @@
     "resolvedToast": "Alerta resuelta",
     "fixCertificate": "Subir certificado",
     "fixRange": "Ver numeración",
-    "fixContingency": "Ver contingencias"
+    "fixContingency": "Ver contingencias",
+    "export": "Exportar CSV",
+    "exportFailed": "No se pudo exportar. Intenta de nuevo.",
+    "filterSeverity": "Severidad",
+    "allSeverities": "Todas",
+    "filterKind": "Tipo",
+    "allKinds": "Todos los tipos",
+    "select": "Seleccionar",
+    "selectAll": "Seleccionar las abiertas de esta página",
+    "selectedCount": "{count, plural, =0 {Ninguna seleccionada} one {# seleccionada} other {# seleccionadas}}",
+    "resolveSelected": "Resolver seleccionadas",
+    "resolveManyTitle": "{count, plural, one {¿Resolver # alerta?} other {¿Resolver # alertas?}}",
+    "resolveManyBody": "Quedan cerradas con tu nombre. Si el problema sigue, Fiscal. vuelve a avisar.",
+    "resolvedMany": "{count, plural, one {# alerta resuelta} other {# alertas resueltas}}",
+    "note": "Nota (opcional)",
+    "noteHint": "Qué se hizo, para quien la lea después. Por ejemplo: «Se subió el certificado nuevo».",
+    "resolvedBy": "Por {name}",
+    "resolvedByFiscal": "La cerró Fiscal."
   },
   "clientSystems": {
     "title": "Sistemas cliente",
@@ -577,7 +662,8 @@
         "O-23": "Agente de retención IVA",
         "O-47": "Régimen simple de tributación",
         "R-99-PN": "No aplica (ninguna de las anteriores)"
-      }
+      },
+      "nitLocked": "El NIT no se cambia: identifica al emisor ante la DIAN."
     },
     "certificate": {
       "title": "Certificado digital del emisor",
@@ -727,7 +813,8 @@
       "copy-software": "Software de producción registrado",
       "fetch-ranges": "Numeración traída de la DIAN",
       "promote": "El emisor pasó a producción"
-    }
+    },
+    "adminOnly": "Solo un administrador puede pasar el emisor a producción."
   },
   "ui": {
     "breadcrumb": "Ruta",
@@ -776,5 +863,207 @@
     "body": "La página tuvo un error inesperado. Lo demás de la consola sigue funcionando.",
     "retry": "Reintentar",
     "home": "Ir al tablero"
+  },
+  "clientSystem": {
+    "back": "Volver a sistemas cliente",
+    "breadcrumb": "Sistemas cliente",
+    "breadcrumbDetail": "Ficha",
+    "notFoundTitle": "No encontramos ese sistema cliente",
+    "notFoundBody": "Puede que el enlace esté mal o que el sistema no exista.",
+    "error": "No pudimos cargar el sistema cliente.",
+    "subtitle": "Creado el {date}",
+    "active": "Activo",
+    "inactive": "Inactivo",
+    "inactiveNotice": "Está desactivado: no puede llamar a la API ni recibe avisos.",
+    "activate": "Activar",
+    "deactivate": "Desactivar",
+    "activated": "Sistema activado",
+    "deactivated": "Sistema desactivado",
+    "activateTitle": "¿Activar {name}?",
+    "deactivateTitle": "¿Desactivar {name}?",
+    "activateBody": "Vuelve a poder llamar a la API con su secreto vigente y a recibir avisos.",
+    "deactivateBody": "Deja de poder llamar a la API: no podrá emitir documentos ni inscribir emisores, y no recibe avisos. Sus emisores y documentos se conservan.",
+    "actionFailed": "No se pudo completar la acción.",
+    "guideTitle": "Conectar el sistema, paso a paso",
+    "guideSubtitle": "Lo que necesita el sistema cliente para trabajar con Fiscal.",
+    "keyId": "Identificador de llave (X-Fiscal-Key)",
+    "apiBase": "Dirección de la API",
+    "steps": {
+      "secret": "Secreto guardado en el sistema cliente",
+      "secretHint": "Se mostró una sola vez al crearlo o rotarlo. Si se perdió, rota el secreto.",
+      "webhook": "URL de avisos",
+      "webhookHint": "Ahí llegan los avisos firmados de documentos y alertas.",
+      "ping": "Aviso de prueba recibido",
+      "pingHint": "Envía un aviso de prueba para comprobar la URL y la verificación de la firma.",
+      "issuers": "{count, plural, =0 {Ningún emisor inscrito} one {# emisor inscrito} other {# emisores inscritos}}",
+      "issuersHint": "Cada comercio se inscribe con su certificado y su registro ante la DIAN."
+    },
+    "edit": "Editar",
+    "configure": "Configurar",
+    "sendPing": "Enviar aviso de prueba",
+    "enrol": "Inscribir emisor",
+    "pingOk": "El sistema cliente recibió el aviso de prueba",
+    "pingFailed": "El sistema cliente no respondió al aviso de prueba",
+    "pingAnswered": "Respondió HTTP {status}.",
+    "pingError": "Falló: {error}. Revisa la URL y que el sistema acepte el aviso.",
+    "lastDelivered": "Último aviso entregado {when}.",
+    "docsHint": "Cómo firmar las llamadas y verificar los avisos: docs/fiscal/contrato.md (con ejemplos en Python y JavaScript).",
+    "editWebhook": "Cambiar la URL de avisos",
+    "webhookDialogBody": "Fiscal. firma cada aviso con el secreto vigente; el sistema cliente debe verificar la firma antes de creerlo.",
+    "webhookUrl": "URL de avisos",
+    "webhookHint": "https recomendado. Déjala vacía para no recibir avisos.",
+    "saveWebhook": "Guardar URL",
+    "webhookSaved": "URL de avisos guardada",
+    "secretsTitle": "Secretos",
+    "noSecrets": "No tiene secreto vigente: no puede llamar a la API. Rota el secreto.",
+    "issuedOn": "Emitido el {date}",
+    "current": "Vigente",
+    "expiresOn": "Deja de servir el {date}",
+    "rotate": "Rotar secreto",
+    "rotateBody": "Se emite un secreto nuevo. El actual sigue sirviendo durante el periodo de gracia, para cambiarlo en el sistema cliente sin cortar el servicio. Los avisos se firman desde ya con el nuevo.",
+    "grace": "Periodo de gracia del secreto actual",
+    "graceHint": "Tiempo que el secreto actual sigue sirviendo.",
+    "graceOption": "{hours, plural, =0 {Sin gracia: deja de servir ya} one {# hora} other {# horas}}",
+    "rotateConfirm": "Rotar secreto",
+    "cancel": "Cancelar",
+    "secretOnceTitle": "Guarda este secreto ahora.",
+    "secretOnceBody": "Es la única vez que se muestra. El anterior sigue sirviendo {hours, plural, =0 {solo hasta ahora} one {# hora} other {# horas}}.",
+    "secretSaved": "Ya lo guardé",
+    "issuersTitle": "{count, plural, =0 {Emisores} one {# emisor} other {# emisores}}",
+    "noIssuers": "Todavía no tiene emisores.",
+    "deliveriesTitle": "Avisos",
+    "deliveriesSubtitle": "Cada aviso firmado que Fiscal. envió, con su resultado.",
+    "deliveriesError": "No pudimos cargar los avisos.",
+    "noDeliveries": "No hay avisos con ese estado.",
+    "deliveryTabs": {
+      "all": "Todos",
+      "pending": "Pendientes",
+      "failed": "Fallidos",
+      "delivered": "Entregados"
+    },
+    "deliveryStates": {
+      "pending": "Pendiente",
+      "failed": "Fallido",
+      "delivered": "Entregado"
+    },
+    "columns": {
+      "event": "Evento",
+      "subject": "Sobre",
+      "state": "Estado",
+      "result": "Resultado",
+      "when": "Cuándo",
+      "actions": "Acción"
+    },
+    "testNotice": "Aviso de prueba",
+    "attempts": "{count, plural, one {# intento} other {# intentos}}",
+    "deliveredAt": "Entregado {when}",
+    "nextAttempt": "Próximo intento {when}",
+    "viewPayload": "Ver",
+    "resend": "Reenviar",
+    "resent": "Aviso entregado",
+    "resendFailed": "No se entregó: {error}",
+    "requeueFailed": "Reencolar los fallidos",
+    "requeued": "{count, plural, one {# aviso vuelve a la cola} other {# avisos vuelven a la cola}}",
+    "payloadTitle": "Contenido del aviso",
+    "pageInfo": "Página {page} · {count} avisos"
+  },
+  "users": {
+    "title": "Usuarios",
+    "subtitle": "Quién entra a la consola y qué puede hacer.",
+    "adminOnly": "Solo un administrador puede ver y cambiar los usuarios.",
+    "error": "No pudimos cargar los usuarios.",
+    "empty": "No hay usuarios",
+    "emptyBody": "Invita a las personas que operan Fiscal.",
+    "invite": "Invitar usuario",
+    "inviteBody": "Le llega un correo con un enlace y un código para elegir su contraseña. El código vence en 72 horas.",
+    "firstName": "Nombre",
+    "lastName": "Apellido (opcional)",
+    "email": "Correo",
+    "emailHint": "Ahí llega la invitación.",
+    "role": "Rol",
+    "roles": {
+      "operator": "Operador",
+      "admin": "Administrador"
+    },
+    "roleHints": {
+      "operator": "Opera la consola: documentos, emisores, inscripciones, alertas y sistemas cliente.",
+      "admin": "Además maneja usuarios, rota secretos, desactiva emisores y sistemas, y pasa emisores a producción."
+    },
+    "sendInvitation": "Enviar invitación",
+    "invited": "Invitación enviada a {email}",
+    "invitedNoMail": "Se creó la cuenta de {email}, pero el correo no salió. Reenvía la invitación más tarde.",
+    "tableCaption": "Usuarios de la consola",
+    "you": "(tú)",
+    "never": "Nunca",
+    "columns": {
+      "name": "Persona",
+      "role": "Rol",
+      "state": "Estado",
+      "lastLogin": "Último ingreso",
+      "actions": "Acciones"
+    },
+    "states": {
+      "active": "Activo",
+      "invited": "Invitado",
+      "inactive": "Inactivo"
+    },
+    "resend": "Reenviar invitación",
+    "makeAdmin": "Hacer administrador",
+    "makeOperator": "Hacer operador",
+    "activate": "Activar",
+    "deactivate": "Desactivar",
+    "confirmTitle": "¿Cambiar a {name}?",
+    "makeAdminBody": "Podrá manejar usuarios, rotar secretos, desactivar emisores y sistemas, y pasar emisores a producción.",
+    "makeOperatorBody": "Deja de poder manejar usuarios, secretos, desactivaciones y el paso a producción.",
+    "deactivateBody": "No podrá volver a entrar a la consola. Lo que hizo queda registrado.",
+    "activateBody": "Vuelve a poder entrar con su contraseña.",
+    "saved": "Usuario actualizado",
+    "failed": "No se pudo completar la acción."
+  },
+  "health": {
+    "title": "Salud del servicio",
+    "subtitle": "Cada parte de Fiscal. y lo que está esperando. Se actualiza sola cada 30 segundos.",
+    "refresh": "Actualizar",
+    "error": "No pudimos consultar la salud del servicio.",
+    "checkedAt": "Revisado el {when}.",
+    "status": {
+      "ok": "Todo en orden.",
+      "degraded": "Con problemas.",
+      "down": "Caído."
+    },
+    "statusBody": {
+      "ok": "La base de datos, el trabajador y la cola responden.",
+      "degraded": "Algo necesita atención: mira abajo qué parte está en rojo.",
+      "down": "La base de datos no responde: Fiscal. no puede recibir ni transmitir documentos."
+    },
+    "partsTitle": "Partes del servicio",
+    "partsSubtitle": "Lo que Fiscal. necesita para recibir, firmar y transmitir.",
+    "database": "Base de datos",
+    "databaseOk": "Responde",
+    "databaseDown": "No responde",
+    "worker": "Trabajador",
+    "workerOk": "Activo",
+    "workerSilent": "No responde",
+    "workerHint": "Sin el trabajador, los documentos se quedan en cola. Avísale a quien administra el servidor.",
+    "lastBeat": "Último latido {when}",
+    "noBeat": "Aún sin latidos",
+    "queue": "Cola de transmisión",
+    "queueDue": "{count, plural, =0 {Al día} one {# documento por transmitir} other {# documentos por transmitir}}",
+    "oldestDue": "El más antiguo espera hace {minutes} min",
+    "queueHint": "La cola lleva mucho tiempo sin avanzar. Revisa que el trabajador esté activo.",
+    "dian": "DIAN",
+    "dianContingency": "{count, plural, =0 {Sin contingencia} one {# documento en contingencia} other {# documentos en contingencia}}",
+    "lastAnswer": "Última respuesta {when}",
+    "noAnswer": "Aún sin respuestas",
+    "waitingTitle": "Lo que espera",
+    "waitingSubtitle": "Toca una fila para ver la lista.",
+    "documents": {
+      "queued": "Documentos en cola",
+      "transmitting": "Documentos transmitiéndose",
+      "contingency_dian": "En contingencia de la DIAN",
+      "contingency_issuer": "En contingencia del emisor"
+    },
+    "noticesPending": "Avisos por entregar",
+    "noticesFailed": "Avisos fallidos"
   }
 }

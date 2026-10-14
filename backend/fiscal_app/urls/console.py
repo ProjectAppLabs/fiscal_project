@@ -1,10 +1,25 @@
 from django.urls import path
 
-from fiscal_app.views import console, console_onboarding, console_operations
+from fiscal_app.views import (
+    console,
+    console_client_systems,
+    console_onboarding,
+    console_operations,
+    console_support,
+    console_users,
+)
 
 urlpatterns = [
     path('summary/', console.console_summary, name='console-summary'),
+    path('users/', console_users.console_users, name='console-users'),
+    path('users/<int:user_id>/', console_users.console_user, name='console-user'),
+    path('users/<int:user_id>/resend-invitation/', console_users.console_resend_invitation, name='console-resend-invitation'),
     path('documents/', console.console_documents, name='console-documents'),
+    path('documents/export/', console_support.console_documents_export, name='console-documents-export'),
+    path('documents/<int:document_id>/actions/<slug:action>/', console_support.console_document_action, name='console-document-action'),
+    path('alerts/export/', console_support.console_alerts_export, name='console-alerts-export'),
+    path('alerts/resolve/', console_operations.console_resolve_alerts, name='console-resolve-alerts'),
+    path('health/', console_support.console_health, name='console-health'),
     path('documents/<int:document_id>/', console.console_document, name='console-document'),
     path('issuers/<int:issuer_id>/contingency-letter/', console.console_contingency_letter, name='console-contingency-letter'),
     path('issuers/', console_operations.console_issuers, name='console-issuers'),
@@ -18,10 +33,22 @@ urlpatterns = [
         name='console-document-artifact',
     ),
     path('client-systems/create/', console_onboarding.console_create_client_system, name='console-create-client-system'),
+    path('client-systems/<int:client_id>/', console_client_systems.console_client_system, name='console-client-system'),
+    path('client-systems/<int:client_id>/rotate-secret/', console_client_systems.console_rotate_secret, name='console-rotate-secret'),
+    path('client-systems/<int:client_id>/ping/', console_client_systems.console_ping_client_system, name='console-ping-client-system'),
+    path('client-systems/<int:client_id>/deliveries/', console_client_systems.console_client_deliveries, name='console-client-deliveries'),
+    path(
+        'client-systems/<int:client_id>/deliveries/retry-failed/', console_client_systems.console_retry_failed_deliveries,
+        name='console-retry-failed-deliveries',
+    ),
+    path('deliveries/<int:delivery_id>/retry/', console_client_systems.console_retry_delivery, name='console-retry-delivery'),
     path('issuers/create/', console_onboarding.console_create_issuer, name='console-create-issuer'),
     path('issuers/<int:issuer_id>/certificate/', console_onboarding.console_upload_certificate, name='console-upload-certificate'),
     path('issuers/<int:issuer_id>/software/', console_onboarding.console_register_software, name='console-register-software'),
     path('issuers/<int:issuer_id>/ranges/', console_onboarding.console_create_range, name='console-create-range'),
+    path('issuers/<int:issuer_id>/ranges/<int:range_id>/', console_operations.console_range, name='console-range'),
+    path('issuers/<int:issuer_id>/activation/', console_operations.console_issuer_activation, name='console-issuer-activation'),
+    path('issuers/<int:issuer_id>/test-set/runs/', console_operations.console_test_set_runs, name='console-test-set-runs'),
     path('issuers/<int:issuer_id>/test-set/', console_onboarding.console_test_set, name='console-test-set'),
     path('test-sets/<int:run_id>/check/', console_onboarding.console_check_test_set, name='console-check-test-set'),
     path('issuers/<int:issuer_id>/production/', console_onboarding.console_production, name='console-production'),

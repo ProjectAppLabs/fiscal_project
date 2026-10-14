@@ -10,6 +10,8 @@ export const ROUTES = {
   CLIENT_SYSTEMS: '/client-systems',
   ONBOARDING: '/onboarding',
   ACCOUNT: '/account',
+  USERS: '/users',
+  HEALTH: '/health',
 } as const;
 
 export function documentDetailRoute(id: number | string): string {
@@ -37,6 +39,7 @@ export const API_ENDPOINTS = {
   CONSOLE_ALERTS: 'console/alerts/',
   CONSOLE_CONTINGENCIES: 'console/contingencies/',
   CONSOLE_CLIENT_SYSTEMS: 'console/client-systems/',
+  CONSOLE_HEALTH: 'console/health/',
 } as const;
 
 export function consoleDocumentEndpoint(id: number | string): string {

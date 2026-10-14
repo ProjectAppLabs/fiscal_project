@@ -95,6 +95,8 @@ export interface DocumentEvent {
 
 export interface DocumentDetail extends DocumentListItem {
   idempotency_key: string;
+  /** Credit and debit notes that correct this invoice. */
+  notes?: { id: number; full_number: string; kind: DocumentKind; state: DocumentState }[];
   /** InvoiceTypeCode of the current XML: 01 sale, 03 paper transcription, 04 DIAN contingency; empty for notes. */
   invoice_type: string;
   contingency_started_at: string | null;
@@ -117,6 +119,26 @@ export interface DocumentPage {
 export interface DocumentFilters {
   state: DocumentState | '';
   issuer: string;
+  kind?: DocumentKind | '';
+  /** Client system id. */
+  client?: string;
+  /** Issue dates (YYYY-MM-DD, Colombia). */
+  date_from?: string;
+  date_to?: string;
+  /** Number as printed (SETP990000007) or the start of a CUFE. */
+  q?: string;
+}
+
+export const FILTER_KEYS = ['state', 'issuer', 'kind', 'client', 'date_from', 'date_to', 'q'] as const;
+
+/** The query parameters of a set of document filters (empty ones are left out). */
+export function documentParams(filters: DocumentFilters): Record<string, string> {
+  const params: Record<string, string> = {};
+  for (const key of FILTER_KEYS) {
+    const value = (filters[key] ?? '').trim();
+    if (value) params[key] = value;
+  }
+  return params;
 }
 
 export async function fetchConsoleSummary(): Promise<ConsoleSummary> {
@@ -131,9 +153,7 @@ export async function fetchDocuments({
   filters: DocumentFilters;
   page: number;
 }): Promise<DocumentPage> {
-  const params: Record<string, string | number> = {};
-  if (filters.state) params.state = filters.state;
-  if (filters.issuer.trim()) params.issuer = filters.issuer.trim();
+  const params: Record<string, string | number> = documentParams(filters);
   if (page > 1) params.page = page;
 
   const response = await api.get<DocumentPage>(API_ENDPOINTS.CONSOLE_DOCUMENTS, { params });

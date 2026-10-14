@@ -39,6 +39,15 @@ class IssuerCreateUpdateSerializer(serializers.ModelSerializer):
             )
         return codes
 
+    def validate_environment(self, value):
+        # Production only comes from the guided move (production.promote), after the DIAN accepted the test set.
+        if value == Environment.PRODUCTION and getattr(self.instance, 'environment', None) != Environment.PRODUCTION:
+            raise serializers.ValidationError(
+                'El ambiente de producción se activa con el paso a producción, después del set de pruebas aceptado.',
+                code='environment_locked',
+            )
+        return value
+
     def validate_municipality_code(self, value):
         if not is_valid('Municipio', value):
             raise serializers.ValidationError('El municipio no está en la lista DANE de la DIAN.', code='invalid_municipality')

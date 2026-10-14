@@ -125,6 +125,67 @@ describe('AlertsPage', () => {
     expect(await screen.findByRole('table', { name: 'Alertas' })).toBeInTheDocument();
   });
 
+  it('filters the alerts by severity', async () => {
+    renderSignedIn();
+    await screen.findByRole('table', { name: 'Alertas' });
+
+    await userEvent.selectOptions(screen.getByLabelText('Severidad'), 'warning');
+
+    expect(mockGet).toHaveBeenLastCalledWith('console/alerts/', { params: { state: 'open', severity: 'warning' } });
+  });
+
+  it('filters the alerts by kind', async () => {
+    renderSignedIn();
+    await screen.findByRole('table', { name: 'Alertas' });
+
+    await userEvent.selectOptions(screen.getByLabelText('Tipo'), 'rejection');
+
+    expect(mockGet).toHaveBeenLastCalledWith('console/alerts/', { params: { state: 'open', kind: 'rejection' } });
+  });
+
+  it('resolves the selected alerts with one note', async () => {
+    mockPost.mockResolvedValue({ data: { resolved: 2 } });
+    renderSignedIn();
+
+    await userEvent.click(await screen.findByLabelText('Seleccionar las abiertas de esta página'));
+    await userEvent.click(screen.getByRole('button', { name: 'Resolver seleccionadas' }));
+    const dialog = screen.getByRole('dialog');
+    await userEvent.type(within(dialog).getByLabelText('Nota (opcional)'), 'Se subió el certificado');
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Resolver seleccionadas' }));
+
+    expect(mockPost).toHaveBeenCalledWith('console/alerts/resolve/', { ids: [12, 13], note: 'Se subió el certificado' });
+  });
+
+  it('keeps the bulk action off until an alert is selected', async () => {
+    renderSignedIn();
+
+    await screen.findByRole('table', { name: 'Alertas' });
+
+    expect(screen.getByRole('button', { name: 'Resolver seleccionadas' })).toBeDisabled();
+  });
+
+  it('shows who resolved an alert and their note', async () => {
+    mockGet.mockResolvedValue({
+      data: buildPage([{ ...rejection, resolved_at: '2026-10-05T13:00:00Z', resolved_by: 'Ana Mejía', resolution_note: 'Reenviada' }]),
+    });
+    renderSignedIn();
+
+    const row = await screen.findByRole('row', { name: /SETP990000007/ });
+
+    expect(row).toHaveTextContent('Por Ana Mejía«Reenviada»');
+  });
+
+  it('exports the filtered alerts as CSV', async () => {
+    renderSignedIn();
+    await screen.findByRole('table', { name: 'Alertas' });
+    mockGet.mockResolvedValue({ data: new Blob(['severidad']) });
+    Object.assign(URL, { createObjectURL: jest.fn(() => 'blob:alerts'), revokeObjectURL: jest.fn() });
+
+    await userEvent.click(screen.getByRole('button', { name: 'Exportar CSV' }));
+
+    expect(mockGet).toHaveBeenLastCalledWith('console/alerts/export/', { params: { state: 'open' }, responseType: 'blob' });
+  });
+
   it('links a certificate alert to where it gets fixed', async () => {
     mockGet.mockResolvedValue({ data: buildPage([buildAlert()]) });
     renderSignedIn();

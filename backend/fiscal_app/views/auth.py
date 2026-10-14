@@ -5,18 +5,16 @@ There is no public sign-up: operators are created by an administrator.
 """
 import logging
 
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated, AllowAny
-from rest_framework.response import Response
-from rest_framework import status
-from django.contrib.auth.hashers import check_password, make_password
 from django.contrib.auth import get_user_model
+from django.contrib.auth.hashers import check_password, make_password
+from django.utils import timezone
+from rest_framework import status
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.response import Response
 
 from fiscal_app.models import PasswordCode
-from fiscal_app.utils.auth_utils import (
-    generate_auth_tokens, 
-    send_password_reset_code
-)
+from fiscal_app.utils.auth_utils import generate_auth_tokens, send_password_reset_code
 from fiscal_app.views.captcha_views import verify_recaptcha
 
 User = get_user_model()
@@ -50,7 +48,7 @@ def sign_in(request):
     
     if not email or not password:
         return Response(
-            {'error': 'Email and password are required'},
+            {'error': 'Escribe el correo y la contraseña.'},
             status=status.HTTP_400_BAD_REQUEST
         )
     
@@ -58,22 +56,25 @@ def sign_in(request):
         user = User.objects.get(email=email)
     except User.DoesNotExist:
         return Response(
-            {'error': 'Invalid credentials'},
+            {'error': 'Credenciales inválidas.'},
             status=status.HTTP_401_UNAUTHORIZED
         )
     
     if not check_password(password, user.password):
         return Response(
-            {'error': 'Invalid credentials'},
+            {'error': 'Credenciales inválidas.'},
             status=status.HTTP_401_UNAUTHORIZED
         )
     
     if not user.is_active:
         return Response(
-            {'error': 'Account is inactive'},
+            {'error': 'La cuenta está desactivada. Pídele a un administrador que la active.'},
             status=status.HTTP_403_FORBIDDEN
         )
     
+    user.last_login = timezone.now()
+    user.save(update_fields=['last_login'])
+
     # Generate tokens
     tokens = generate_auth_tokens(user)
     
@@ -93,16 +94,16 @@ def send_passcode(request):
     
     if not email:
         return Response(
-            {'error': 'Email is required'},
+            {'error': 'Escribe el correo.'},
             status=status.HTTP_400_BAD_REQUEST
         )
     
     try:
-        user = User.objects.get(email=email)
+        user = User.objects.get(email=email, is_active=True)
     except User.DoesNotExist:
-        # Don't reveal if user exists
+        # Don't reveal if user exists (or is deactivated)
         return Response(
-            {'message': 'If the email exists, a code has been sent'},
+            {'message': 'Si el correo está registrado, te enviamos un código.'},
             status=status.HTTP_200_OK
         )
     
@@ -114,12 +115,12 @@ def send_passcode(request):
     
     if not success:
         return Response(
-            {'error': 'Failed to send email'},
+            {'error': 'No se pudo enviar el correo. Intenta de nuevo en unos minutos.'},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
     
     return Response(
-        {'message': 'Code sent successfully'},
+        {'message': 'Te enviamos el código a tu correo.'},
         status=status.HTTP_200_OK
     )
 
@@ -141,7 +142,7 @@ def verify_passcode_and_reset_password(request):
     
     if not email or not code or not new_password:
         return Response(
-            {'error': 'Email, code, and new password are required'},
+            {'error': 'Escribe el correo, el código y la contraseña nueva.'},
             status=status.HTTP_400_BAD_REQUEST
         )
     
@@ -149,7 +150,7 @@ def verify_passcode_and_reset_password(request):
         user = User.objects.get(email=email)
     except User.DoesNotExist:
         return Response(
-            {'error': 'Invalid email or code'},
+            {'error': 'El código no es válido o ya venció.'},
             status=status.HTTP_400_BAD_REQUEST
         )
     
@@ -162,15 +163,21 @@ def verify_passcode_and_reset_password(request):
         
         if not password_code or not password_code.is_valid():
             return Response(
-                {'error': 'Invalid or expired code'},
+                {'error': 'El código no es válido o ya venció.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
     except Exception:
         return Response(
-            {'error': 'Invalid or expired code'},
+            {'error': 'El código no es válido o ya venció.'},
             status=status.HTTP_400_BAD_REQUEST
         )
     
+    if len(new_password) < MIN_PASSWORD_LENGTH:
+        return Response(
+            {'error': f'La contraseña nueva debe tener al menos {MIN_PASSWORD_LENGTH} caracteres.'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
     # Update password
     user.password = make_password(new_password)
     user.save()
@@ -180,7 +187,7 @@ def verify_passcode_and_reset_password(request):
     password_code.save()
     
     return Response(
-        {'message': 'Password reset successfully'},
+        {'message': 'Contraseña restablecida.'},
         status=status.HTTP_200_OK
     )
 

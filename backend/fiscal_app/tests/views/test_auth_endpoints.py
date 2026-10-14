@@ -28,7 +28,7 @@ def test_sign_in_requires_fields(mock_captcha, api_client):
     response = api_client.post(reverse('sign_in'), {}, format='json')
 
     assert response.status_code == status.HTTP_400_BAD_REQUEST
-    assert response.json()['error'] == 'Email and password are required'
+    assert response.json()['error'] == 'Escribe el correo y la contraseña.'
 
 
 @pytest.mark.django_db
@@ -41,7 +41,7 @@ def test_sign_in_rejects_unknown_user(mock_captcha, api_client):
     )
 
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
-    assert response.json()['error'] == 'Invalid credentials'
+    assert response.json()['error'] == 'Credenciales inválidas.'
 
 
 @pytest.mark.django_db
@@ -74,7 +74,7 @@ def test_sign_in_rejects_inactive_user(mock_captcha, api_client):
     )
 
     assert response.status_code == status.HTTP_403_FORBIDDEN
-    assert response.json()['error'] == 'Account is inactive'
+    assert response.json()['error'] == 'La cuenta está desactivada. Pídele a un administrador que la active.'
 
 
 @pytest.mark.django_db
@@ -98,7 +98,7 @@ def test_send_passcode_requires_email(api_client):
     response = api_client.post(reverse('send_passcode'), {}, format='json')
 
     assert response.status_code == status.HTTP_400_BAD_REQUEST
-    assert response.json()['error'] == 'Email is required'
+    assert response.json()['error'] == 'Escribe el correo.'
 
 
 @pytest.mark.django_db
@@ -110,7 +110,7 @@ def test_send_passcode_returns_generic_message_for_missing_user(api_client):
     )
 
     assert response.status_code == status.HTTP_200_OK
-    assert response.json()['message'] == 'If the email exists, a code has been sent'
+    assert response.json()['message'] == 'Si el correo está registrado, te enviamos un código.'
     assert PasswordCode.objects.count() == 0
 
 
@@ -145,7 +145,7 @@ def test_send_passcode_failure(api_client, monkeypatch):
     )
 
     assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
-    assert response.json()['error'] == 'Failed to send email'
+    assert response.json()['error'] == 'No se pudo enviar el correo. Intenta de nuevo en unos minutos.'
 
 
 @pytest.mark.django_db
@@ -153,14 +153,14 @@ def test_verify_passcode_requires_fields(api_client):
     response = api_client.post(reverse('verify_passcode_reset'), {}, format='json')
 
     assert response.status_code == status.HTTP_400_BAD_REQUEST
-    assert response.json()['error'] == 'Email, code, and new password are required'
+    assert response.json()['error'] == 'Escribe el correo, el código y la contraseña nueva.'
 
 
 @pytest.mark.django_db
 def test_verify_passcode_rejects_invalid_email(api_client):
     response = api_client.post(
         reverse('verify_passcode_reset'),
-        {'email': 'missing@example.com', 'code': '123456', 'new_password': 'newpass'},
+        {'email': 'missing@example.com', 'code': '123456', 'new_password': 'newpass-123'},
         format='json',
     )
 
@@ -180,12 +180,12 @@ def test_verify_passcode_rejects_expired_code(api_client):
 
     response = api_client.post(
         reverse('verify_passcode_reset'),
-        {'email': user.email, 'code': '111111', 'new_password': 'newpass'},
+        {'email': user.email, 'code': '111111', 'new_password': 'newpass-123'},
         format='json',
     )
 
     assert response.status_code == status.HTTP_400_BAD_REQUEST
-    assert response.json()['error'] == 'Invalid or expired code'
+    assert response.json()['error'] == 'El código no es válido o ya venció.'
 
 
 @pytest.mark.django_db
@@ -202,12 +202,12 @@ def test_verify_passcode_handles_exception(api_client, monkeypatch):
 
     response = api_client.post(
         reverse('verify_passcode_reset'),
-        {'email': user.email, 'code': '222222', 'new_password': 'newpass'},
+        {'email': user.email, 'code': '222222', 'new_password': 'newpass-123'},
         format='json',
     )
 
     assert response.status_code == status.HTTP_400_BAD_REQUEST
-    assert response.json()['error'] == 'Invalid or expired code'
+    assert response.json()['error'] == 'El código no es válido o ya venció.'
 
 
 @pytest.mark.django_db
@@ -219,7 +219,7 @@ def test_verify_passcode_resets_password(api_client):
 
     response = api_client.post(
         reverse('verify_passcode_reset'),
-        {'email': user.email, 'code': '333333', 'new_password': 'newpass'},
+        {'email': user.email, 'code': '333333', 'new_password': 'newpass-123'},
         format='json',
     )
 
@@ -228,7 +228,7 @@ def test_verify_passcode_resets_password(api_client):
     user.refresh_from_db()
 
     assert password_code.used is True
-    assert user.check_password('newpass') is True
+    assert user.check_password('newpass-123') is True
 
 
 @pytest.mark.django_db

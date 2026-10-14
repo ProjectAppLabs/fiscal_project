@@ -142,6 +142,70 @@ describe('DocumentsPage', () => {
     expect(mockGet).toHaveBeenLastCalledWith('console/documents/', { params: { issuer: '900373115' } });
   });
 
+  it('searches by number or CUFE', async () => {
+    renderSignedIn();
+    await findFirstRow();
+
+    await userEvent.type(screen.getByLabelText('Número o CUFE'), ' SETP990000007 ');
+    await userEvent.click(screen.getByRole('button', { name: 'Filtrar' }));
+
+    expect(mockGet).toHaveBeenLastCalledWith('console/documents/', { params: { q: 'SETP990000007' } });
+  });
+
+  it('filters by kind from the extra filters', async () => {
+    renderSignedIn();
+    await findFirstRow();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Más filtros' }));
+    await userEvent.selectOptions(screen.getByLabelText('Tipo'), 'credit_note');
+    await userEvent.click(screen.getByRole('button', { name: 'Filtrar' }));
+
+    expect(mockGet).toHaveBeenLastCalledWith('console/documents/', { params: { kind: 'credit_note' } });
+  });
+
+  it('filters by the issue dates', async () => {
+    renderSignedIn();
+    await findFirstRow();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Más filtros' }));
+    await userEvent.type(screen.getByLabelText('Emitido desde'), '2026-10-01');
+    await userEvent.type(screen.getByLabelText('Emitido hasta'), '2026-10-05');
+    await userEvent.click(screen.getByRole('button', { name: 'Filtrar' }));
+
+    expect(mockGet).toHaveBeenLastCalledWith('console/documents/', { params: { date_from: '2026-10-01', date_to: '2026-10-05' } });
+  });
+
+  it('opens the extra filters when the URL brings one', async () => {
+    window.history.replaceState(null, '', '/documents?kind=credit_note');
+    renderSignedIn();
+
+    await findFirstRow();
+
+    expect(screen.getByRole('button', { name: 'Menos filtros' })).toHaveAttribute('aria-expanded', 'true');
+  });
+
+  it('clears every filter at once', async () => {
+    window.history.replaceState(null, '', '/documents?state=rejected');
+    renderSignedIn();
+    await findFirstRow();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Quitar filtros' }));
+
+    expect(mockGet).toHaveBeenLastCalledWith('console/documents/', { params: {} });
+  });
+
+  it('exports the filtered documents as CSV', async () => {
+    window.history.replaceState(null, '', '/documents?state=rejected');
+    renderSignedIn();
+    await findFirstRow();
+    mockGet.mockResolvedValue({ data: new Blob(['numero']) });
+    Object.assign(URL, { createObjectURL: jest.fn(() => 'blob:documents'), revokeObjectURL: jest.fn() });
+
+    await userEvent.click(screen.getByRole('button', { name: 'Exportar CSV' }));
+
+    expect(mockGet).toHaveBeenLastCalledWith('console/documents/export/', { params: { state: 'rejected' }, responseType: 'blob' });
+  });
+
   it('disables the previous button on the first page', async () => {
     renderSignedIn();
     await findFirstRow();

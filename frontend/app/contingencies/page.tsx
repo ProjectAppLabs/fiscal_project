@@ -2,20 +2,25 @@
 
 import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { Send } from 'lucide-react';
 
 import { ConsoleLoadError } from '@/components/console/ConsoleStatus';
 import { Page } from '@/components/layout/Page';
 import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
 import { DataTable } from '@/components/ui/DataTable';
 import { Notice } from '@/components/ui/Notice';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { ProgressBar } from '@/components/ui/Progress';
 import { EmptyState, SkeletonTable } from '@/components/ui/States';
+import { toast } from '@/components/ui/Toast';
 import { documentDetailRoute } from '@/lib/constants';
 import { formatDateTime } from '@/lib/format';
 import { useRequireAuth } from '@/lib/hooks/useRequireAuth';
+import { stepErrors } from '@/lib/services/onboarding';
 import type { Contingency } from '@/lib/services/operations';
+import { runDocumentAction } from '@/lib/services/support';
 import { useOperationsStore } from '@/lib/stores/operationsStore';
 
 // The annex gives 48 hours; the alerts warn at 24 h and 40 h, so under 8 hours left is urgent.
@@ -102,10 +107,37 @@ function ContingencyTable({ contingencies }: { contingencies: Contingency[] }) {
         { key: 'deadline', header: t('columns.deadline'), className: 'whitespace-nowrap', cell: (item) => formatDateTime(item.deadline_at, locale) },
         { key: 'left', header: t('columns.left'), className: 'min-w-40', cell: (item) => <HoursLeft hours={item.hours_left} /> },
         { key: 'attempts', header: t('columns.attempts'), align: 'end', mobile: 'hidden', className: 'tabular-nums', cell: (item) => item.attempts },
+        { key: 'actions', header: t('columns.actions'), align: 'end', mobile: 'action', cell: (item) => (item.contingency === 'dian' ? <TransmitNow item={item} /> : null) },
       ]}
       rowKey={(item) => item.id}
       rows={contingencies}
     />
+  );
+}
+
+/** Without waiting for the next 30-minute sweep (H-26): the document goes first in the queue and Fiscal. tries now. */
+function TransmitNow({ item }: { item: Contingency }) {
+  const t = useTranslations('contingencies');
+  const loadContingencies = useOperationsStore((s) => s.loadContingencies);
+  const [busy, setBusy] = useState(false);
+
+  const onClick = async () => {
+    setBusy(true);
+    try {
+      await runDocumentAction(item.id, 'transmit');
+      toast(t('transmitted', { number: item.full_number }));
+      void loadContingencies();
+    } catch (error) {
+      toast(stepErrors(error)[0] ?? t('transmitFailed'), 'error');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Button aria-label={`${t('transmit')}: ${item.full_number}`} icon={<Send aria-hidden className="size-4" />} loading={busy} onClick={() => void onClick()} size="sm" variant="soft">
+      {t('transmit')}
+    </Button>
   );
 }
 

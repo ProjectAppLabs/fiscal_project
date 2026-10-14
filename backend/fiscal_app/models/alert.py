@@ -31,6 +31,9 @@ class Alert(models.Model):
     message = models.CharField(max_length=500)
     created_at = models.DateTimeField(auto_now_add=True)
     resolved_at = models.DateTimeField(null=True, blank=True)
+    # Who closed it from the console and why (empty when Fiscal. closed it because the condition went away).
+    resolved_by = models.ForeignKey('fiscal_app.User', on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
+    resolution_note = models.CharField(max_length=300, blank=True, default='')
 
     class Meta:
         ordering = ['-created_at']

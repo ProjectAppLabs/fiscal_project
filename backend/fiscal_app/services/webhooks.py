@@ -88,3 +88,29 @@ def deliver(delivery: WebhookDelivery) -> bool:
 def pending_deliveries(now=None):
     now = now or timezone.now()
     return WebhookDelivery.objects.filter(delivered_at__isnull=True, next_attempt_at__lte=now).select_related('client')
+
+
+def send_ping(client) -> WebhookDelivery:
+    """A signed `ping` to the client's notice URL, sent now, so the integration can be checked from the console."""
+    delivery = WebhookDelivery.objects.create(
+        client=client, payload={'event': 'ping', 'sent_at': timezone.now().isoformat()}, next_attempt_at=timezone.now(),
+    )
+    if not deliver(delivery):
+        # A test notice is not retried: the operator sees the result and tries again.
+        delivery.next_attempt_at = None
+        delivery.save(update_fields=['next_attempt_at'])
+    return delivery
+
+
+def retry_now(delivery: WebhookDelivery) -> bool:
+    """Send a pending or failed notice again right away; a delivered one is left as it is."""
+    if delivery.delivered_at:
+        return True
+    return deliver(delivery)
+
+
+def requeue_failed(client) -> int:
+    """Put the client's failed notices back in the queue (they had used up their attempts)."""
+    return WebhookDelivery.objects.filter(client=client, delivered_at__isnull=True, next_attempt_at__isnull=True).exclude(
+        payload__event='ping'
+    ).update(next_attempt_at=timezone.now(), attempts=0)

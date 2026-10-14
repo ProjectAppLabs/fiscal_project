@@ -1,6 +1,6 @@
 """Tests for the one-time password reset code."""
 
-import random
+import secrets
 from datetime import timedelta
 
 import pytest
@@ -13,25 +13,38 @@ from fiscal_app.models import PasswordCode
 
 @pytest.mark.django_db
 def test_password_code_str_representation():
-    """Fails if the admin label of a reset code stops naming its owner and code."""
+    """Fails if the admin label of a code stops naming its purpose and owner, or starts showing the code."""
     User = get_user_model()
     user = User.objects.create_user(email='code@example.com', password='pass1234')
     password_code = PasswordCode.objects.create(user=user, code='123456')
 
-    assert str(password_code) == 'Code for code@example.com - 123456'
+    assert str(password_code) == 'Restablecer contraseña · code@example.com'
 
 
 @pytest.mark.django_db
 def test_password_code_generate_code_creates_six_digits(monkeypatch):
-    """Fails if a generated reset code is not the six-digit value operators receive by email."""
+    """Fails if a generated code is not the zero-padded six digits operators receive by email."""
     User = get_user_model()
     user = User.objects.create_user(email='generate@example.com', password='pass1234')
 
-    monkeypatch.setattr(random, 'randint', lambda *_: 1)
+    monkeypatch.setattr(secrets, 'randbelow', lambda _limit: 4207)
 
     password_code = PasswordCode.generate_code(user)
 
-    assert password_code.code == '111111'
+    assert password_code.code == '004207'
+
+
+@pytest.mark.django_db
+def test_password_code_generate_code_retires_the_previous_code():
+    """Fails if an earlier unused code still works after a new one is sent."""
+    User = get_user_model()
+    user = User.objects.create_user(email='again@example.com', password='pass1234')
+    first = PasswordCode.generate_code(user)
+
+    PasswordCode.generate_code(user)
+    first.refresh_from_db()
+
+    assert first.used is True
 
 
 @pytest.mark.django_db

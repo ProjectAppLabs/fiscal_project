@@ -10,6 +10,7 @@ import {
   fetchIssuer,
   fetchIssuers,
   resolveAlert,
+  type AlertFilters,
   type Alert,
   type ClientSystemRow,
   type Contingency,
@@ -29,6 +30,7 @@ type OperationsState = {
   alerts: Paginated<Alert> | null;
   alertsStatus: LoadStatus;
   includeResolved: boolean;
+  alertFilters: AlertFilters;
   alertsPage: number;
   resolvingAlertId: number | null;
   contingencies: Contingency[] | null;
@@ -43,8 +45,9 @@ type OperationsState = {
   refreshIssuer: (id: number | string) => Promise<void>;
   loadAlerts: () => Promise<void>;
   showResolvedAlerts: (includeResolved: boolean) => Promise<void>;
+  filterAlerts: (filters: AlertFilters) => Promise<void>;
   goToAlertsPage: (link: string | null) => Promise<void>;
-  resolve: (id: number) => Promise<boolean>;
+  resolve: (id: number, note?: string) => Promise<boolean>;
   loadContingencies: () => Promise<void>;
   loadClientSystems: () => Promise<void>;
 };
@@ -59,6 +62,7 @@ export const useOperationsStore = create<OperationsState>((set, get) => ({
   alerts: null,
   alertsStatus: 'idle',
   includeResolved: false,
+  alertFilters: { severity: '', kind: '' },
   alertsPage: 1,
   resolvingAlertId: null,
   contingencies: null,
@@ -106,10 +110,10 @@ export const useOperationsStore = create<OperationsState>((set, get) => ({
   },
 
   loadAlerts: async () => {
-    const { includeResolved, alertsPage } = get();
+    const { includeResolved, alertsPage, alertFilters } = get();
     set({ alertsStatus: 'loading' });
     try {
-      set({ alerts: await fetchAlerts({ includeResolved, page: alertsPage }), alertsStatus: 'ready' });
+      set({ alerts: await fetchAlerts({ includeResolved, page: alertsPage, filters: alertFilters }), alertsStatus: 'ready' });
     } catch {
       set({ alertsStatus: 'error' });
     }
@@ -120,6 +124,11 @@ export const useOperationsStore = create<OperationsState>((set, get) => ({
     await get().loadAlerts();
   },
 
+  filterAlerts: async (alertFilters) => {
+    set({ alertFilters, alertsPage: 1 });
+    await get().loadAlerts();
+  },
+
   goToAlertsPage: async (link) => {
     const page = pageFromLink(link);
     if (page === null) return;
@@ -127,10 +136,10 @@ export const useOperationsStore = create<OperationsState>((set, get) => ({
     await get().loadAlerts();
   },
 
-  resolve: async (id) => {
+  resolve: async (id, note = '') => {
     set({ resolvingAlertId: id });
     try {
-      await resolveAlert(id);
+      await resolveAlert(id, note);
       await get().loadAlerts();
       return true;
     } catch {

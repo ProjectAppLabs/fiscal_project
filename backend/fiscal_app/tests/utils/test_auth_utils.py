@@ -1,5 +1,7 @@
 """Tests for JWT token generation and authentication emails."""
 
+import smtplib
+
 import pytest
 from django.contrib.auth import get_user_model
 
@@ -45,7 +47,7 @@ def test_send_password_reset_code_failure(monkeypatch):
     user = User.objects.create_user(email='resetfail@example.com', password='pass1234', first_name='Reset')
 
     def fake_send_mail(*_args, **_kwargs):
-        raise RuntimeError('send failed')
+        raise smtplib.SMTPException('send failed')
 
     monkeypatch.setattr(auth_utils, 'send_mail', fake_send_mail)
 

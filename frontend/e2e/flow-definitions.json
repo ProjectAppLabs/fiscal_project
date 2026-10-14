@@ -412,6 +412,111 @@
       "outcomes": [
         "success"
       ]
+    },
+    "console-client-system-connect": {
+      "name": "Connect a client system from its page",
+      "module": "console",
+      "roles": [
+        "operator",
+        "admin"
+      ],
+      "priority": "P1",
+      "description": "The client system page guides the connection: key, notice URL, a signed test notice, secret rotation and the notice log with resend",
+      "expectedSpecs": 3,
+      "outcomes": [
+        "success"
+      ]
+    },
+    "console-users-manage": {
+      "name": "Administrators manage console users",
+      "module": "console",
+      "roles": [
+        "admin"
+      ],
+      "priority": "P1",
+      "description": "/users invites an operator by e-mail and changes roles after a confirmation",
+      "expectedSpecs": 2,
+      "outcomes": [
+        "success"
+      ]
+    },
+    "console-issuer-edit": {
+      "name": "Correct the issuer data",
+      "module": "console",
+      "roles": [
+        "operator"
+      ],
+      "priority": "P2",
+      "description": "«Editar datos» on the issuer page corrects the RUT data; the NIT and the environment never change there",
+      "expectedSpecs": 1,
+      "outcomes": [
+        "success"
+      ]
+    },
+    "console-document-support": {
+      "name": "Support actions on one document",
+      "module": "console",
+      "roles": [
+        "operator"
+      ],
+      "priority": "P1",
+      "description": "The document page asks the DIAN what it knows about the document and sends the notice to the client system again",
+      "expectedSpecs": 2,
+      "outcomes": [
+        "success"
+      ]
+    },
+    "console-contingency-transmit": {
+      "name": "Transmit a contingency now",
+      "module": "console",
+      "roles": [
+        "operator"
+      ],
+      "priority": "P1",
+      "description": "«Transmitir ahora» on a DIAN contingency moves it to the front of the queue without waiting for the 30-minute sweep",
+      "expectedSpecs": 1,
+      "outcomes": [
+        "success"
+      ]
+    },
+    "console-alerts-bulk-resolve": {
+      "name": "Resolve several alerts with a note",
+      "module": "console",
+      "roles": [
+        "operator"
+      ],
+      "priority": "P2",
+      "description": "/alerts filters by severity and kind, selects the open alerts and resolves them together with a note that stays visible",
+      "expectedSpecs": 1,
+      "outcomes": [
+        "success"
+      ]
+    },
+    "console-documents-search": {
+      "name": "Search documents by number",
+      "module": "console",
+      "roles": [
+        "operator"
+      ],
+      "priority": "P2",
+      "description": "/documents searches by number or CUFE and narrows the list by kind and dates from «Más filtros»",
+      "expectedSpecs": 1,
+      "outcomes": [
+        "success"
+      ]
+    },
+    "console-health-detail": {
+      "name": "Service health in detail",
+      "module": "console",
+      "roles": [
+        "operator"
+      ],
+      "priority": "P2",
+      "description": "The dashboard health card opens /health, with each part's state and links to what waits",
+      "expectedSpecs": 1,
+      "outcomes": [
+        "success"
+      ]
     }
   }
 }

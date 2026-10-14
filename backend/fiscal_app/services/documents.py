@@ -85,6 +85,11 @@ def _same_or_conflict(document, digest):
 
 
 def _check_ready(issuer):
+    if not issuer.active:
+        raise FiscalError(
+            'El emisor está desactivado en Fiscal.: un administrador debe activarlo antes de emitir.', 'issuer_inactive',
+            status.HTTP_409_CONFLICT,
+        )
     missing = []
     certificate = active_certificate(issuer)
     if certificate is None or certificate.not_after <= timezone.now():

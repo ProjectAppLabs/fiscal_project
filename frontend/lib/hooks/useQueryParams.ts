@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback } from 'react';
+import { useCallback, useSyncExternalStore } from 'react';
 
 /**
  * Reads and writes query parameters with the browser History API, which Next keeps in sync. Filters and tabs live in
@@ -24,4 +24,16 @@ export function useQueryParams() {
   }, []);
 
   return { read, write };
+}
+
+/** One query parameter for rendering: empty on the server and while hydrating, then the real value. */
+export function useQueryParam(name: string): string {
+  return useSyncExternalStore(
+    (onChange) => {
+      window.addEventListener('popstate', onChange);
+      return () => window.removeEventListener('popstate', onChange);
+    },
+    () => new URLSearchParams(window.location.search).get(name) ?? '',
+    () => '',
+  );
 }

@@ -186,18 +186,29 @@ def test_production_status_lists_what_is_missing(authenticated_client, ready_iss
 
 
 @pytest.mark.django_db
-def test_promotion_needs_an_explicit_confirmation(authenticated_client, ready_issuer):
+def test_promotion_needs_an_explicit_confirmation(console_admin_client, ready_issuer):
     """Fails if a single click moves a business to production without confirming it is enabled in the DIAN portal."""
-    response = authenticated_client.post(f'/api/console/issuers/{ready_issuer.pk}/production/promote/', {}, format='json')
+    response = console_admin_client.post(f'/api/console/issuers/{ready_issuer.pk}/production/promote/', {}, format='json')
 
     assert response.status_code == 400
     assert 'confirm' in response.json()
 
 
 @pytest.mark.django_db
-def test_promotion_of_an_issuer_not_ready_is_refused(authenticated_client, ready_issuer):
-    """Fails if an issuer missing the accepted set or production numbering is switched to production."""
+def test_operator_cannot_move_an_issuer_to_production(authenticated_client, ready_issuer):
+    """Fails if an operator who is not an administrator can give an issuer's documents fiscal effect."""
     response = authenticated_client.post(
+        f'/api/console/issuers/{ready_issuer.pk}/production/promote/', {'confirm': True}, format='json'
+    )
+
+    ready_issuer.refresh_from_db()
+    assert (response.status_code, ready_issuer.environment) == (403, '2')
+
+
+@pytest.mark.django_db
+def test_promotion_of_an_issuer_not_ready_is_refused(console_admin_client, ready_issuer):
+    """Fails if an issuer missing the accepted set or production numbering is switched to production."""
+    response = console_admin_client.post(
         f'/api/console/issuers/{ready_issuer.pk}/production/promote/', {'confirm': True}, format='json'
     )
 

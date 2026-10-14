@@ -32,6 +32,8 @@ type ConsoleState = {
   goToNextPage: () => Promise<void>;
   goToPreviousPage: () => Promise<void>;
   loadDocument: (id: number | string) => Promise<void>;
+  /** Reloads the document after an action without clearing the page. */
+  refreshDocument: (id: string) => Promise<void>;
 };
 
 export const EMPTY_FILTERS: DocumentFilters = { state: '', issuer: '' };
@@ -93,6 +95,14 @@ export const useConsoleStore = create<ConsoleState>((set, get) => ({
       set({ document, documentStatus: 'ready' });
     } catch (error) {
       set({ documentStatus: isNotFoundError(error) ? 'not-found' : 'error' });
+    }
+  },
+
+  refreshDocument: async (id) => {
+    try {
+      set({ document: await fetchDocument(id), documentStatus: 'ready' });
+    } catch {
+      // The page keeps what it already shows; the next full load reports the error.
     }
   },
 }));

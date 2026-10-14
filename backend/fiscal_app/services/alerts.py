@@ -46,10 +46,11 @@ def raise_alert(kind, key, message, *, severity=Alert.Severity.WARNING, issuer=N
     return alert
 
 
-def resolve(alerts, now=None) -> int:
+def resolve(alerts, now=None, *, by=None, note='') -> int:
     """Close alerts. Their key gets the id appended, so the same condition can raise a new alert if it comes back."""
     return alerts.filter(resolved_at__isnull=True).update(
-        resolved_at=now or timezone.now(), key=Concat('key', Value('#'), Cast('id', CharField()))
+        resolved_at=now or timezone.now(), key=Concat('key', Value('#'), Cast('id', CharField())),
+        resolved_by=by, resolution_note=note[:300],
     )
 
 

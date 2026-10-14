@@ -14,6 +14,7 @@ import {
   CONSOLE_CONTINGENCY_LETTER,
   CONSOLE_ISSUER_CERTIFICATE_REPLACE,
   CONSOLE_ISSUER_DETAIL,
+  CONSOLE_ISSUER_EDIT,
   CONSOLE_ISSUER_RANGE_ADD,
   CONSOLE_ISSUERS_LIST,
 } from '../helpers/flow-tags';
@@ -130,5 +131,17 @@ test.describe('Console issuers', () => {
     await dialog.getByRole('button', { name: 'Guardar certificado' }).click();
 
     await expect(page.getByRole('status').filter({ hasText: 'Certificado cargado' })).toBeVisible();
+  });
+
+  test('corrects the issuer data from its page', { tag: [...CONSOLE_ISSUER_EDIT, '@outcome:success'] }, async ({ page }) => {
+    await page.getByRole('link', { name: testIssuerRow.legal_name }).click();
+
+    await page.getByRole('button', { name: 'Editar datos' }).click();
+    const dialog = page.getByRole('dialog', { name: 'Editar datos' });
+    await expect(dialog.getByLabel('NIT (sin dígito de verificación)')).toBeDisabled();
+    await dialog.getByLabel('Nombre comercial (opcional)').fill('La Casa de la Prueba');
+    await dialog.getByRole('button', { name: 'Guardar datos' }).click();
+
+    await expect(page.getByRole('status').filter({ hasText: 'Datos del emisor guardados' })).toBeVisible();
   });
 });

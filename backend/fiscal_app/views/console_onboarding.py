@@ -30,7 +30,7 @@ from fiscal_app.services.certificates import set_certificate
 from fiscal_app.services.client_systems import create_client_system
 from fiscal_app.services.software import register_software
 
-from .console import IsConsoleOperator
+from .console import IsConsoleAdmin, IsConsoleOperator
 
 logger = logging.getLogger(__name__)
 MAX_CERTIFICATE_BYTES = 100_000
@@ -189,6 +189,8 @@ def console_production_action(request, issuer_id, action):
         elif action == 'fetch-ranges':
             production.fetch_ranges(issuer)
         elif action == 'promote':
+            if not IsConsoleAdmin().has_permission(request, None):
+                return Response({'detail': IsConsoleAdmin.message}, status=status.HTTP_403_FORBIDDEN)
             if request.data.get('confirm') is not True:
                 return Response({'confirm': ['Confirma que el comercio ya quedó «Habilitado» en el portal de la DIAN.']},
                                 status=status.HTTP_400_BAD_REQUEST)

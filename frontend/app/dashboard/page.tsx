@@ -222,7 +222,10 @@ function HealthCard({ summary }: { summary: ConsoleSummary }) {
         />
         <HealthRow label={t('contingencies')} ok={!health.dian.in_contingency} value={t('dianContingency', { count: health.dian.in_contingency })} />
       </ul>
-      <CardLink href={ROUTES.CONTINGENCIES}>{t('viewContingencies')}</CardLink>
+      <span className="mt-auto flex flex-wrap gap-x-4">
+        <CardLink href={ROUTES.HEALTH}>{t('viewHealth')}</CardLink>
+        <CardLink href={ROUTES.CONTINGENCIES}>{t('viewContingencies')}</CardLink>
+      </span>
     </Card>
   );
 }

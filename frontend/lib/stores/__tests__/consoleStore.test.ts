@@ -151,4 +151,26 @@ describe('consoleStore', () => {
 
     expect(useConsoleStore.getState().documentStatus).toBe(expected);
   });
+
+  it('refreshes the document without clearing it first', async () => {
+    useConsoleStore.setState({ document: buildDocumentDetail(), documentStatus: 'ready' });
+    mockGet.mockResolvedValueOnce({ data: buildDocumentDetail({ state: 'validated' }) });
+
+    await act(async () => {
+      await useConsoleStore.getState().refreshDocument('7');
+    });
+
+    expect(useConsoleStore.getState().document?.state).toBe('validated');
+  });
+
+  it('keeps the shown document when a refresh fails', async () => {
+    useConsoleStore.setState({ document: buildDocumentDetail(), documentStatus: 'ready' });
+    mockGet.mockRejectedValueOnce(httpError(500));
+
+    await act(async () => {
+      await useConsoleStore.getState().refreshDocument('7');
+    });
+
+    expect(useConsoleStore.getState().document?.state).toBe('rejected');
+  });
 });

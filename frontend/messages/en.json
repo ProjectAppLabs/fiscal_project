@@ -23,7 +23,8 @@
     "changePassword": "Change password",
     "more": "More",
     "closeMore": "Close the menu",
-    "openCount": "{count, plural, one {# open} other {# open}}"
+    "openCount": "{count, plural, one {# open} other {# open}}",
+    "users": "Console users"
   },
   "footer": {
     "tagline": "ProjectApp's internal electronic invoicing console."
@@ -75,7 +76,10 @@
     "resetSuccess": "Password reset. Redirecting…",
     "resetFailed": "The password could not be reset.",
     "backToEmail": "Back to email",
-    "backToSignIn": "Back to sign in"
+    "backToSignIn": "Back to sign in",
+    "inviteTitle": "Activate your account",
+    "inviteIntro": "Type the invitation code sent to <strong>{email}</strong> and choose your password.",
+    "inviteSuccess": "Account activated. You can sign in now."
   },
   "console": {
     "states": {
@@ -149,7 +153,8 @@
     "criticalNoticeBody": "Check them before they stop invoicing.",
     "contingencyNotice": "{count, plural, one {# invoice in contingency.} other {# invoices in contingency.}}",
     "contingencyNoticeBody": "They must be sent within 48 hours.",
-    "viewClientSystems": "See client systems"
+    "viewClientSystems": "See client systems",
+    "viewHealth": "See health in detail"
   },
   "documents": {
     "title": "Documents",
@@ -179,7 +184,21 @@
     "subtitle": "{count} documents from every issuer",
     "issuerPlaceholder": "No dots nor check digit",
     "emptyBody": "Try another state or NIT.",
-    "attemptsValue": "{count, plural, one {# attempt} other {# attempts}}"
+    "attemptsValue": "{count, plural, one {# attempt} other {# attempts}}",
+    "export": "Export CSV",
+    "exportFailed": "Could not export. Try again.",
+    "filterSearch": "Number or CUFE",
+    "searchPlaceholder": "SETP990000001 or part of the CUFE",
+    "filterKind": "Type",
+    "allKinds": "All types",
+    "filterClient": "Client system",
+    "allClients": "All systems",
+    "filterFrom": "Issued from",
+    "filterTo": "Issued to",
+    "moreFilters": "More filters",
+    "moreFiltersCount": "More filters ({count} active)",
+    "lessFilters": "Fewer filters",
+    "clearFilters": "Clear filters"
   },
   "documentDetail": {
     "back": "Back to documents",
@@ -200,7 +219,8 @@
       "original": "Original document",
       "cufe": "CUFE",
       "invoiceType": "DIAN invoice type",
-      "contingencyStarted": "In contingency since"
+      "contingencyStarted": "In contingency since",
+      "notes": "Notes on this invoice"
     },
     "viewOriginal": "View document {id}",
     "qr": "View QR code",
@@ -242,7 +262,20 @@
     "copyCufe": "Copy the CUFE",
     "rejections": "Rejections",
     "notifications": "Notifications (they do not stop the document)",
-    "artifactsSubtitle": "Kept for 10 years; Fiscal. checks their fingerprint before handing them out."
+    "artifactsSubtitle": "Kept for 10 years; Fiscal. checks their fingerprint before handing them out.",
+    "actions": {
+      "transmit": "Transmit now",
+      "transmitted": "Done: the document moved to the front of the queue and Fiscal. is transmitting it.",
+      "checkDian": "Ask the DIAN",
+      "resendNotice": "Resend notice",
+      "noticeDelivered": "Notice delivered to the client system.",
+      "noticeFailed": "The client system did not get the notice: {error}. Fiscal. will retry on its own.",
+      "failed": "The action could not be done.",
+      "dianTitle": "What the DIAN says",
+      "dianBody": "The DIAN's answer to this query. It only informs: the document's state in Fiscal. does not change.",
+      "dianValid": "The DIAN holds the document as valid.",
+      "dianNotValid": "The DIAN does not hold it as valid."
+    }
   },
   "staging": {
     "remainsOne": "remains",
@@ -366,7 +399,8 @@
       "numbers": "Numbers",
       "validity": "Validity",
       "used": "Used",
-      "last": "Last number"
+      "last": "Last number",
+      "actions": "Action"
     },
     "alertsTitle": "Open alerts",
     "noAlerts": "No open alerts.",
@@ -431,7 +465,37 @@
     "saveRange": "Save range",
     "rangeSaved": "Range added",
     "rangesSubtitle": "Usage and validity of each resolution",
-    "productionRangesHint": "The production numbering is brought from the DIAN in the move to production, once the business asked for it in MUISCA."
+    "productionRangesHint": "The production numbering is brought from the DIAN in the move to production, once the business asked for it in MUISCA.",
+    "editData": "Edit data",
+    "editBody": "Correct the data as it is in the RUT. It applies to new documents; those already issued do not change.",
+    "saveData": "Save data",
+    "dataSaved": "Issuer data saved",
+    "actionFailed": "The action could not be completed.",
+    "activateIssuer": "Activate issuer",
+    "deactivateIssuer": "Deactivate issuer",
+    "activateIssuerTitle": "Activate {name}?",
+    "deactivateIssuerTitle": "Deactivate {name}?",
+    "activateIssuerBody": "Its client system can issue documents for this NIT again.",
+    "deactivateIssuerBody": "Its client system can no longer issue for this NIT. Documents and files are kept for 10 years.",
+    "issuerActivated": "Issuer activated",
+    "issuerDeactivated": "Issuer deactivated",
+    "inactiveNotice": "This issuer is deactivated: its client system cannot issue documents for it.",
+    "activateRange": "Activate",
+    "deactivateRange": "Deactivate",
+    "rangeConfirmTitle": "Change the range {range}?",
+    "activateRangeBody": "It can number documents again while it is valid.",
+    "deactivateRangeBody": "It stops numbering documents. It is not deleted: documents already issued still point to it.",
+    "rangeActivated": "Range activated",
+    "rangeDeactivated": "Range deactivated",
+    "runsTitle": "Earlier test set runs",
+    "runsSubtitle": "Every time the test set was sent to the DIAN.",
+    "runColumns": {
+      "date": "Date",
+      "state": "Result",
+      "result": "Documents",
+      "error": "Error"
+    },
+    "runResult": "{accepted} of {total} accepted{rejected, plural, =0 {} one { · # rejected} other { · # rejected}}"
   },
   "contingencies": {
     "title": "Contingencies",
@@ -446,7 +510,8 @@
       "started": "Since",
       "deadline": "Deadline",
       "left": "Time left",
-      "attempts": "Attempts"
+      "attempts": "Attempts",
+      "actions": "Action"
     },
     "kinds": {
       "dian": "DIAN (type 04)",
@@ -456,7 +521,10 @@
     "overdue": "Overdue by {hours} h",
     "emptyBody": "When the DIAN does not answer, invoices wait here with their 48-hour deadline.",
     "urgentNotice": "{count, plural, one {# invoice is due in less than 8 hours.} other {# invoices are due in less than 8 hours.}}",
-    "urgentNoticeBody": "Fiscal. retries every 30 minutes; if the DIAN still does not answer, check the issuer's contingency letter."
+    "urgentNoticeBody": "Fiscal. retries every 30 minutes; if the DIAN still does not answer, check the issuer's contingency letter.",
+    "transmit": "Transmit now",
+    "transmitted": "{number} moved to the front of the queue.",
+    "transmitFailed": "Could not transmit. Try again."
   },
   "alerts": {
     "title": "Alerts",
@@ -486,7 +554,24 @@
     "resolvedToast": "Alert resolved",
     "fixCertificate": "Upload certificate",
     "fixRange": "See numbering",
-    "fixContingency": "See contingencies"
+    "fixContingency": "See contingencies",
+    "export": "Export CSV",
+    "exportFailed": "Could not export. Try again.",
+    "filterSeverity": "Severity",
+    "allSeverities": "All",
+    "filterKind": "Type",
+    "allKinds": "All types",
+    "select": "Select",
+    "selectAll": "Select the open ones on this page",
+    "selectedCount": "{count, plural, =0 {None selected} other {# selected}}",
+    "resolveSelected": "Resolve selected",
+    "resolveManyTitle": "{count, plural, one {Resolve # alert?} other {Resolve # alerts?}}",
+    "resolveManyBody": "They close under your name. If the problem persists, Fiscal. warns again.",
+    "resolvedMany": "{count, plural, one {# alert resolved} other {# alerts resolved}}",
+    "note": "Note (optional)",
+    "noteHint": "What was done, for whoever reads it later. For example: «The new certificate was uploaded».",
+    "resolvedBy": "By {name}",
+    "resolvedByFiscal": "Closed by Fiscal."
   },
   "clientSystems": {
     "title": "Client systems",
@@ -577,7 +662,8 @@
         "O-23": "VAT withholding agent",
         "O-47": "Simple tax regime",
         "R-99-PN": "Not applicable (none of the above)"
-      }
+      },
+      "nitLocked": "The NIT does not change: it identifies the issuer before the DIAN."
     },
     "certificate": {
       "title": "Issuer's digital certificate",
@@ -727,7 +813,8 @@
       "copy-software": "Production software registered",
       "fetch-ranges": "Numbering brought from the DIAN",
       "promote": "The issuer moved to production"
-    }
+    },
+    "adminOnly": "Only an administrator can move the issuer to production."
   },
   "ui": {
     "breadcrumb": "Breadcrumb",
@@ -776,5 +863,207 @@
     "body": "The page hit an unexpected error. The rest of the console keeps working.",
     "retry": "Retry",
     "home": "Go to the dashboard"
+  },
+  "clientSystem": {
+    "back": "Back to client systems",
+    "breadcrumb": "Client systems",
+    "breadcrumbDetail": "Profile",
+    "notFoundTitle": "We could not find that client system",
+    "notFoundBody": "The link may be wrong or the system may not exist.",
+    "error": "We could not load the client system.",
+    "subtitle": "Created on {date}",
+    "active": "Active",
+    "inactive": "Inactive",
+    "inactiveNotice": "It is deactivated: it cannot call the API nor receive notices.",
+    "activate": "Activate",
+    "deactivate": "Deactivate",
+    "activated": "System activated",
+    "deactivated": "System deactivated",
+    "activateTitle": "Activate {name}?",
+    "deactivateTitle": "Deactivate {name}?",
+    "activateBody": "It can call the API again with its current secret and receive notices.",
+    "deactivateBody": "It can no longer call the API: it cannot issue documents nor enrol issuers, and it receives no notices. Its issuers and documents are kept.",
+    "actionFailed": "The action could not be completed.",
+    "guideTitle": "Connect the system, step by step",
+    "guideSubtitle": "What the client system needs to work with Fiscal.",
+    "keyId": "Key identifier (X-Fiscal-Key)",
+    "apiBase": "API address",
+    "steps": {
+      "secret": "Secret saved in the client system",
+      "secretHint": "It was shown only once when created or rotated. If it was lost, rotate the secret.",
+      "webhook": "Notice URL",
+      "webhookHint": "Signed notices of documents and alerts arrive there.",
+      "ping": "Test notice received",
+      "pingHint": "Send a test notice to check the URL and the signature verification.",
+      "issuers": "{count, plural, =0 {No issuer enrolled} one {# issuer enrolled} other {# issuers enrolled}}",
+      "issuersHint": "Each business enrols with its certificate and its DIAN registration."
+    },
+    "edit": "Edit",
+    "configure": "Configure",
+    "sendPing": "Send test notice",
+    "enrol": "Enrol issuer",
+    "pingOk": "The client system received the test notice",
+    "pingFailed": "The client system did not answer the test notice",
+    "pingAnswered": "It answered HTTP {status}.",
+    "pingError": "Failed: {error}. Check the URL and that the system accepts the notice.",
+    "lastDelivered": "Last notice delivered {when}.",
+    "docsHint": "How to sign calls and verify notices: docs/fiscal/contrato.md (with examples in Python and JavaScript).",
+    "editWebhook": "Change the notice URL",
+    "webhookDialogBody": "Fiscal. signs each notice with the current secret; the client system must verify the signature before trusting it.",
+    "webhookUrl": "Notice URL",
+    "webhookHint": "https recommended. Leave it empty to receive no notices.",
+    "saveWebhook": "Save URL",
+    "webhookSaved": "Notice URL saved",
+    "secretsTitle": "Secrets",
+    "noSecrets": "It has no valid secret: it cannot call the API. Rotate the secret.",
+    "issuedOn": "Issued on {date}",
+    "current": "Current",
+    "expiresOn": "Stops working on {date}",
+    "rotate": "Rotate secret",
+    "rotateBody": "A new secret is issued. The current one keeps working during the grace period, so the client system can switch without downtime. Notices are signed with the new one from now on.",
+    "grace": "Grace period of the current secret",
+    "graceHint": "How long the current secret keeps working.",
+    "graceOption": "{hours, plural, =0 {No grace: it stops now} one {# hour} other {# hours}}",
+    "rotateConfirm": "Rotate secret",
+    "cancel": "Cancel",
+    "secretOnceTitle": "Save this secret now.",
+    "secretOnceBody": "This is the only time it is shown. The previous one keeps working {hours, plural, =0 {only until now} one {# hour} other {# hours}}.",
+    "secretSaved": "I saved it",
+    "issuersTitle": "{count, plural, =0 {Issuers} one {# issuer} other {# issuers}}",
+    "noIssuers": "It has no issuers yet.",
+    "deliveriesTitle": "Notices",
+    "deliveriesSubtitle": "Every signed notice Fiscal. sent, with its result.",
+    "deliveriesError": "We could not load the notices.",
+    "noDeliveries": "There are no notices in that state.",
+    "deliveryTabs": {
+      "all": "All",
+      "pending": "Pending",
+      "failed": "Failed",
+      "delivered": "Delivered"
+    },
+    "deliveryStates": {
+      "pending": "Pending",
+      "failed": "Failed",
+      "delivered": "Delivered"
+    },
+    "columns": {
+      "event": "Event",
+      "subject": "About",
+      "state": "State",
+      "result": "Result",
+      "when": "When",
+      "actions": "Action"
+    },
+    "testNotice": "Test notice",
+    "attempts": "{count, plural, one {# attempt} other {# attempts}}",
+    "deliveredAt": "Delivered {when}",
+    "nextAttempt": "Next attempt {when}",
+    "viewPayload": "View",
+    "resend": "Resend",
+    "resent": "Notice delivered",
+    "resendFailed": "Not delivered: {error}",
+    "requeueFailed": "Queue the failed ones again",
+    "requeued": "{count, plural, one {# notice back in the queue} other {# notices back in the queue}}",
+    "payloadTitle": "Notice content",
+    "pageInfo": "Page {page} · {count} notices"
+  },
+  "users": {
+    "title": "Users",
+    "subtitle": "Who enters the console and what they can do.",
+    "adminOnly": "Only an administrator can see and change users.",
+    "error": "We could not load the users.",
+    "empty": "There are no users",
+    "emptyBody": "Invite the people who operate Fiscal.",
+    "invite": "Invite user",
+    "inviteBody": "They get an e-mail with a link and a code to choose their password. The code expires in 72 hours.",
+    "firstName": "First name",
+    "lastName": "Last name (optional)",
+    "email": "E-mail",
+    "emailHint": "The invitation goes there.",
+    "role": "Role",
+    "roles": {
+      "operator": "Operator",
+      "admin": "Administrator"
+    },
+    "roleHints": {
+      "operator": "Runs the console: documents, issuers, enrolments, alerts and client systems.",
+      "admin": "Also manages users, rotates secrets, deactivates issuers and systems, and moves issuers to production."
+    },
+    "sendInvitation": "Send invitation",
+    "invited": "Invitation sent to {email}",
+    "invitedNoMail": "The account for {email} was created, but the e-mail did not go out. Resend the invitation later.",
+    "tableCaption": "Console users",
+    "you": "(you)",
+    "never": "Never",
+    "columns": {
+      "name": "Person",
+      "role": "Role",
+      "state": "State",
+      "lastLogin": "Last sign in",
+      "actions": "Actions"
+    },
+    "states": {
+      "active": "Active",
+      "invited": "Invited",
+      "inactive": "Inactive"
+    },
+    "resend": "Resend invitation",
+    "makeAdmin": "Make administrator",
+    "makeOperator": "Make operator",
+    "activate": "Activate",
+    "deactivate": "Deactivate",
+    "confirmTitle": "Change {name}?",
+    "makeAdminBody": "They will manage users, rotate secrets, deactivate issuers and systems, and move issuers to production.",
+    "makeOperatorBody": "They will no longer manage users, secrets, deactivations nor the move to production.",
+    "deactivateBody": "They will not be able to enter the console again. What they did stays recorded.",
+    "activateBody": "They can enter again with their password.",
+    "saved": "User updated",
+    "failed": "The action could not be completed."
+  },
+  "health": {
+    "title": "Service health",
+    "subtitle": "Each part of Fiscal. and what is waiting. It refreshes on its own every 30 seconds.",
+    "refresh": "Refresh",
+    "error": "We could not check the service health.",
+    "checkedAt": "Checked on {when}.",
+    "status": {
+      "ok": "All good.",
+      "degraded": "Having problems.",
+      "down": "Down."
+    },
+    "statusBody": {
+      "ok": "The database, the worker and the queue respond.",
+      "degraded": "Something needs attention: see below which part is red.",
+      "down": "The database does not respond: Fiscal. cannot receive nor transmit documents."
+    },
+    "partsTitle": "Service parts",
+    "partsSubtitle": "What Fiscal. needs to receive, sign and transmit.",
+    "database": "Database",
+    "databaseOk": "Responds",
+    "databaseDown": "Not responding",
+    "worker": "Worker",
+    "workerOk": "Active",
+    "workerSilent": "Not responding",
+    "workerHint": "Without the worker, documents stay queued. Tell whoever runs the server.",
+    "lastBeat": "Last beat {when}",
+    "noBeat": "No beats yet",
+    "queue": "Transmission queue",
+    "queueDue": "{count, plural, =0 {Up to date} one {# document to transmit} other {# documents to transmit}}",
+    "oldestDue": "The oldest has waited {minutes} min",
+    "queueHint": "The queue has not moved for a long time. Check that the worker is active.",
+    "dian": "DIAN",
+    "dianContingency": "{count, plural, =0 {No contingency} one {# document in contingency} other {# documents in contingency}}",
+    "lastAnswer": "Last answer {when}",
+    "noAnswer": "No answers yet",
+    "waitingTitle": "What is waiting",
+    "waitingSubtitle": "Tap a row to see the list.",
+    "documents": {
+      "queued": "Queued documents",
+      "transmitting": "Documents being transmitted",
+      "contingency_dian": "In DIAN contingency",
+      "contingency_issuer": "In issuer contingency"
+    },
+    "noticesPending": "Notices to deliver",
+    "noticesFailed": "Failed notices"
   }
 }
