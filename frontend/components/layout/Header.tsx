@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type MouseEvent } from 'react';
 import { Bell, Building2, FilePlus2, LayoutDashboard, LifeBuoy, MoreHorizontal, Plug, Receipt, X, type LucideIcon } from 'lucide-react';
 
 import { FiscalLogo } from '@/components/brand/FiscalLogo';
@@ -13,12 +13,13 @@ import { ROUTES } from '@/lib/constants';
 import { cn } from '@/lib/cn';
 import { useHydrated } from '@/lib/hooks/useHydrated';
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery';
+import { useSlidingPill } from '@/lib/hooks/useSlidingPill';
 import { useAuthStore } from '@/lib/stores/authStore';
 import { useConsoleStore } from '@/lib/stores/consoleStore';
 import { AccountMenu } from './AccountMenu';
 
 /**
- * Floating soft-glass header (H-01): the active page as a raised pill, counters on Alertas and Contingencias,
+ * Floating soft-glass header (H-01): the active page as a raised pill that slides between items, counters on Alertas and Contingencias,
  * «Inscribir emisor» and who is signed in. Below 1024 px the menu becomes a bottom bar with «Más».
  * The sign-in pages draw their own screen, so the header stays out of them.
  */
@@ -30,6 +31,7 @@ export default function Header() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated) && hydrated;
   const narrow = useMediaQuery('(max-width: 1023px)');
   const counts = useMenuCounts(isAuthenticated);
+  const [pending, follow] = usePendingHref(pathname);
 
   if (AUTH_SCREENS.includes(pathname)) return null;
 
@@ -40,7 +42,7 @@ export default function Header() {
           <FiscalLogo />
         </Link>
 
-        {isAuthenticated && !narrow ? <MainNav counts={counts} label={t('mainNav')} pathname={pathname} /> : null}
+        {isAuthenticated && !narrow ? <MainNav counts={counts} follow={follow} label={t('mainNav')} pathname={pathname} pending={pending} /> : null}
 
         <div className="flex items-center gap-2">
           {isAuthenticated ? (
@@ -59,16 +61,20 @@ export default function Header() {
           )}
         </div>
       </div>
-      {isAuthenticated && narrow ? <BottomNav counts={counts} label={t('mainNav')} pathname={pathname} /> : null}
+      {isAuthenticated && narrow ? <BottomNav counts={counts} follow={follow} label={t('mainNav')} pathname={pathname} pending={pending} /> : null}
     </header>
   );
 }
 
-function MainNav({ label, pathname, counts }: NavProps) {
+function MainNav({ label, pathname, pending, follow, counts }: NavProps) {
   const t = useTranslations('header');
+  // The pill goes where the person clicked right away; aria-current keeps telling the page actually shown.
+  const shown = pending ?? NAV.find(({ href }) => isActive(pathname, href))?.href ?? null;
+  const { containerRef, pillRef } = useSlidingPill<HTMLElement>(shown);
 
   return (
-    <nav aria-label={label} className="flex items-center gap-0.5 rounded-full bg-surface-sunk/70 p-1 shadow-sunk">
+    <nav aria-label={label} className="relative flex items-center gap-0.5 rounded-full bg-surface-sunk/70 p-1 shadow-sunk" ref={containerRef}>
+      <span aria-hidden className={cn(PILL_CLASS, 'rounded-full')} data-testid="nav-pill" ref={pillRef} />
       {NAV.map(({ href, key }) => {
         const active = isActive(pathname, href);
         const count = key === 'alerts' ? counts.alerts : key === 'contingencies' ? counts.contingencies : 0;
@@ -77,11 +83,13 @@ function MainNav({ label, pathname, counts }: NavProps) {
             aria-current={active ? 'page' : undefined}
             aria-describedby={count ? `nav-count-${key}` : undefined}
             className={cn(
-              'inline-flex h-10 items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 text-sm font-semibold transition duration-200 ease-soft xl:px-4',
-              active ? 'bg-surface text-ink shadow-rest' : 'text-ink-2 hover:text-ink',
+              'relative inline-flex h-10 items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 text-sm font-semibold transition-colors duration-300 ease-soft xl:px-4',
+              shown === href ? 'text-ink' : 'text-ink-2 hover:text-ink',
             )}
+            data-pill={href}
             href={href}
             key={href}
+            onClick={(event) => follow(event, href)}
           >
             {t(key)}
             <NavCount count={count} id={`nav-count-${key}`} tone={key === 'alerts' && counts.critical ? 'danger' : 'warning'} />
@@ -93,13 +101,15 @@ function MainNav({ label, pathname, counts }: NavProps) {
 }
 
 /** Below 1024 px: Tablero, Documentos, Emisores, Alertas and «Más» (Contingencias, Sistemas cliente, Inscribir). */
-function BottomNav({ label, pathname, counts }: NavProps) {
+function BottomNav({ label, pathname, pending, follow, counts }: NavProps) {
   const t = useTranslations('header');
   // «Más» stays open only on the page where it was opened: navigating closes it.
   const [openedAt, setOpenedAt] = useState<string | null>(null);
   const moreOpen = openedAt === pathname;
   const setMoreOpen = (open: boolean | ((current: boolean) => boolean)) =>
     setOpenedAt((typeof open === 'function' ? open(moreOpen) : open) ? pathname : null);
+  const shown = moreOpen ? MORE_KEY : (pending ?? BOTTOM.find(({ href }) => isActive(pathname, href))?.href ?? null);
+  const { containerRef, pillRef } = useSlidingPill<HTMLElement>(shown);
 
   return (
     <>
@@ -120,15 +130,21 @@ function BottomNav({ label, pathname, counts }: NavProps) {
           ))}
         </div>
       ) : null}
-      <nav aria-label={label} className="glass fixed inset-x-3 bottom-3 z-40 grid grid-cols-5 gap-1 rounded-panel p-1.5">
+      <nav aria-label={label} className="glass fixed inset-x-3 bottom-3 z-40 grid grid-cols-5 gap-1 rounded-panel p-1.5" ref={containerRef}>
+        <span aria-hidden className={cn(PILL_CLASS, 'rounded-lg')} data-testid="nav-pill" ref={pillRef} />
         {BOTTOM.map(({ href, key, Icon }) => {
           const active = isActive(pathname, href);
           return (
             <Link
               aria-current={active ? 'page' : undefined}
-              className={cn('relative flex h-14 flex-col items-center justify-center gap-0.5 rounded-lg text-[11px] font-semibold', active ? 'bg-surface text-ink shadow-rest' : 'text-ink-2')}
+              className={cn(
+                'relative flex h-14 flex-col items-center justify-center gap-0.5 rounded-lg text-[11px] font-semibold transition-colors duration-300 ease-soft',
+                shown === href ? 'text-ink' : 'text-ink-2',
+              )}
+              data-pill={href}
               href={href}
               key={href}
+              onClick={(event) => follow(event, href)}
             >
               <Icon aria-hidden className="size-5" />
               {t(key)}
@@ -142,7 +158,11 @@ function BottomNav({ label, pathname, counts }: NavProps) {
         })}
         <button
           aria-expanded={moreOpen}
-          className={cn('flex h-14 flex-col items-center justify-center gap-0.5 rounded-lg text-[11px] font-semibold', moreOpen ? 'bg-surface text-ink shadow-rest' : 'text-ink-2')}
+          className={cn(
+            'relative flex h-14 flex-col items-center justify-center gap-0.5 rounded-lg text-[11px] font-semibold transition-colors duration-300 ease-soft',
+            moreOpen ? 'text-ink' : 'text-ink-2',
+          )}
+          data-pill={MORE_KEY}
           onClick={() => setMoreOpen((current) => !current)}
           type="button"
         >
@@ -186,11 +206,30 @@ function useMenuCounts(enabled: boolean): Counts {
   };
 }
 
+/**
+ * Where the person just clicked, until that page shows: the pill moves on the click instead of waiting for the next
+ * page to render. A click that opens a new tab or window does not count.
+ */
+function usePendingHref(pathname: string): [string | null, (event: MouseEvent, href: string) => void] {
+  const [clicked, setClicked] = useState<{ href: string; from: string } | null>(null);
+  const pending = clicked && clicked.from === pathname && !isActive(pathname, clicked.href) ? clicked.href : null;
+  const follow = (event: MouseEvent, href: string) => {
+    if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    setClicked({ href, from: pathname });
+  };
+  return [pending, follow];
+}
+
 function isActive(pathname: string, href: string): boolean {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
 const AUTH_SCREENS: string[] = [ROUTES.SIGN_IN, ROUTES.FORGOT_PASSWORD];
+
+// The sliding pill: absolute behind the items (they are relative, so they paint on top) and invisible until placed.
+const PILL_CLASS =
+  'pointer-events-none absolute left-0 top-0 bg-surface opacity-0 shadow-rest transition-[transform,width,height,opacity] duration-300 ease-soft motion-reduce:transition-none';
+const MORE_KEY = 'more';
 
 const NAV = [
   { href: ROUTES.DASHBOARD, key: 'dashboard' },
@@ -223,5 +262,8 @@ interface Counts {
 interface NavProps {
   label: string;
   pathname: string;
+  /** Where the person just clicked, while that page loads. */
+  pending: string | null;
+  follow: (event: MouseEvent, href: string) => void;
   counts: Counts;
 }

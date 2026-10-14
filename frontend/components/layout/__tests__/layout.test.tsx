@@ -99,6 +99,27 @@ describe('Header', () => {
     expect(screen.getByRole('link', { name: 'Emisores' })).toHaveAttribute('aria-current', 'page');
   });
 
+  it('moves the pill to a clicked link before its page shows', async () => {
+    const left = jest.spyOn(HTMLElement.prototype, 'offsetLeft', 'get').mockImplementation(function (this: HTMLElement) {
+      return this.textContent?.startsWith('Alertas') ? 500 : 0;
+    });
+    renderHeader({ isAuthenticated: true, user: ANA });
+    const nav = screen.getByRole('navigation', { name: 'Navegación principal' });
+
+    await userEvent.click(within(nav).getByRole('link', { name: 'Alertas' }));
+
+    expect(within(nav).getByTestId('nav-pill').style.transform).toBe('translate(500px, 0px)');
+    left.mockRestore();
+  });
+
+  it('keeps the shown page as current while the clicked one loads', async () => {
+    renderHeader({ isAuthenticated: true, user: ANA });
+
+    await userEvent.click(screen.getByRole('link', { name: 'Alertas' }));
+
+    expect(screen.getByRole('link', { name: 'Tablero' })).toHaveAttribute('aria-current', 'page');
+  });
+
   it('counts the open alerts next to Alertas', () => {
     renderHeader({ isAuthenticated: true, user: ANA });
 
