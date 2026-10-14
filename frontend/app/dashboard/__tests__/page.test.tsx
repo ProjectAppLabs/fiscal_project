@@ -43,10 +43,10 @@ describe('DashboardPage', () => {
     expect(container).toBeEmptyDOMElement();
   });
 
-  it('shows the Fiscal. wordmark as the page heading', async () => {
+  it('titles the page Tablero', async () => {
     renderSignedIn();
 
-    expect(screen.getByRole('heading', { level: 1, name: 'Fiscal.' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1, name: 'Tablero' })).toBeInTheDocument();
     expect(await screen.findByRole('group', { name: 'Total' })).toBeInTheDocument();
   });
 
@@ -230,7 +230,17 @@ describe('DashboardPage', () => {
 
     const health = await screen.findByRole('region', { name: 'Salud del servicio' });
     expect(health).toHaveTextContent('Con problemas');
-    expect(within(health).getByText('El trabajador no responde')).toHaveClass('text-destructive');
-    expect(within(health).getByText('2 documentos en contingencia')).toHaveClass('text-destructive');
+    expect(health).toHaveTextContent('El trabajador no responde');
+    expect(health).toHaveTextContent('2 documentos en contingencia');
+  });
+
+  it('warns at the top when invoices are in contingency', async () => {
+    mockGet.mockResolvedValue({
+      data: buildSummary({ health: buildHealth({ status: 'degraded', dian: { in_contingency: 2, last_answer_at: null } }) }),
+    });
+
+    renderSignedIn();
+
+    expect(await screen.findByText('2 facturas en contingencia.')).toBeInTheDocument();
   });
 });

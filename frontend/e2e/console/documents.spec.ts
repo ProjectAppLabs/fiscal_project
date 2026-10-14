@@ -81,7 +81,7 @@ test.describe('Console documents', () => {
   test('shows the DIAN errors of the opened document', { tag: [...CONSOLE_DOCUMENT_DETAIL, '@outcome:display'] }, async ({ page }) => {
     await page.getByRole('link', { name: rejectedDocument.full_number }).click();
 
-    await expect(page.getByRole('region', { name: 'Errores de la DIAN' })).toContainText('FAD06: El CUFE no corresponde.');
+    await expect(page.getByRole('region', { name: 'Respuesta de la DIAN' })).toContainText('FAD06: El CUFE no corresponde.');
   });
 
   test('shows the artifacts of the opened document', { tag: [...CONSOLE_DOCUMENT_DETAIL, '@outcome:display'] }, async ({ page }) => {

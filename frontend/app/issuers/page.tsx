@@ -3,23 +3,29 @@
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { FormEvent, useEffect, useState } from 'react';
+import { FilePlus2, Search } from 'lucide-react';
 
-import { ConsoleLoadError, ConsoleLoading } from '@/components/console/ConsoleStatus';
+import { ConsoleLoadError } from '@/components/console/ConsoleStatus';
+import { Page } from '@/components/layout/Page';
+import { Badge } from '@/components/ui/Badge';
+import { Button, ButtonLink } from '@/components/ui/Button';
+import { DataTable } from '@/components/ui/DataTable';
+import { Input } from '@/components/ui/Field';
+import { PageHeader } from '@/components/ui/PageHeader';
+import { Pagination } from '@/components/ui/Pagination';
+import { EmptyState, SkeletonTable } from '@/components/ui/States';
 import { ROUTES, issuerDetailRoute } from '@/lib/constants';
 import { useRequireAuth } from '@/lib/hooks/useRequireAuth';
 import { daysUntil, type IssuerListItem } from '@/lib/services/operations';
 import { useOperationsStore } from '@/lib/stores/operationsStore';
 
-const INPUT_CLASS =
-  'w-full rounded-xl border border-border bg-card px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring';
-const PAGER_BUTTON_CLASS =
-  'rounded-full border border-border px-4 py-2 text-sm hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50';
 const CERTIFICATE_WARNING_DAYS = 30;
 
 export default function IssuersPage() {
   const t = useTranslations('issuers');
   const { isAuthenticated } = useRequireAuth();
   const loadIssuers = useOperationsStore((s) => s.loadIssuers);
+  const issuers = useOperationsStore((s) => s.issuers);
 
   useEffect(() => {
     if (isAuthenticated) void loadIssuers();
@@ -28,19 +34,20 @@ export default function IssuersPage() {
   if (!isAuthenticated) return null;
 
   return (
-    <main className="mx-auto max-w-6xl px-6 py-10">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <h1 className="text-3xl font-semibold tracking-tight">{t('title')}</h1>
-        <Link
-          className="rounded-full bg-primary px-5 py-2 text-sm text-primary-foreground hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          href={ROUTES.ONBOARDING}
-        >
-          {t('enrol')}
-        </Link>
-      </div>
+    <Page>
+      <PageHeader
+        actions={
+          <ButtonLink href={ROUTES.ONBOARDING} icon={<FilePlus2 aria-hidden className="size-4" />} variant="primary">
+            {t('enrol')}
+          </ButtonLink>
+        }
+        emoji="issuers"
+        subtitle={issuers ? t('subtitle', { count: issuers.count }) : undefined}
+        title={t('title')}
+      />
       <IssuerSearch />
       <IssuerResults />
-    </main>
+    </Page>
   );
 }
 
@@ -56,19 +63,17 @@ function IssuerSearch() {
   };
 
   return (
-    <form className="mt-6 grid gap-4 sm:grid-cols-[1fr_auto] sm:items-end" onSubmit={onSubmit} role="search">
-      <div>
-        <label className="mb-1 block text-sm" htmlFor="issuers-search">
-          {t('searchLabel')}
-        </label>
-        <input id="issuers-search" className={INPUT_CLASS} value={value} onChange={(e) => setValue(e.target.value)} />
+    <form className="mb-6 flex gap-2" onSubmit={onSubmit} role="search">
+      <label className="sr-only" htmlFor="issuers-search">
+        {t('searchLabel')}
+      </label>
+      <div className="relative flex-1">
+        <Search aria-hidden className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-ink-3" />
+        <Input className="pl-11" id="issuers-search" onChange={(e) => setValue(e.target.value)} placeholder={t('searchPlaceholder')} value={value} />
       </div>
-      <button
-        className="rounded-full bg-primary px-5 py-2 text-sm text-primary-foreground hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        type="submit"
-      >
+      <Button className="h-12" type="submit" variant="secondary">
         {t('searchSubmit')}
-      </button>
+      </Button>
     </form>
   );
 }
@@ -78,39 +83,43 @@ function IssuerResults() {
   const issuers = useOperationsStore((s) => s.issuers);
   const status = useOperationsStore((s) => s.issuersStatus);
   const page = useOperationsStore((s) => s.issuersPage);
+  const query = useOperationsStore((s) => s.issuerQuery);
   const loadIssuers = useOperationsStore((s) => s.loadIssuers);
   const goToIssuersPage = useOperationsStore((s) => s.goToIssuersPage);
 
   if (status === 'error') return <ConsoleLoadError message={t('error')} onRetry={() => void loadIssuers()} />;
-  if (!issuers) return <ConsoleLoading />;
+  if (!issuers) return <SkeletonTable />;
   if (issuers.results.length === 0) {
-    return <p className="mt-10 rounded-2xl border border-dashed border-border bg-card px-6 py-12 text-center text-sm">{t('empty')}</p>;
+    return (
+      <EmptyState
+        action={
+          query ? undefined : (
+            <ButtonLink href={ROUTES.ONBOARDING} size="sm" variant="primary">
+              {t('enrol')}
+            </ButtonLink>
+          )
+        }
+        body={query ? t('emptySearchBody') : t('emptyBody')}
+        emoji={query ? 'search' : 'empty'}
+        title={t('empty')}
+      />
+    );
   }
 
   return (
     <>
       <IssuerTable issuers={issuers.results} />
-      <nav aria-label={t('pagination')} className="mt-6 flex flex-wrap items-center justify-between gap-4">
-        <p className="text-sm text-muted-foreground">{t('pageInfo', { page, count: issuers.count })}</p>
-        <div className="flex gap-2">
-          <button
-            className={PAGER_BUTTON_CLASS}
-            disabled={!issuers.previous || status === 'loading'}
-            onClick={() => void goToIssuersPage(issuers.previous)}
-            type="button"
-          >
-            {t('previous')}
-          </button>
-          <button
-            className={PAGER_BUTTON_CLASS}
-            disabled={!issuers.next || status === 'loading'}
-            onClick={() => void goToIssuersPage(issuers.next)}
-            type="button"
-          >
-            {t('next')}
-          </button>
-        </div>
-      </nav>
+      <Pagination
+        busy={status === 'loading'}
+        hasNext={Boolean(issuers.next)}
+        hasPrevious={Boolean(issuers.previous)}
+        label={t('pagination')}
+        nextLabel={t('next')}
+        onNext={() => void goToIssuersPage(issuers.next)}
+        onPrevious={() => void goToIssuersPage(issuers.previous)}
+        previousLabel={t('previous')}
+        summary={t('pageInfo', { page, count: issuers.count })}
+      />
     </>
   );
 }
@@ -120,42 +129,54 @@ function IssuerTable({ issuers }: { issuers: IssuerListItem[] }) {
   const tEnvironments = useTranslations('operations.environments');
 
   return (
-    <div className="mt-8 overflow-x-auto rounded-2xl border border-border bg-card">
-      <table className="w-full text-left text-sm">
-        <caption className="sr-only">{t('tableCaption')}</caption>
-        <thead className="border-b border-border text-xs text-muted-foreground">
-          <tr>
-            <th className="px-4 py-3 font-medium" scope="col">{t('columns.issuer')}</th>
-            <th className="px-4 py-3 font-medium" scope="col">{t('columns.environment')}</th>
-            <th className="px-4 py-3 font-medium" scope="col">{t('columns.client')}</th>
-            <th className="px-4 py-3 font-medium" scope="col">{t('columns.documents')}</th>
-            <th className="px-4 py-3 font-medium" scope="col">{t('columns.certificate')}</th>
-            <th className="px-4 py-3 font-medium" scope="col">{t('columns.alerts')}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {issuers.map((issuer) => (
-            <tr className="border-b border-border last:border-0" key={issuer.id}>
-              <td className="px-4 py-3">
-                <Link className="block hover:underline" href={issuerDetailRoute(issuer.id)}>
-                  {issuer.legal_name}
-                </Link>
-                <span className="block text-xs text-muted-foreground">
-                  {issuer.nit}-{issuer.dv}
-                </span>
-              </td>
-              <td className="px-4 py-3">{tEnvironments(issuer.environment)}</td>
-              <td className="px-4 py-3">{issuer.client}</td>
-              <td className="px-4 py-3 tabular-nums">{issuer.documents}</td>
-              <td className="px-4 py-3">
-                <CertificateExpiry expires={issuer.certificate_expires} />
-              </td>
-              <td className={`px-4 py-3 tabular-nums ${issuer.open_alerts ? 'text-destructive' : ''}`}>{issuer.open_alerts}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+    <DataTable<IssuerListItem>
+      caption={t('tableCaption')}
+      columns={[
+        {
+          key: 'issuer',
+          header: t('columns.issuer'),
+          mobile: 'body',
+          cell: (issuer) => (
+            <>
+              <Link className="block font-semibold text-ink hover:text-primary-text hover:underline" href={issuerDetailRoute(issuer.id)}>
+                {issuer.legal_name}
+              </Link>
+              <span className="block font-mono text-[12px] text-ink-3">
+                {issuer.nit}-{issuer.dv}
+              </span>
+            </>
+          ),
+        },
+        {
+          key: 'environment',
+          header: t('columns.environment'),
+          mobile: 'badge',
+          cell: (issuer) => (
+            <Badge size="sm" tone={issuer.environment === '1' ? 'success' : 'pending'}>
+              {tEnvironments(issuer.environment)}
+            </Badge>
+          ),
+        },
+        { key: 'client', header: t('columns.client'), mobile: 'title', cell: (issuer) => issuer.client },
+        { key: 'documents', header: t('columns.documents'), align: 'end', className: 'tabular-nums', cell: (issuer) => issuer.documents },
+        { key: 'certificate', header: t('columns.certificate'), cell: (issuer) => <CertificateExpiry expires={issuer.certificate_expires} /> },
+        {
+          key: 'alerts',
+          header: t('columns.alerts'),
+          align: 'end',
+          cell: (issuer) =>
+            issuer.open_alerts ? (
+              <Badge size="sm" tone="danger">
+                {issuer.open_alerts}
+              </Badge>
+            ) : (
+              <span className="text-ink-3">0</span>
+            ),
+        },
+      ]}
+      rowKey={(issuer) => issuer.id}
+      rows={issuers}
+    />
   );
 }
 
@@ -163,9 +184,8 @@ export function CertificateExpiry({ expires }: { expires: string | null }) {
   const t = useTranslations('issuers');
   const days = daysUntil(expires);
 
-  if (days === null) return <span className="text-destructive">{t('noCertificate')}</span>;
-  if (days < 0) return <span className="text-destructive">{t('certificateExpired')}</span>;
-  return (
-    <span className={days <= CERTIFICATE_WARNING_DAYS ? 'text-destructive' : ''}>{t('certificateDays', { days })}</span>
-  );
+  if (days === null) return <Badge size="sm" tone="danger">{t('noCertificate')}</Badge>;
+  if (days < 0) return <Badge size="sm" tone="danger">{t('certificateExpired')}</Badge>;
+  if (days <= CERTIFICATE_WARNING_DAYS) return <Badge size="sm" tone={days <= 7 ? 'danger' : 'warning'}>{t('certificateDays', { days })}</Badge>;
+  return <span className="text-ink-2">{t('certificateDays', { days })}</span>;
 }

@@ -26,7 +26,7 @@ test.describe('Console onboarding', () => {
   });
 
   test('enrols ProjectApp step by step', { tag: [...CONSOLE_ONBOARDING, '@outcome:success'] }, async ({ page }) => {
-    await page.getByRole('link', { name: 'Inscribir emisor' }).click();
+    await page.getByRole('main').getByRole('link', { name: 'Inscribir emisor' }).click();
 
     await page.getByLabel('Nombre del sistema nuevo').fill('ProjectApp');
     await page.getByRole('button', { name: 'Crear sistema cliente' }).click();
@@ -37,7 +37,7 @@ test.describe('Console onboarding', () => {
     await page.getByLabel('Dígito de verificación', { exact: true }).fill('3');
     await page.getByLabel('Razón social o nombre').fill('ProjectApp');
     await page.getByLabel('Dirección').fill('Calle 10 #43-12');
-    await page.getByLabel('Municipio (código DANE de 5 dígitos)').fill('05001');
+    await page.getByLabel('Municipio', { exact: true }).fill('05001');
     await page.getByLabel('Correo para facturación').fill('facturas@projectapp.co');
     await page.getByRole('button', { name: 'Continuar' }).click();
 
@@ -56,7 +56,7 @@ test.describe('Console onboarding', () => {
     await page.getByLabel('Clave técnica').fill('clave-tecnica-del-catalogo');
     await page.getByRole('button', { name: 'Continuar' }).click();
 
-    await expect(page.getByRole('link', { name: 'Ir a la ficha del emisor' })).toHaveAttribute('href', '/issuers/3');
+    await expect(page.getByRole('link', { name: 'Ir a la ficha y correr el set' })).toHaveAttribute('href', '/issuers/3?tab=habilitation');
   });
 
   test('runs the DIAN test set from the issuer page', { tag: [...CONSOLE_TEST_SET, '@outcome:success'] }, async ({ page }) => {
@@ -68,6 +68,7 @@ test.describe('Console onboarding', () => {
     await panel.getByRole('button', { name: 'Consultar a la DIAN' }).click();
 
     await expect(panel).toContainText('Aceptado');
+    await panel.getByRole('button', { name: 'Ver los 1 documentos' }).click();
     await expect(panel.getByRole('table', { name: 'Documentos del set de pruebas' })).toContainText('SETP990000000');
   });
 });

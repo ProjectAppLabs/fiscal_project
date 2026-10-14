@@ -12,7 +12,18 @@
     "contingencies": "Contingencies",
     "alerts": "Alerts",
     "clientSystems": "Client systems",
-    "onboarding": "Enrol issuer"
+    "onboarding": "Enrol issuer",
+    "account": "Your account",
+    "roles": {
+      "admin": "Administrator",
+      "operator": "Operator"
+    },
+    "language": "Language",
+    "theme": "Theme",
+    "changePassword": "Change password",
+    "more": "More",
+    "closeMore": "Close the menu",
+    "openCount": "{count, plural, one {# open} other {# open}}"
   },
   "footer": {
     "tagline": "ProjectApp's internal electronic invoicing console."
@@ -32,14 +43,16 @@
   },
   "signIn": {
     "title": "Sign in",
-    "subtitle": "Sign in with your account to operate the console.",
+    "subtitle": "ProjectApp electronic invoicing.",
     "email": "Email",
     "password": "Password",
     "submit": "Sign in",
     "submitting": "Signing in…",
     "captchaRequired": "Please complete the reCAPTCHA check.",
     "invalidCredentials": "Invalid credentials.",
-    "forgotPassword": "Forgot your password?"
+    "forgotPassword": "Forgot your password?",
+    "emailPlaceholder": "you@company.co",
+    "passwordPlaceholder": "Your password"
   },
   "forgotPassword": {
     "title": "Reset password",
@@ -93,7 +106,7 @@
   "dashboard": {
     "subtitle": "Operations console",
     "emptyTitle": "There are no documents yet",
-    "emptyBody": "Invoices and other electronic documents will show up here once they are issued.",
+    "emptyBody": "They show up here when a client system sends its first invoice.",
     "error": "We could not load the dashboard.",
     "documentsTitle": "Documents by state",
     "total": "Total",
@@ -121,7 +134,22 @@
     "workerOk": "Worker running",
     "workerSilent": "The worker is not answering",
     "dianContingency": "{count, plural, =0 {No documents in contingency} one {# document in contingency} other {# documents in contingency}}",
-    "viewContingencies": "View contingencies"
+    "viewContingencies": "View contingencies",
+    "title": "Dashboard",
+    "greeting": "Hi, {name} · {today}",
+    "totalCaption": "<strong>{count}</strong> in total",
+    "queueDueCaption": "ready to send",
+    "viewQueue": "See the queue",
+    "alertsCaption": "unresolved",
+    "service": "Service",
+    "worker": "Worker",
+    "lastBeat": "Heartbeat {when}",
+    "contingencies": "Contingencies",
+    "criticalNotice": "{count, plural, one {# critical alert unresolved.} other {# critical alerts unresolved.}}",
+    "criticalNoticeBody": "Check them before they stop invoicing.",
+    "contingencyNotice": "{count, plural, one {# invoice in contingency.} other {# invoices in contingency.}}",
+    "contingencyNoticeBody": "They must be sent within 48 hours.",
+    "viewClientSystems": "See client systems"
   },
   "documents": {
     "title": "Documents",
@@ -147,7 +175,11 @@
     "pagination": "Pagination",
     "previous": "Previous",
     "next": "Next",
-    "pageInfo": "Page {page} · {count, plural, one {# document} other {# documents}}"
+    "pageInfo": "Page {page} · {count, plural, one {# document} other {# documents}}",
+    "subtitle": "{count} documents from every issuer",
+    "issuerPlaceholder": "No dots nor check digit",
+    "emptyBody": "Try another state or NIT.",
+    "attemptsValue": "{count, plural, one {# attempt} other {# attempts}}"
   },
   "documentDetail": {
     "back": "Back to documents",
@@ -172,7 +204,7 @@
     },
     "viewOriginal": "View document {id}",
     "qr": "View QR code",
-    "errorsTitle": "DIAN errors",
+    "errorsTitle": "DIAN response",
     "noErrors": "The DIAN reported no errors.",
     "artifactsTitle": "Artifacts",
     "artifactsCaption": "Stored artifacts",
@@ -204,7 +236,13 @@
       "invoice_type": "Signed as type",
       "waiting_for": "Waiting for invoice",
       "delivery_failed": "Delivery failed"
-    }
+    },
+    "breadcrumb": "Documents",
+    "payloadSubtitle": "As {client} sent it",
+    "copyCufe": "Copy the CUFE",
+    "rejections": "Rejections",
+    "notifications": "Notifications (they do not stop the document)",
+    "artifactsSubtitle": "Kept for 10 years; Fiscal. checks their fingerprint before handing them out."
   },
   "staging": {
     "remainsOne": "remains",
@@ -252,7 +290,7 @@
     "searchLabel": "Search by NIT or name",
     "searchSubmit": "Search",
     "tableCaption": "Registered issuers",
-    "empty": "No issuers match that search.",
+    "empty": "There are no issuers",
     "error": "We could not load the issuers.",
     "columns": {
       "issuer": "Issuer",
@@ -269,7 +307,11 @@
     "previous": "Previous",
     "next": "Next",
     "pagination": "Issuer pagination",
-    "enrol": "Enrol issuer"
+    "enrol": "Enrol issuer",
+    "subtitle": "{count, plural, one {# business enrolled} other {# businesses enrolled}}",
+    "searchPlaceholder": "Search by NIT or name",
+    "emptyBody": "Enrol the first business so it can run its test set.",
+    "emptySearchBody": "No issuer matches that search."
   },
   "issuerDetail": {
     "back": "Back to issuers",
@@ -284,7 +326,9 @@
       "personType": "Person type",
       "responsibilities": "Responsibilities",
       "address": "Address",
-      "email": "Email"
+      "email": "Email",
+      "legalName": "Legal name",
+      "tradeName": "Trade name"
     },
     "personTypes": {
       "1": "Legal entity",
@@ -308,7 +352,8 @@
       "environment": "Environment",
       "softwareId": "Identifier",
       "testSet": "Test set",
-      "state": "State"
+      "state": "State",
+      "pin": "PIN"
     },
     "testSetYes": "With TestSetId",
     "testSetNo": "Without TestSetId",
@@ -330,7 +375,63 @@
     "letterFrom": "From",
     "letterTo": "To",
     "letterSubmit": "Download draft",
-    "letterError": "The letter could not be generated. Check the dates."
+    "letterError": "The letter could not be generated. Check the dates.",
+    "breadcrumb": "Issuers",
+    "breadcrumbDetail": "Profile",
+    "clientCaption": "client system {client}",
+    "lifecycleLabel": "Issuer life cycle",
+    "tabsLabel": "Profile sections",
+    "tabs": {
+      "summary": "Summary",
+      "habilitation": "Habilitación",
+      "certificates": "Certificates and software",
+      "numbering": "Numbering",
+      "contingency": "Contingency"
+    },
+    "lifecycle": {
+      "enrolled": "Enrolled",
+      "testSet": "Test set accepted",
+      "enabled": "Enabled",
+      "production": "Production",
+      "done": "Done",
+      "missing": "To complete",
+      "pending": "Pending",
+      "setRejected": "With rejections",
+      "setProgress": "In progress · {accepted} of {total}",
+      "inPortal": "Mark it in the DIAN portal",
+      "live": "With fiscal effect"
+    },
+    "incompleteTitle": "Incomplete enrolment.",
+    "incompleteBody": "Missing: {missing}.",
+    "completeEnrolment": "Complete enrolment",
+    "missing": {
+      "certificate": "certificate",
+      "software": "software",
+      "test_set_id": "TestSetId",
+      "range": "numbering range"
+    },
+    "certificateExpiring": "The certificate expires in {days, plural, one {# day.} other {# days.}}",
+    "certificateExpired": "The certificate has expired.",
+    "certificateExpiringBody": "Upload the new one before it expires so issuing does not stop.",
+    "viewCertificate": "See certificate",
+    "replaceCertificate": "Replace certificate",
+    "uploadCertificate": "Upload certificate",
+    "replaceCertificateBody": "The current certificate stops signing and stays in the list as inactive.",
+    "saveCertificate": "Save certificate",
+    "certificateLoaded": "Certificate loaded; it expires on {date}",
+    "expired": "Expired",
+    "expiresIn": "{days, plural, one {in # day} other {in # days}}",
+    "registerSoftware": "Register software",
+    "registerSoftwareBody": "It replaces the active registration of that environment. The PIN is stored encrypted and never shown again.",
+    "saveSoftware": "Save software",
+    "softwareSaved": "Software registered",
+    "pinRegistered": "Registered",
+    "addRange": "Add range",
+    "addRangeBody": "A numbering authorized by the DIAN or a contingency range (booklet or paper, type 03).",
+    "saveRange": "Save range",
+    "rangeSaved": "Range added",
+    "rangesSubtitle": "Usage and validity of each resolution",
+    "productionRangesHint": "The production numbering is brought from the DIAN in the move to production, once the business asked for it in MUISCA."
   },
   "contingencies": {
     "title": "Contingencies",
@@ -352,7 +453,10 @@
       "issuer": "Issuer (type 03)"
     },
     "hoursLeft": "{hours} h",
-    "overdue": "Overdue by {hours} h"
+    "overdue": "Overdue by {hours} h",
+    "emptyBody": "When the DIAN does not answer, invoices wait here with their 48-hour deadline.",
+    "urgentNotice": "{count, plural, one {# invoice is due in less than 8 hours.} other {# invoices are due in less than 8 hours.}}",
+    "urgentNoticeBody": "Fiscal. retries every 30 minutes; if the DIAN still does not answer, check the issuer's contingency letter."
   },
   "alerts": {
     "title": "Alerts",
@@ -376,7 +480,13 @@
     "pageInfo": "Page {page} · {count} alerts",
     "previous": "Previous",
     "next": "Next",
-    "pagination": "Alert pagination"
+    "pagination": "Alert pagination",
+    "subtitle": "What needs action: certificates, numbering, deadlines, rejections and the queue.",
+    "emptyBody": "Fiscal. warns here and by e-mail when something needs attention.",
+    "resolvedToast": "Alert resolved",
+    "fixCertificate": "Upload certificate",
+    "fixRange": "See numbering",
+    "fixContingency": "See contingencies"
   },
   "clientSystems": {
     "title": "Client systems",
@@ -394,7 +504,12 @@
     },
     "noWebhook": "No notice URL",
     "inactive": "Inactive",
-    "noticesState": "{pending} pending · {failed} failed"
+    "noticesState": "{pending} pending · {failed} failed",
+    "subtitle": "The systems using the Fiscal. API (Waiter first).",
+    "new": "New client system",
+    "newDescription": "It gets a key identifier and a secret to sign its calls.",
+    "emptyBody": "Create the first one so it can enrol issuers and issue documents.",
+    "created": "System {name} created"
   },
   "onboarding": {
     "title": "Enrol an issuer",
@@ -423,7 +538,10 @@
       "keyId": "Key identifier",
       "secret": "Secret",
       "secretSaved": "I saved it",
-      "useClient": "Use this system"
+      "useClient": "Use this system",
+      "namePlaceholder": "For example, Waiter",
+      "webhookHint": "Optional. Fiscal.'s signed notices arrive there (https).",
+      "creating": "Creating…"
     },
     "issuer": {
       "title": "Issuer data as it appears in the RUT",
@@ -444,9 +562,22 @@
         "ZZ": "ZZ · Not applicable"
       },
       "address": "Address",
-      "municipality": "Municipality (5-digit DANE code)",
+      "municipality": "Municipality",
       "email": "Invoicing email",
-      "phone": "Phone (optional)"
+      "phone": "Phone (optional)",
+      "subtitle": "As they are in the RUT.",
+      "dvCalculated": "Calculated from the NIT.",
+      "dvMismatch": "It does not match the NIT: it should be {expected}.",
+      "municipalityPlaceholder": "Type the name or the DANE code",
+      "municipalityHint": "Search by name; the DANE code is saved.",
+      "municipalityCode": "DANE code {code}",
+      "responsibilityNames": {
+        "O-13": "Large taxpayer",
+        "O-15": "Self-withholding agent",
+        "O-23": "VAT withholding agent",
+        "O-47": "Simple tax regime",
+        "R-99-PN": "Not applicable (none of the above)"
+      }
     },
     "certificate": {
       "title": "Issuer's digital certificate",
@@ -469,24 +600,47 @@
       "body": "The data the habilitación portal gives when registering Fiscal. in the «Software propio» mode.",
       "softwareId": "Software identifier",
       "pin": "Software PIN",
-      "testSetId": "TestSetId"
+      "testSetId": "TestSetId",
+      "environment": "Environment",
+      "softwareIdHint": "The DIAN creates it when Fiscal. is associated in «Configurar modos de operación».",
+      "pinHint": "The one the business chose. It is stored encrypted.",
+      "testSetIdHint": "It appears in the «¡Importante!» notice of the test set page."
     },
     "range": {
       "title": "Habilitación numbering range",
-      "body": "Prefilled with the DIAN's official example range. Compare it with the participants catalog and paste the technical key.",
+      "body": "Preloaded with the DIAN's habilitación range. Compare it with the «Set de pruebas Factura Electrónica» page of the portal and paste the technical key.",
       "resolution": "Resolution number",
       "prefix": "Prefix",
       "from": "From",
       "to": "To",
       "validFrom": "Valid from",
       "validTo": "Valid to",
-      "technicalKey": "Technical key"
+      "technicalKey": "Technical key",
+      "kind": "Range type",
+      "prefixHint": "Up to 4 letters or digits.",
+      "resolutionDate": "Resolution date",
+      "establishment": "Branch (optional)",
+      "establishmentHint": "If the business has several branches, the prefix is required.",
+      "technicalKeyHint": "40 characters. In the portal: click the field, Ctrl+A and Ctrl+C.",
+      "kinds": {
+        "invoice": {
+          "label": "Invoicing",
+          "description": "Numbering authorized by the DIAN; it needs its technical key."
+        },
+        "contingency": {
+          "label": "Contingency",
+          "description": "Booklet or paper for when there is no system (type 03)."
+        }
+      }
     },
     "done": {
       "title": "Issuer enrolled",
       "body": "It can now run the test set from its page.",
-      "open": "Go to the issuer's page"
-    }
+      "open": "Go to the profile and run the set"
+    },
+    "back": "Back",
+    "issuerDone": "The issuer is already enrolled. Its data is corrected from its profile.",
+    "clientDone": "The client system is already chosen."
   },
   "testSet": {
     "title": "DIAN test set",
@@ -532,7 +686,14 @@
     "phases": {
       "invoices": "the invoices",
       "notes": "the notes"
-    }
+    },
+    "lastRun": "Last run: {date}",
+    "progress": "{accepted} of {total} documents accepted",
+    "sizeHint": "Use the «Total de documentos requeridos» of the test set page in the DIAN portal.",
+    "rulesTitle": "DIAN rules",
+    "ruleCount": "{count, plural, one {in # document} other {in # documents}}",
+    "showDocuments": "See the {count} documents",
+    "hideDocuments": "Hide the documents"
   },
   "production": {
     "title": "Move to production",
@@ -548,6 +709,72 @@
     "fetchRanges": "Fetch numbering from the DIAN",
     "confirm": "I confirm the business is already «Habilitado» in the DIAN portal and set its start date. From now on its documents have fiscal effect.",
     "promote": "Move to production",
-    "done": "In production: its documents have fiscal effect."
+    "done": "In production: its documents have fiscal effect.",
+    "readyCount": "{ready} of {total} requirements ready",
+    "inProduction": "In production: its documents have fiscal effect.",
+    "outsideTitle": "First, outside Fiscal.:",
+    "outsideBody": "the business marks «Habilitado» in the DIAN portal (irreversible date; talk to the accountant first) and asks for its numbering in MUISCA.",
+    "hints": {
+      "test_set_accepted": "The DIAN must accept the test set.",
+      "certificate": "Upload a valid certificate.",
+      "software": "Usually the same SoftwareID and PIN as habilitación.",
+      "range": "Bring it from the DIAN once the business associated it with the software.",
+      "gateway": "It is a server setting (DIAN_GATEWAY=soap), not something of the business."
+    },
+    "confirmHint": "From then on its documents have fiscal effect.",
+    "promoteHint": "It turns on when every requirement is ready.",
+    "actionDone": {
+      "copy-software": "Production software registered",
+      "fetch-ranges": "Numbering brought from the DIAN",
+      "promote": "The issuer moved to production"
+    }
+  },
+  "ui": {
+    "breadcrumb": "Breadcrumb",
+    "loading": "Loading…",
+    "retry": "Retry",
+    "errorBody": "The service did not answer in time. What already loaded stays on screen.",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
+    "copy": "Copy",
+    "copied": "Copied",
+    "download": "Download",
+    "show": "Show",
+    "hide": "Hide",
+    "close": "Close",
+    "cancel": "Cancel",
+    "previous": "Previous",
+    "next": "Next"
+  },
+  "account": {
+    "title": "Your account",
+    "subtitle": "Who is signed in and your password.",
+    "dataTitle": "Details",
+    "name": "Name",
+    "email": "E-mail",
+    "role": "Role",
+    "passwordTitle": "Change password",
+    "passwordSubtitle": "No need to sign out.",
+    "current": "Current password",
+    "new": "New password",
+    "newHint": "At least 8 characters.",
+    "confirm": "Confirm the new password",
+    "save": "Change password",
+    "saving": "Saving…",
+    "tooShort": "The new password must have at least 8 characters.",
+    "mismatch": "The new passwords do not match.",
+    "failed": "The password could not be changed.",
+    "changed": "Password changed"
+  },
+  "notFound": {
+    "title": "This page does not exist",
+    "body": "The link may be wrong or the page moved.",
+    "action": "Go to the dashboard"
+  },
+  "errorPage": {
+    "title": "Something went wrong",
+    "body": "The page hit an unexpected error. The rest of the console keeps working.",
+    "retry": "Retry",
+    "home": "Go to the dashboard"
   }
 }

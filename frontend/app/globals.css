@@ -1,188 +1,287 @@
 /*
  * ─────────────────────────────────────────────────────────────────────────
- *  THEME ROOT — Brand colors and dark mode
+ *  ALGODÓN v0.1 — design system of the Fiscal. console
  * ─────────────────────────────────────────────────────────────────────────
- *  This file is the single source of truth for the design system.
+ *  Pastel families, an «aurora» of soft radial gradients that appears only in
+ *  the right places (sign in, page headers, empty states, celebrations) and
+ *  surfaces with a lavender shadow and a white highlight on top.
  *
- *  Architecture (two layers):
- *    1. Raw tokens (:root and .dark)  → OKLCH color values per mode.
- *    2. Tailwind mapping (@theme inline) → exposes tokens as utilities
- *       like `bg-primary`, `text-muted-foreground`, `border-border`.
+ *  Two layers:
+ *    1. Raw tokens (:root and .dark).
+ *    2. Tailwind mapping (@theme inline): `bg-surface`, `text-ink-2`,
+ *       `bg-success-bg text-success-fg`, `shadow-rest`, `rounded-card`…
  *
- *  HOW TO REBRAND A DERIVED PROJECT:
- *    • Edit the OKLCH values in :root (light) and .dark (dark).
- *    • DO NOT change the token names or the @theme block.
- *    • Components stay untouched — they consume semantic utilities.
+ *  The template's semantic names (primary, card, muted-foreground, border,
+ *  destructive…) are kept as aliases so every existing component keeps
+ *  working; new code uses the Algodón names.
  *
- *  TOKEN GROUPS:
- *    • Brand:   --primary / --secondary / --tertiary (+ -foreground pairs)
- *    • Surface: --background / --card / --popover / --muted / --accent
- *    • Form:    --border / --input / --ring
- *    • Status:  --success / --warning / --destructive / --info
- *    • Shape:   --radius
- *
- *  DARK MODE STRATEGY:
- *    Class-based via next-themes (`<html class="dark">`). The provider
- *    in `app/providers.tsx` writes the class; the @custom-variant below
- *    teaches Tailwind to honor it.
+ *  Status rule: tint background (*-bg) with its text (*-fg) on top. Never
+ *  white text on a pastel: it does not reach 4.5:1.
  * ─────────────────────────────────────────────────────────────────────────
  */
 
 @import "tailwindcss";
 
-/* Class-based dark mode: any element inside `.dark` gets dark variants. */
+/* Class-based dark mode (next-themes writes `.dark` on <html>). */
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
-  /* Brand */
-  --primary: oklch(0.55 0.18 260);
-  --primary-foreground: oklch(0.99 0 0);
-  --secondary: oklch(0.65 0.12 200);
-  --secondary-foreground: oklch(0.15 0 0);
-  --tertiary: oklch(0.72 0.15 50);
-  --tertiary-foreground: oklch(0.15 0 0);
+  --bg: #F7F6FB;
+  --surface: #FFFFFF;
+  --surface-glass: rgb(255 255 255 / 0.62);
+  --surface-sunk: #EFEDF6;
+  --line: rgb(48 38 110 / 0.08);
+  --ink: #1E1A30;
+  --ink-2: #4A4563;
+  --ink-3: #66617F;
 
-  /* Surfaces */
-  --background: oklch(0.99 0 0);
-  --foreground: oklch(0.15 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.15 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.15 0 0);
-  --muted: oklch(0.96 0.005 260);
-  --muted-foreground: oklch(0.45 0.01 260);
-  --accent: oklch(0.94 0.01 260);
-  --accent-foreground: oklch(0.15 0 0);
+  --primary: #6652DE;
+  --primary-ink: #FFFFFF;
+  --primary-soft: #E9E3FF;
+  --primary-text: #5240C0;
+  --focus: #9D8CFA;
 
-  /* Form & borders */
-  --border: oklch(0.90 0.005 260);
-  --input: oklch(0.90 0.005 260);
-  --ring: oklch(0.55 0.18 260);
+  /* status: background · text · solid */
+  --success-bg: #D5F5E6; --success-fg: #176846; --success: #1E845A;
+  --info-bg: #D7EAFF;    --info-fg: #255597;    --info: #2F6CBC;
+  --pending-bg: #FFF4C7; --pending-fg: #6A5100; --pending: #8A6A00;
+  --warning-bg: #FFE6D4; --warning-fg: #8E4314; --warning: #B4561C;
+  --danger-bg: #FFDFE6;  --danger-fg: #9F2D47;  --danger: #C53B5B;
+  --neutral-bg: #EFEDF6; --neutral-fg: #4A4563;
 
-  /* Status */
-  --success: oklch(0.65 0.17 150);
-  --success-foreground: oklch(0.99 0 0);
-  --warning: oklch(0.78 0.16 80);
-  --warning-foreground: oklch(0.15 0 0);
-  --destructive: oklch(0.60 0.22 25);
-  --destructive-foreground: oklch(0.99 0 0);
-  --info: oklch(0.62 0.14 230);
-  --info-foreground: oklch(0.99 0 0);
+  --shadow-rest: 0 0 0 1px rgb(48 38 110 / 0.05), 0 1px 2px rgb(48 38 110 / 0.05),
+    0 12px 28px -14px rgb(48 38 110 / 0.18), inset 0 1px 0 #fff;
+  --shadow-float: 0 0 0 1px rgb(48 38 110 / 0.05), 0 2px 4px rgb(48 38 110 / 0.06),
+    0 24px 48px -20px rgb(48 38 110 / 0.3), inset 0 1px 0 #fff;
+  --shadow-sunk: inset 0 2px 6px rgb(48 38 110 / 0.12), inset 0 0 0 1px rgb(48 38 110 / 0.06);
+  --shadow-primary: inset 0 1px 0 rgb(255 255 255 / 0.3), inset 0 -2px 0 rgb(30 20 90 / 0.2),
+    0 8px 18px -8px var(--primary);
+  --shadow-danger: inset 0 1px 0 rgb(255 255 255 / 0.25), inset 0 -2px 0 rgb(90 20 40 / 0.2),
+    0 8px 18px -8px var(--danger);
 
-  /* Shape */
-  --radius: 0.625rem;
+  /* Aurora: radial spots of the 200 tones, very diffuse, over the background. */
+  --aurora-dawn: radial-gradient(40% 55% at 8% 12%, rgb(214 204 255 / 0.95), transparent 70%),
+    radial-gradient(38% 50% at 92% 10%, rgb(255 191 205 / 0.8), transparent 70%),
+    radial-gradient(45% 55% at 82% 92%, rgb(255 205 171 / 0.8), transparent 70%),
+    radial-gradient(35% 45% at 18% 92%, rgb(181 215 255 / 0.75), transparent 70%), var(--bg);
+  --aurora-glacier: radial-gradient(45% 120% at 0% 0%, rgb(181 215 255 / 0.85), transparent 70%),
+    radial-gradient(40% 120% at 100% 0%, rgb(174 235 208 / 0.8), transparent 70%),
+    radial-gradient(30% 90% at 50% 0%, rgb(214 204 255 / 0.55), transparent 70%);
+  --aurora-boreal: radial-gradient(45% 60% at 15% 20%, rgb(174 235 208 / 0.8), transparent 70%),
+    radial-gradient(45% 60% at 85% 30%, rgb(214 204 255 / 0.8), transparent 70%),
+    radial-gradient(45% 60% at 60% 100%, rgb(181 215 255 / 0.7), transparent 70%);
+  --aurora-progress: linear-gradient(90deg, #7FDDB4, #8CC0FA 55%, #BBAEFF);
+
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 .dark {
-  /* Brand — lighter chroma so they pop on dark surfaces */
-  --primary: oklch(0.70 0.18 260);
-  --primary-foreground: oklch(0.14 0.005 260);
-  --secondary: oklch(0.72 0.10 200);
-  --secondary-foreground: oklch(0.14 0.005 260);
-  --tertiary: oklch(0.78 0.15 50);
-  --tertiary-foreground: oklch(0.14 0.005 260);
+  --bg: #15131F;
+  --surface: #1E1B2C;
+  --surface-glass: rgb(39 35 57 / 0.72);
+  --surface-sunk: #121019;
+  --line: rgb(255 255 255 / 0.08);
+  --ink: #F3F1FA;
+  --ink-2: #BDB8D3;
+  --ink-3: #9A95B3;
 
-  /* Surfaces */
-  --background: oklch(0.14 0.005 260);
-  --foreground: oklch(0.96 0 0);
-  --card: oklch(0.18 0.008 260);
-  --card-foreground: oklch(0.96 0 0);
-  --popover: oklch(0.18 0.008 260);
-  --popover-foreground: oklch(0.96 0 0);
-  --muted: oklch(0.22 0.008 260);
-  --muted-foreground: oklch(0.70 0.01 260);
-  --accent: oklch(0.26 0.01 260);
-  --accent-foreground: oklch(0.96 0 0);
+  --primary: #B7A9FF;
+  --primary-ink: #15131F;
+  --primary-soft: rgb(187 174 255 / 0.14);
+  --primary-text: #C4B8FF;
+  --focus: #B7A9FF;
 
-  /* Form & borders */
-  --border: oklch(0.28 0.008 260);
-  --input: oklch(0.28 0.008 260);
-  --ring: oklch(0.70 0.18 260);
+  --success-bg: rgb(127 221 180 / 0.14); --success-fg: #94E6C2; --success: #94E6C2;
+  --info-bg: rgb(140 192 250 / 0.14);    --info-fg: #9CCBFF;    --info: #9CCBFF;
+  --pending-bg: rgb(255 219 92 / 0.14);  --pending-fg: #FFE27A; --pending: #FFE27A;
+  --warning-bg: rgb(255 176 131 / 0.14); --warning-fg: #FFC89E; --warning: #FFC89E;
+  --danger-bg: rgb(255 154 176 / 0.14);  --danger-fg: #FFB3C2;  --danger: #FF9AB0;
+  --neutral-bg: rgb(255 255 255 / 0.06); --neutral-fg: #BDB8D3;
 
-  /* Status */
-  --success: oklch(0.72 0.16 150);
-  --success-foreground: oklch(0.14 0.005 260);
-  --warning: oklch(0.82 0.16 80);
-  --warning-foreground: oklch(0.14 0.005 260);
-  --destructive: oklch(0.68 0.20 25);
-  --destructive-foreground: oklch(0.99 0 0);
-  --info: oklch(0.70 0.14 230);
-  --info-foreground: oklch(0.14 0.005 260);
+  --shadow-rest: 0 0 0 1px rgb(255 255 255 / 0.06), 0 16px 32px -16px rgb(0 0 0 / 0.6),
+    inset 0 1px 0 rgb(255 255 255 / 0.06);
+  --shadow-float: 0 0 0 1px rgb(255 255 255 / 0.08), 0 28px 56px -20px rgb(0 0 0 / 0.7),
+    inset 0 1px 0 rgb(255 255 255 / 0.08);
+  --shadow-sunk: inset 0 2px 6px rgb(0 0 0 / 0.4), inset 0 0 0 1px rgb(255 255 255 / 0.06);
+  --shadow-primary: inset 0 1px 0 rgb(255 255 255 / 0.35), 0 8px 18px -10px rgb(183 169 255 / 0.6);
+  --shadow-danger: inset 0 1px 0 rgb(255 255 255 / 0.3), 0 8px 18px -10px rgb(255 154 176 / 0.6);
+
+  --aurora-dawn: radial-gradient(50% 60% at 10% 10%, #3A2D80, transparent 70%),
+    radial-gradient(45% 55% at 95% 20%, #5A2445, transparent 70%),
+    radial-gradient(45% 55% at 70% 100%, #0F4A4E, transparent 70%), var(--bg);
+  --aurora-glacier: radial-gradient(45% 120% at 0% 0%, rgb(15 74 78 / 0.7), transparent 70%),
+    radial-gradient(40% 120% at 100% 0%, rgb(58 45 128 / 0.7), transparent 70%);
+  --aurora-boreal: radial-gradient(45% 60% at 15% 20%, rgb(15 74 78 / 0.6), transparent 70%),
+    radial-gradient(45% 60% at 85% 30%, rgb(58 45 128 / 0.6), transparent 70%);
 }
 
-/*
- * Tailwind v4 theme mapping. `inline` keeps these as references to the
- * CSS variables above (so light/dark switching just works). Each entry
- * `--color-<name>` becomes a Tailwind utility (e.g. `bg-primary`).
- */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-card: var(--card);
-  --color-card-foreground: var(--card-foreground);
-  --color-popover: var(--popover);
-  --color-popover-foreground: var(--popover-foreground);
+  /* Typography: Figtree for the interface, JetBrains Mono for fiscal codes (layout.tsx loads them). */
+  --font-sans: var(--font-figtree), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, Menlo, monospace;
+
+  /* Algodón */
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-glass: var(--surface-glass);
+  --color-surface-sunk: var(--surface-sunk);
+  --color-line: var(--line);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-primary-ink: var(--primary-ink);
+  --color-primary-soft: var(--primary-soft);
+  --color-primary-text: var(--primary-text);
+  --color-focus: var(--focus);
+  --color-success-bg: var(--success-bg);
+  --color-success-fg: var(--success-fg);
+  --color-info-bg: var(--info-bg);
+  --color-info-fg: var(--info-fg);
+  --color-pending: var(--pending);
+  --color-pending-bg: var(--pending-bg);
+  --color-pending-fg: var(--pending-fg);
+  --color-warning-bg: var(--warning-bg);
+  --color-warning-fg: var(--warning-fg);
+  --color-danger: var(--danger);
+  --color-danger-bg: var(--danger-bg);
+  --color-danger-fg: var(--danger-fg);
+  --color-neutral-bg: var(--neutral-bg);
+  --color-neutral-fg: var(--neutral-fg);
+
+  /* Template aliases (kept so older components keep working) */
+  --color-background: var(--bg);
+  --color-foreground: var(--ink);
+  --color-card: var(--surface);
+  --color-card-foreground: var(--ink);
+  --color-popover: var(--surface);
+  --color-popover-foreground: var(--ink);
   --color-primary: var(--primary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-secondary: var(--secondary);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-tertiary: var(--tertiary);
-  --color-tertiary-foreground: var(--tertiary-foreground);
-  --color-muted: var(--muted);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-accent: var(--accent);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-border: var(--border);
-  --color-input: var(--input);
-  --color-ring: var(--ring);
+  --color-primary-foreground: var(--primary-ink);
+  --color-secondary: var(--info);
+  --color-secondary-foreground: var(--primary-ink);
+  --color-muted: var(--surface-sunk);
+  --color-muted-foreground: var(--ink-3);
+  --color-accent: var(--primary-soft);
+  --color-accent-foreground: var(--ink);
+  --color-border: var(--line);
+  --color-input: var(--line);
+  --color-ring: var(--focus);
   --color-success: var(--success);
-  --color-success-foreground: var(--success-foreground);
+  --color-success-foreground: var(--surface);
   --color-warning: var(--warning);
-  --color-warning-foreground: var(--warning-foreground);
-  --color-destructive: var(--destructive);
-  --color-destructive-foreground: var(--destructive-foreground);
+  --color-warning-foreground: var(--surface);
+  --color-destructive: var(--danger);
+  --color-destructive-foreground: var(--surface);
   --color-info: var(--info);
-  --color-info-foreground: var(--info-foreground);
-  --radius-lg: var(--radius);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-sm: calc(var(--radius) - 4px);
+  --color-info-foreground: var(--surface);
+
+  --radius-xs: 8px;
+  --radius-sm: 12px;
+  --radius-md: 14px;
+  --radius-lg: 18px;
+  --radius-card: 22px;
+  --radius-panel: 28px;
+
+  --shadow-rest: var(--shadow-rest);
+  --shadow-float: var(--shadow-float);
+  --shadow-sunk: var(--shadow-sunk);
+  --shadow-primary: var(--shadow-primary);
+  --shadow-danger: var(--shadow-danger);
+
+  --ease-soft: var(--ease);
 }
 
 @layer base {
   * {
-    border-color: var(--border);
+    border-color: var(--line);
   }
+
   body {
-    background-color: var(--background);
-    color: var(--foreground);
+    background-color: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    font-size: 15px;
+    line-height: 22px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  :focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 4px rgb(157 140 250 / 0.35);
   }
 }
 
-@keyframes bounce-slow {
-  0%, 100% {
+@layer components {
+  .aurora-dawn {
+    background: var(--aurora-dawn);
+  }
+
+  .aurora-glacier {
+    background-image: var(--aurora-glacier);
+  }
+
+  .aurora-boreal {
+    background-image: var(--aurora-boreal);
+  }
+
+  .aurora-progress {
+    background-image: var(--aurora-progress);
+  }
+
+  /* Soft glass: only over an aurora (sign in, header, celebrations). */
+  .glass {
+    background: var(--surface-glass);
+    backdrop-filter: blur(18px) saturate(140%);
+    -webkit-backdrop-filter: blur(18px) saturate(140%);
+    box-shadow: var(--shadow-float);
+  }
+
+  .text-label {
+    font-size: 12px;
+    line-height: 16px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+
+  .skeleton {
+    background: linear-gradient(90deg, var(--surface-sunk) 0%, var(--primary-soft) 50%, var(--surface-sunk) 100%);
+    background-size: 200% 100%;
+    animation: skeleton-shine 1.4s var(--ease) infinite;
+  }
+
+  .appear {
+    animation: appear 240ms var(--ease) both;
+  }
+}
+
+@keyframes skeleton-shine {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
+}
+
+@keyframes appear {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
     transform: translateY(0);
   }
-  50% {
-    transform: translateY(-20px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-property: opacity, color, background-color !important;
   }
-}
-
-.animate-bounce-slow {
-  animation: bounce-slow 3s ease-in-out infinite;
-}
-
-.delay-300 {
-  animation-delay: 300ms;
-}
-
-.delay-500 {
-  animation-delay: 500ms;
-}
-
-.delay-1000 {
-  animation-delay: 1000ms;
-}
-
-.delay-2000 {
-  animation-delay: 2000ms;
 }

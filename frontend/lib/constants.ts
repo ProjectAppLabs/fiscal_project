@@ -9,6 +9,7 @@ export const ROUTES = {
   ALERTS: '/alerts',
   CLIENT_SYSTEMS: '/client-systems',
   ONBOARDING: '/onboarding',
+  ACCOUNT: '/account',
 } as const;
 
 export function documentDetailRoute(id: number | string): string {

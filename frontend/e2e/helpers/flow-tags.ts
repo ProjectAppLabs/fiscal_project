@@ -40,6 +40,10 @@ export const CONSOLE_ALERTS_RESOLVE = ['@flow:console-alerts-resolve', '@module:
 export const CONSOLE_CLIENT_SYSTEMS = ['@flow:console-client-systems', '@module:console', '@priority:P2'];
 export const CONSOLE_ONBOARDING = ['@flow:console-onboarding', '@module:console', '@priority:P1'];
 export const CONSOLE_TEST_SET = ['@flow:console-test-set', '@module:console', '@priority:P1'];
+export const CONSOLE_CLIENT_SYSTEM_CREATE = ['@flow:console-client-system-create', '@module:console', '@priority:P2'];
+export const CONSOLE_ISSUER_RANGE_ADD = ['@flow:console-issuer-range-add', '@module:console', '@priority:P1'];
+export const CONSOLE_ISSUER_CERTIFICATE_REPLACE = ['@flow:console-issuer-certificate-replace', '@module:console', '@priority:P1'];
+export const ACCOUNT_CHANGE_PASSWORD = ['@flow:account-change-password', '@module:account', '@priority:P2'];
 
 // ── i18n ──
 export const I18N_LOCALE_SWITCH = ['@flow:i18n-locale-switch', '@module:i18n', '@priority:P2'];

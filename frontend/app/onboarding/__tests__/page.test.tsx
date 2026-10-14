@@ -41,7 +41,7 @@ async function fillIssuer() {
   await userEvent.type(screen.getByLabelText('Dígito de verificación'), '3');
   await userEvent.type(screen.getByLabelText('Razón social o nombre'), 'ProjectApp');
   await userEvent.type(screen.getByLabelText('Dirección'), 'Calle 10');
-  await userEvent.type(screen.getByLabelText('Municipio (código DANE de 5 dígitos)'), '05001');
+  await userEvent.type(screen.getByLabelText('Municipio'), '05001');
   await userEvent.type(screen.getByLabelText('Correo para facturación'), 'f@projectapp.co');
   await userEvent.click(screen.getByRole('button', { name: 'Continuar' }));
 }
@@ -49,6 +49,8 @@ async function fillIssuer() {
 describe('OnboardingPage', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    // The wizard keeps the issuer in the URL to resume: start every test without it.
+    window.history.replaceState(null, '', '/onboarding');
     useOperationsStore.setState(initialState, true);
     mockGet.mockResolvedValue({ data: { count: 1, results: [buildClientSystem()] } });
   });
@@ -124,7 +126,7 @@ describe('OnboardingPage', () => {
     fireEvent.change(screen.getByLabelText('Clave técnica'), { target: { value: 'clave-tecnica' } });
     await userEvent.click(screen.getByRole('button', { name: 'Continuar' }));
 
-    expect(await screen.findByRole('link', { name: 'Ir a la ficha del emisor' })).toHaveAttribute('href', '/issuers/3');
+    expect(await screen.findByRole('link', { name: 'Ir a la ficha y correr el set' })).toHaveAttribute('href', '/issuers/3?tab=habilitation');
     expect(mockPost).toHaveBeenLastCalledWith('console/issuers/3/ranges/', expect.objectContaining({ technical_key: 'clave-tecnica', number_from: 990000000 }));
   });
 
@@ -145,5 +147,42 @@ describe('OnboardingPage', () => {
 
     expect(await screen.findByRole('status')).toHaveTextContent('Certificado de CN=ProjectApp');
     expect(screen.getByText(/No se pudo descargar la cadena de la entidad/)).toBeInTheDocument();
+  });
+
+  it('fills the check digit from the NIT', async () => {
+    renderSignedIn();
+    await chooseWaiter();
+
+    await userEvent.type(screen.getByLabelText('NIT (sin dígito de verificación)'), '1021513348');
+
+    expect(screen.getByLabelText('Dígito de verificación')).toHaveValue('7');
+  });
+
+  it('drops «no aplica» when a real responsibility is chosen', async () => {
+    renderSignedIn();
+    await chooseWaiter();
+
+    await userEvent.click(screen.getByRole('checkbox', { name: /Gran contribuyente/ }));
+
+    expect(screen.getByRole('checkbox', { name: /Gran contribuyente/ })).toBeChecked();
+    expect(screen.getByRole('checkbox', { name: /No aplica/ })).not.toBeChecked();
+  });
+
+  it('goes back to the previous step', async () => {
+    renderSignedIn();
+    await chooseWaiter();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Atrás' }));
+
+    expect(screen.getByRole('region', { name: '¿Por qué sistema llega el emisor?' })).toBeInTheDocument();
+  });
+
+  it('resumes a half-done enrolment at its first missing step', async () => {
+    window.history.replaceState(null, '', '/onboarding?issuer=3');
+    mockGet.mockResolvedValue({ data: { readiness: { environment: true, certificate: true, software: false, test_set_id: false, range: false }, run: null } });
+
+    renderSignedIn();
+
+    expect(await screen.findByRole('region', { name: 'Software registrado en la DIAN' })).toBeInTheDocument();
   });
 });

@@ -47,6 +47,8 @@ function findFirstRow() {
 describe('DocumentsPage', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    // The filters live in the URL: start every test without them.
+    window.history.replaceState(null, '', '/documents');
     useConsoleStore.setState(initialConsoleState, true);
     mockGet.mockResolvedValue({ data: FIRST_PAGE });
   });
@@ -109,6 +111,25 @@ describe('DocumentsPage', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Filtrar' }));
 
     expect(mockGet).toHaveBeenLastCalledWith('console/documents/', { params: { state: 'rejected' } });
+  });
+
+  it('opens already filtered from a link with the state', async () => {
+    window.history.replaceState(null, '', '/documents?state=rejected');
+    renderSignedIn();
+
+    await findFirstRow();
+
+    expect(mockGet).toHaveBeenLastCalledWith('console/documents/', { params: { state: 'rejected' } });
+  });
+
+  it('keeps the applied filters in the URL', async () => {
+    renderSignedIn();
+    await findFirstRow();
+
+    await userEvent.type(screen.getByLabelText('NIT del emisor'), '900373115');
+    await userEvent.click(screen.getByRole('button', { name: 'Filtrar' }));
+
+    expect(window.location.search).toBe('?issuer=900373115');
   });
 
   it('filters the list by issuer NIT', async () => {

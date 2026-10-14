@@ -1,71 +1,104 @@
 'use client';
 
-import Link from 'next/link';
-import { useLocale, useTranslations } from 'next-intl';
+import { useTranslations } from 'next-intl';
 import { FormEvent, useEffect, useState, type ReactNode } from 'react';
+import { ArrowLeft } from 'lucide-react';
 
+import { ClientSystemForm, StepErrors } from '@/components/console/ClientSystemForm';
+import { CertificateForm, LoadedCertificateNotice, RangeFormFields, SoftwareFormFields, WIZARD_RANGE } from '@/components/console/EnrolmentForms';
+import { MunicipalityField } from '@/components/console/MunicipalityField';
+import { Page } from '@/components/layout/Page';
+import { Button, ButtonLink } from '@/components/ui/Button';
+import { Card, CardHeader } from '@/components/ui/Card';
+import { Emoji } from '@/components/ui/Emoji';
+import { Choice, Field, Input, Select } from '@/components/ui/Field';
+import { Notice } from '@/components/ui/Notice';
+import { PageHeader } from '@/components/ui/PageHeader';
+import { SkeletonCard } from '@/components/ui/States';
+import { Stepper } from '@/components/ui/Steps';
 import { issuerDetailRoute } from '@/lib/constants';
-import { formatDateTime } from '@/lib/format';
+import { useQueryParams } from '@/lib/hooks/useQueryParams';
 import { useRequireAuth } from '@/lib/hooks/useRequireAuth';
-import {
-  HABILITATION_RANGE,
-  TAX_RESPONSIBILITIES,
-  TAX_SCHEMES,
-  createClientSystem,
-  createIssuer,
-  createRange,
-  registerSoftware,
-  stepErrors,
-  uploadCertificate,
-  type CertificateUpload,
-  type CreatedClientSystem,
-  type LoadedCertificate,
-  type IssuerForm,
-} from '@/lib/services/onboarding';
+import { checkDigit } from '@/lib/nit';
+import { TAX_RESPONSIBILITIES, TAX_SCHEMES, createIssuer, fetchTestSet, stepErrors, type IssuerForm, type LoadedCertificate } from '@/lib/services/onboarding';
 import { useOperationsStore } from '@/lib/stores/operationsStore';
 
-const CARD_CLASS = 'rounded-2xl border border-border bg-card p-6';
-const INPUT_CLASS =
-  'w-full rounded-xl border border-border bg-card px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring';
-const PRIMARY_BUTTON_CLASS =
-  'rounded-full bg-primary px-5 py-2 text-sm text-primary-foreground hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50';
 const STEPS = ['client', 'issuer', 'certificate', 'software', 'range'] as const;
+const DONE = STEPS.length;
 
 export default function OnboardingPage() {
   const t = useTranslations('onboarding');
   const { isAuthenticated } = useRequireAuth();
+  const { read, write } = useQueryParams();
   const [step, setStep] = useState(0);
   const [clientId, setClientId] = useState<number | null>(null);
   const [issuerId, setIssuerId] = useState<number | null>(null);
+  const [resuming, setResuming] = useState(() => Boolean(Number(read('issuer'))));
+
+  // H-21: /onboarding?issuer=3 resumes a half-done enrolment at its first missing step.
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    const resumeId = Number(read('issuer'));
+    if (!resumeId) return;
+    fetchTestSet(resumeId)
+      .then(({ readiness }) => {
+        const next = !readiness.certificate ? 2 : !readiness.software || !readiness.test_set_id ? 3 : !readiness.range ? 4 : DONE;
+        setIssuerId(resumeId);
+        setStep(next);
+      })
+      .catch(() => write({ issuer: '' }))
+      .finally(() => setResuming(false));
+  }, [isAuthenticated, read, write]);
 
   if (!isAuthenticated) return null;
 
   const advance = () => setStep((current) => current + 1);
+  const canGoBack = step > 0 && step < DONE;
 
   return (
-    <main className="mx-auto max-w-3xl px-6 py-10">
-      <h1 className="text-3xl font-semibold tracking-tight">{t('title')}</h1>
-      <p className="mt-2 text-muted-foreground">{t('subtitle')}</p>
-      <ol aria-label={t('stepOf', { current: Math.min(step + 1, STEPS.length), total: STEPS.length })} className="mt-6 flex flex-wrap gap-2 text-xs">
-        {STEPS.map((name, index) => (
-          <li
-            aria-current={index === step ? 'step' : undefined}
-            className={`rounded-full px-3 py-1 ${index === step ? 'bg-primary text-primary-foreground' : index < step ? 'bg-success/15' : 'bg-muted'}`}
-            key={name}
-          >
-            {index + 1}. {t(`steps.${name}`)}
-          </li>
-        ))}
-      </ol>
-      <div className="mt-6">
-        {step === 0 ? <ClientStep onDone={(id) => { setClientId(id); advance(); }} /> : null}
-        {step === 1 && clientId ? <IssuerStep clientId={clientId} onDone={(id) => { setIssuerId(id); advance(); }} /> : null}
-        {step === 2 && issuerId ? <CertificateStep issuerId={issuerId} onDone={advance} /> : null}
-        {step === 3 && issuerId ? <SoftwareStep issuerId={issuerId} onDone={advance} /> : null}
-        {step === 4 && issuerId ? <RangeStep issuerId={issuerId} onDone={advance} /> : null}
-        {step === 5 && issuerId ? <Done issuerId={issuerId} /> : null}
-      </div>
-    </main>
+    <Page narrow>
+      <PageHeader emoji="enrol" subtitle={t('subtitle')} title={t('title')} />
+      {step < DONE ? (
+        <div className="mb-5 flex flex-col gap-4">
+          <Stepper current={step} label={t('stepOf', { current: step + 1, total: STEPS.length })} onStepClick={(index) => setStep(index)} steps={STEPS.map((name) => t(`steps.${name}`))} />
+        </div>
+      ) : null}
+      {resuming ? <SkeletonCard lines={5} /> : null}
+      {!resuming && step === 0 && issuerId ? <AlreadyDone body={t('clientDone')} onContinue={advance} title={t('client.title')} /> : null}
+      {!resuming && step === 0 && !issuerId ? (
+        <ClientStep
+          onDone={(id) => {
+            setClientId(id);
+            advance();
+          }}
+        />
+      ) : null}
+      {!resuming && step === 1 ? (
+        issuerId ? (
+          <AlreadyDone body={t('issuerDone')} onContinue={advance} title={t('issuer.title')} />
+        ) : clientId ? (
+          <IssuerStep
+            clientId={clientId}
+            onDone={(id) => {
+              setIssuerId(id);
+              write({ issuer: String(id) });
+              advance();
+            }}
+          />
+        ) : null
+      ) : null}
+      {!resuming && step === 2 && issuerId ? <CertificateStep issuerId={issuerId} onDone={advance} /> : null}
+      {!resuming && step === 3 && issuerId ? <SoftwareStep issuerId={issuerId} onDone={advance} /> : null}
+      {!resuming && step === 4 && issuerId ? <RangeStep issuerId={issuerId} onDone={advance} /> : null}
+      {!resuming && step === DONE && issuerId ? <Done issuerId={issuerId} /> : null}
+      {canGoBack && !resuming ? (
+        <div className="mt-4">
+          <Button icon={<ArrowLeft aria-hidden className="size-4" />} onClick={() => setStep(step - 1)} variant="ghost">
+            {t('back')}
+          </Button>
+        </div>
+      ) : null}
+    </Page>
   );
 }
 
@@ -74,69 +107,34 @@ function ClientStep({ onDone }: { onDone: (clientId: number) => void }) {
   const clients = useOperationsStore((s) => s.clientSystems);
   const loadClientSystems = useOperationsStore((s) => s.loadClientSystems);
   const [chosen, setChosen] = useState('');
-  const [name, setName] = useState('');
-  const [webhook, setWebhook] = useState('');
-  const [created, setCreated] = useState<CreatedClientSystem | null>(null);
-  const { errors, saving, run } = useStep();
 
   useEffect(() => {
     void loadClientSystems();
   }, [loadClientSystems]);
 
-  if (created) {
-    return (
-      <StepCard title={t('secretTitle')}>
-        <p className="text-sm text-destructive">{t('secretBody')}</p>
-        <dl className="mt-4 space-y-3 text-sm">
-          <div>
-            <dt className="text-xs text-muted-foreground">{t('keyId')}</dt>
-            <dd className="font-mono break-all">{created.key_id}</dd>
-          </div>
-          <div>
-            <dt className="text-xs text-muted-foreground">{t('secret')}</dt>
-            <dd className="font-mono break-all">{created.secret}</dd>
-          </div>
-        </dl>
-        <button className={`${PRIMARY_BUTTON_CLASS} mt-6`} onClick={() => onDone(created.id)} type="button">
-          {t('secretSaved')}
-        </button>
-      </StepCard>
-    );
-  }
-
   return (
     <StepCard title={t('title')}>
-      <div className="grid gap-4 sm:grid-cols-[1fr_auto] sm:items-end">
+      <div className="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
         <Field id="client-existing" label={t('existing')}>
-          <select id="client-existing" className={INPUT_CLASS} value={chosen} onChange={(e) => setChosen(e.target.value)}>
+          <Select id="client-existing" onChange={(e) => setChosen(e.target.value)} value={chosen}>
             <option value="">{t('choose')}</option>
             {(clients ?? []).map((client) => (
               <option key={client.id} value={client.id}>
                 {client.name}
               </option>
             ))}
-          </select>
+          </Select>
         </Field>
-        <button className={PRIMARY_BUTTON_CLASS} disabled={!chosen} onClick={() => onDone(Number(chosen))} type="button">
+        <Button className="h-12" disabled={!chosen} onClick={() => onDone(Number(chosen))} variant="primary">
           {t('useClient')}
-        </button>
+        </Button>
       </div>
-      <p className="my-4 text-center text-xs text-muted-foreground">{t('orNew')}</p>
-      <form
-        className="grid gap-4"
-        onSubmit={(e: FormEvent) => {
-          e.preventDefault();
-          void run(async () => setCreated(await createClientSystem({ name: name.trim(), webhook_url: webhook.trim() })));
-        }}
-      >
-        <Field id="client-name" label={t('name')}>
-          <input id="client-name" className={INPUT_CLASS} required value={name} onChange={(e) => setName(e.target.value)} />
-        </Field>
-        <Field id="client-webhook" label={t('webhook')}>
-          <input id="client-webhook" className={INPUT_CLASS} type="url" value={webhook} onChange={(e) => setWebhook(e.target.value)} />
-        </Field>
-        <StepActions errors={errors} label={t('create')} saving={saving} />
-      </form>
+      <div className="my-6 flex items-center gap-3 text-[13px] font-semibold text-ink-3">
+        <span className="h-px flex-1 bg-line" />
+        {t('orNew')}
+        <span className="h-px flex-1 bg-line" />
+      </div>
+      <ClientSystemForm onDone={(client) => onDone(client.id)} />
     </StepCard>
   );
 }
@@ -148,82 +146,107 @@ function IssuerStep({ clientId, onDone }: { clientId: number; onDone: (issuerId:
     nit: '', dv: '', person_type: '2', legal_name: '', trade_name: '', tax_responsibilities: ['R-99-PN'], tax_scheme: 'ZZ',
     address_line: '', municipality_code: '', email: '', phone: '',
   });
-  const { errors, saving, run } = useStep();
+  const [errors, setErrors] = useState<string[] | null>(null);
+  const [saving, setSaving] = useState(false);
   const set = (key: keyof typeof form) => (value: string) => setForm((current) => ({ ...current, [key]: value }));
+  const expectedDv = checkDigit(form.nit);
+
+  const setNit = (nit: string) =>
+    // H-23: the check digit follows the NIT; it can still be corrected by hand.
+    setForm((current) => ({ ...current, nit, dv: checkDigit(nit) || current.dv }));
 
   const toggleResponsibility = (code: string) =>
-    setForm((current) => ({
-      ...current,
-      tax_responsibilities: current.tax_responsibilities.includes(code)
-        ? current.tax_responsibilities.filter((item) => item !== code)
-        : [...current.tax_responsibilities, code],
-    }));
-
-  const onSubmit = (e: FormEvent) => {
-    e.preventDefault();
-    void run(async () => {
-      const issuer = await createIssuer({
-        ...form, client_id: clientId, environment: '2', department_code: form.municipality_code.slice(0, 2),
-      });
-      onDone(issuer.id);
+    setForm((current) => {
+      const has = current.tax_responsibilities.includes(code);
+      const rest = has ? current.tax_responsibilities.filter((item) => item !== code) : [...current.tax_responsibilities, code];
+      // R-99-PN means «none of the others»: it leaves when another one is chosen and comes back when none is left.
+      const cleaned = code === 'R-99-PN' ? (has ? rest : ['R-99-PN']) : rest.filter((item) => item !== 'R-99-PN');
+      return { ...current, tax_responsibilities: cleaned.length ? cleaned : ['R-99-PN'] };
     });
+
+  const onSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    setErrors(null);
+    try {
+      const issuer = await createIssuer({ ...form, client_id: clientId, environment: '2', department_code: form.municipality_code.slice(0, 2) });
+      onDone(issuer.id);
+    } catch (error) {
+      setErrors(stepErrors(error));
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
-    <StepCard title={t('title')}>
-      <form className="grid gap-4 sm:grid-cols-2" onSubmit={onSubmit}>
+    <StepCard subtitle={t('subtitle')} title={t('title')}>
+      <form className="grid gap-4 sm:grid-cols-2" onSubmit={(e) => void onSubmit(e)}>
         <Field id="issuer-nit" label={t('nit')}>
-          <input id="issuer-nit" className={INPUT_CLASS} inputMode="numeric" required value={form.nit} onChange={(e) => set('nit')(e.target.value.trim())} />
+          <Input className="font-mono" id="issuer-nit" inputMode="numeric" onChange={(e) => setNit(e.target.value.trim())} required value={form.nit} />
         </Field>
-        <Field id="issuer-dv" label={t('dv')}>
-          <input id="issuer-dv" className={INPUT_CLASS} inputMode="numeric" maxLength={1} required value={form.dv} onChange={(e) => set('dv')(e.target.value.trim())} />
+        <Field
+          error={form.dv && expectedDv && form.dv !== expectedDv ? t('dvMismatch', { expected: expectedDv }) : undefined}
+          hint={expectedDv ? t('dvCalculated') : undefined}
+          id="issuer-dv"
+          label={t('dv')}
+        >
+          <Input aria-invalid={Boolean(form.dv && expectedDv && form.dv !== expectedDv)} className="font-mono" id="issuer-dv" inputMode="numeric" maxLength={1} onChange={(e) => set('dv')(e.target.value.trim())} required value={form.dv} />
         </Field>
         <Field id="issuer-person" label={t('personType')}>
-          <select id="issuer-person" className={INPUT_CLASS} value={form.person_type} onChange={(e) => set('person_type')(e.target.value)}>
+          <Select id="issuer-person" onChange={(e) => set('person_type')(e.target.value)} value={form.person_type}>
             <option value="2">{t('personTypes.2')}</option>
             <option value="1">{t('personTypes.1')}</option>
-          </select>
+          </Select>
         </Field>
         <Field id="issuer-scheme" label={t('taxScheme')}>
-          <select id="issuer-scheme" className={INPUT_CLASS} value={form.tax_scheme} onChange={(e) => set('tax_scheme')(e.target.value)}>
+          <Select id="issuer-scheme" onChange={(e) => set('tax_scheme')(e.target.value)} value={form.tax_scheme}>
             {TAX_SCHEMES.map((code) => (
               <option key={code} value={code}>
                 {t(`taxSchemes.${code}`)}
               </option>
             ))}
-          </select>
+          </Select>
         </Field>
         <Field id="issuer-name" label={t('legalName')}>
-          <input id="issuer-name" className={INPUT_CLASS} required value={form.legal_name} onChange={(e) => set('legal_name')(e.target.value)} />
+          <Input id="issuer-name" onChange={(e) => set('legal_name')(e.target.value)} required value={form.legal_name} />
         </Field>
         <Field id="issuer-trade" label={t('tradeName')}>
-          <input id="issuer-trade" className={INPUT_CLASS} value={form.trade_name} onChange={(e) => set('trade_name')(e.target.value)} />
+          <Input id="issuer-trade" onChange={(e) => set('trade_name')(e.target.value)} value={form.trade_name} />
         </Field>
         <fieldset className="sm:col-span-2">
-          <legend className="mb-1 text-sm">{t('responsibilities')}</legend>
-          <div className="flex flex-wrap gap-4 text-sm">
+          <legend className="mb-2 text-[13px] font-semibold text-ink">{t('responsibilities')}</legend>
+          <div className="grid gap-2 sm:grid-cols-2">
             {TAX_RESPONSIBILITIES.map((code) => (
-              <label className="inline-flex items-center gap-2" key={code}>
-                <input checked={form.tax_responsibilities.includes(code)} onChange={() => toggleResponsibility(code)} type="checkbox" />
-                {code}
-              </label>
+              <Choice
+                checked={form.tax_responsibilities.includes(code)}
+                className="rounded-sm bg-surface-sunk/60 px-3 py-2.5"
+                description={code}
+                key={code}
+                label={t(`responsibilityNames.${code}`)}
+                onChange={() => toggleResponsibility(code)}
+              />
             ))}
           </div>
         </fieldset>
         <Field id="issuer-address" label={t('address')}>
-          <input id="issuer-address" className={INPUT_CLASS} required value={form.address_line} onChange={(e) => set('address_line')(e.target.value)} />
+          <Input id="issuer-address" onChange={(e) => set('address_line')(e.target.value)} required value={form.address_line} />
         </Field>
-        <Field id="issuer-municipality" label={t('municipality')}>
-          <input id="issuer-municipality" className={INPUT_CLASS} inputMode="numeric" maxLength={5} pattern="[0-9]{5}" required value={form.municipality_code} onChange={(e) => set('municipality_code')(e.target.value.trim())} />
+        <Field hint={form.municipality_code ? t('municipalityCode', { code: form.municipality_code }) : t('municipalityHint')} id="issuer-municipality" label={t('municipality')}>
+          <MunicipalityField id="issuer-municipality" onChange={set('municipality_code')} value={form.municipality_code} />
         </Field>
         <Field id="issuer-email" label={t('email')}>
-          <input id="issuer-email" className={INPUT_CLASS} required type="email" value={form.email} onChange={(e) => set('email')(e.target.value)} />
+          <Input id="issuer-email" onChange={(e) => set('email')(e.target.value)} required type="email" value={form.email} />
         </Field>
         <Field id="issuer-phone" label={t('phone')}>
-          <input id="issuer-phone" className={INPUT_CLASS} value={form.phone} onChange={(e) => set('phone')(e.target.value)} />
+          <Input id="issuer-phone" onChange={(e) => set('phone')(e.target.value)} value={form.phone} />
         </Field>
-        <div className="sm:col-span-2">
-          <StepActions errors={errors} label={tStep('next')} saving={saving} />
+        <div className="flex flex-col gap-3 sm:col-span-2">
+          {errors ? <StepErrors errors={errors} /> : null}
+          <div>
+            <Button loading={saving} loadingLabel={tStep('saving')} type="submit" variant="primary">
+              {tStep('next')}
+            </Button>
+          </div>
         </div>
       </form>
     </StepCard>
@@ -233,80 +256,21 @@ function IssuerStep({ clientId, onDone }: { clientId: number; onDone: (issuerId:
 function CertificateStep({ issuerId, onDone }: { issuerId: number; onDone: () => void }) {
   const t = useTranslations('onboarding.certificate');
   const tStep = useTranslations('onboarding');
-  const locale = useLocale();
-  const [kind, setKind] = useState<'p12' | 'pair'>('p12');
-  const [file, setFile] = useState<File | null>(null);
-  const [password, setPassword] = useState('');
-  const [certificate, setCertificate] = useState<File | null>(null);
-  const [privateKey, setPrivateKey] = useState<File | null>(null);
-  const [keyPassword, setKeyPassword] = useState('');
   const [loaded, setLoaded] = useState<LoadedCertificate | null>(null);
-  const { errors, saving, run } = useStep();
-
-  const onSubmit = (e: FormEvent) => {
-    e.preventDefault();
-    const upload: CertificateUpload | null =
-      kind === 'p12'
-        ? file && { kind, file, password }
-        : certificate && privateKey && { kind, certificate, privateKey, keyPassword };
-    if (!upload) return;
-    void run(async () => {
-      setLoaded(await uploadCertificate(issuerId, upload));
-      setPassword('');
-      setKeyPassword('');
-    });
-  };
 
   return (
-    <StepCard title={t('title')}>
-      <p className="text-sm text-muted-foreground">{t('body')}</p>
+    <StepCard subtitle={t('body')} title={t('title')}>
       {loaded ? (
-        <>
-          <p className="mt-4 text-sm text-success" role="status">
-            {t('loaded', { subject: loaded.subject, date: formatDateTime(loaded.not_after, locale) })}
-          </p>
-          {loaded.chain_complete ? null : <p className="mt-2 text-sm text-destructive">{t('chainIncomplete')}</p>}
-          <button className={`${PRIMARY_BUTTON_CLASS} mt-6`} onClick={onDone} type="button">
-            {tStep('next')}
-          </button>
-        </>
+        <div className="flex flex-col gap-4">
+          <LoadedCertificateNotice certificate={loaded} />
+          <div>
+            <Button onClick={onDone} variant="primary">
+              {tStep('next')}
+            </Button>
+          </div>
+        </div>
       ) : (
-        <form className="mt-4 grid gap-4" onSubmit={onSubmit}>
-          <fieldset>
-            <legend className="mb-2 text-sm">{t('kind')}</legend>
-            <div className="flex flex-wrap gap-4 text-sm">
-              {(['p12', 'pair'] as const).map((value) => (
-                <label className="inline-flex items-center gap-2" key={value}>
-                  <input checked={kind === value} name="certificate-kind" onChange={() => setKind(value)} type="radio" />
-                  {t(`kinds.${value}`)}
-                </label>
-              ))}
-            </div>
-          </fieldset>
-          {kind === 'p12' ? (
-            <>
-              <Field id="certificate-file" label={t('file')}>
-                <input id="certificate-file" accept=".p12,.pfx" className={INPUT_CLASS} required type="file" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
-              </Field>
-              <Field id="certificate-password" label={t('password')}>
-                <input id="certificate-password" autoComplete="off" className={INPUT_CLASS} required type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
-              </Field>
-            </>
-          ) : (
-            <>
-              <Field id="certificate-public" label={t('certificateFile')}>
-                <input id="certificate-public" accept=".cer,.crt,.pem,.der,.zip" className={INPUT_CLASS} required type="file" onChange={(e) => setCertificate(e.target.files?.[0] ?? null)} />
-              </Field>
-              <Field id="certificate-key" label={t('keyFile')}>
-                <input id="certificate-key" accept=".key,.pem" className={INPUT_CLASS} required type="file" onChange={(e) => setPrivateKey(e.target.files?.[0] ?? null)} />
-              </Field>
-              <Field id="certificate-key-password" label={t('keyPassword')}>
-                <input id="certificate-key-password" autoComplete="off" className={INPUT_CLASS} type="password" value={keyPassword} onChange={(e) => setKeyPassword(e.target.value)} />
-              </Field>
-            </>
-          )}
-          <StepActions errors={errors} label={tStep('next')} saving={saving} />
-        </form>
+        <CertificateForm issuerId={issuerId} onLoaded={setLoaded} submitLabel={tStep('next')} />
       )}
     </StepCard>
   );
@@ -315,34 +279,10 @@ function CertificateStep({ issuerId, onDone }: { issuerId: number; onDone: () =>
 function SoftwareStep({ issuerId, onDone }: { issuerId: number; onDone: () => void }) {
   const t = useTranslations('onboarding.software');
   const tStep = useTranslations('onboarding');
-  const [softwareId, setSoftwareId] = useState('');
-  const [pin, setPin] = useState('');
-  const [testSetId, setTestSetId] = useState('');
-  const { errors, saving, run } = useStep();
-
-  const onSubmit = (e: FormEvent) => {
-    e.preventDefault();
-    void run(async () => {
-      await registerSoftware(issuerId, { environment: '2', software_id: softwareId.trim(), software_pin: pin, test_set_id: testSetId.trim() });
-      onDone();
-    });
-  };
 
   return (
-    <StepCard title={t('title')}>
-      <p className="text-sm text-muted-foreground">{t('body')}</p>
-      <form className="mt-4 grid gap-4" onSubmit={onSubmit}>
-        <Field id="software-id" label={t('softwareId')}>
-          <input id="software-id" className={INPUT_CLASS} required value={softwareId} onChange={(e) => setSoftwareId(e.target.value)} />
-        </Field>
-        <Field id="software-pin" label={t('pin')}>
-          <input id="software-pin" autoComplete="off" className={INPUT_CLASS} required type="password" value={pin} onChange={(e) => setPin(e.target.value)} />
-        </Field>
-        <Field id="software-test-set" label={t('testSetId')}>
-          <input id="software-test-set" className={INPUT_CLASS} required value={testSetId} onChange={(e) => setTestSetId(e.target.value)} />
-        </Field>
-        <StepActions errors={errors} label={tStep('next')} saving={saving} />
-      </form>
+    <StepCard subtitle={t('body')} title={t('title')}>
+      <SoftwareFormFields environment="2" issuerId={issuerId} onSaved={onDone} submitLabel={tStep('next')} />
     </StepCard>
   );
 }
@@ -350,124 +290,51 @@ function SoftwareStep({ issuerId, onDone }: { issuerId: number; onDone: () => vo
 function RangeStep({ issuerId, onDone }: { issuerId: number; onDone: () => void }) {
   const t = useTranslations('onboarding.range');
   const tStep = useTranslations('onboarding');
-  const [form, setForm] = useState({ ...HABILITATION_RANGE, technical_key: '' });
-  const { errors, saving, run } = useStep();
-  const set = (key: keyof typeof form) => (value: string) =>
-    setForm((current) => ({ ...current, [key]: key === 'number_from' || key === 'number_to' ? Number(value) : value }));
-
-  const onSubmit = (e: FormEvent) => {
-    e.preventDefault();
-    void run(async () => {
-      await createRange(issuerId, { ...form, technical_key: form.technical_key.trim() });
-      onDone();
-    });
-  };
 
   return (
-    <StepCard title={t('title')}>
-      <p className="text-sm text-muted-foreground">{t('body')}</p>
-      <form className="mt-4 grid gap-4 sm:grid-cols-2" onSubmit={onSubmit}>
-        <Field id="range-resolution" label={t('resolution')}>
-          <input id="range-resolution" className={INPUT_CLASS} required value={form.resolution_number} onChange={(e) => set('resolution_number')(e.target.value)} />
-        </Field>
-        <Field id="range-prefix" label={t('prefix')}>
-          <input id="range-prefix" className={INPUT_CLASS} maxLength={4} value={form.prefix} onChange={(e) => set('prefix')(e.target.value)} />
-        </Field>
-        <Field id="range-from" label={t('from')}>
-          <input id="range-from" className={INPUT_CLASS} required type="number" value={form.number_from} onChange={(e) => set('number_from')(e.target.value)} />
-        </Field>
-        <Field id="range-to" label={t('to')}>
-          <input id="range-to" className={INPUT_CLASS} required type="number" value={form.number_to} onChange={(e) => set('number_to')(e.target.value)} />
-        </Field>
-        <Field id="range-valid-from" label={t('validFrom')}>
-          <input id="range-valid-from" className={INPUT_CLASS} required type="date" value={form.valid_from} onChange={(e) => set('valid_from')(e.target.value)} />
-        </Field>
-        <Field id="range-valid-to" label={t('validTo')}>
-          <input id="range-valid-to" className={INPUT_CLASS} required type="date" value={form.valid_to} onChange={(e) => set('valid_to')(e.target.value)} />
-        </Field>
-        <div className="sm:col-span-2">
-          <Field id="range-key" label={t('technicalKey')}>
-            <input id="range-key" autoComplete="off" className={INPUT_CLASS} required value={form.technical_key} onChange={(e) => set('technical_key')(e.target.value)} />
-          </Field>
-        </div>
-        <div className="sm:col-span-2">
-          <StepActions errors={errors} label={tStep('next')} saving={saving} />
-        </div>
-      </form>
+    <StepCard subtitle={t('body')} title={t('title')}>
+      <RangeFormFields issuerId={issuerId} onSaved={onDone} preset={WIZARD_RANGE} submitLabel={tStep('next')} />
     </StepCard>
   );
 }
 
+/** The Dawn aurora and a party popper: the business can now run its DIAN test set. */
 function Done({ issuerId }: { issuerId: number }) {
   const t = useTranslations('onboarding.done');
 
   return (
-    <StepCard title={t('title')}>
-      <p className="text-sm">{t('body')}</p>
-      <Link className={`${PRIMARY_BUTTON_CLASS} mt-6 inline-block`} href={issuerDetailRoute(issuerId)}>
-        {t('open')}
-      </Link>
-    </StepCard>
-  );
-}
-
-function useStep() {
-  const [errors, setErrors] = useState<string[] | null>(null);
-  const [saving, setSaving] = useState(false);
-
-  const run = async (action: () => Promise<void>) => {
-    setSaving(true);
-    setErrors(null);
-    try {
-      await action();
-    } catch (error) {
-      setErrors(stepErrors(error));
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  return { errors, saving, run };
-}
-
-function StepActions({ errors, label, saving }: { errors: string[] | null; label: string; saving: boolean }) {
-  const t = useTranslations('onboarding');
-
-  return (
-    <div>
-      {errors ? (
-        <div className="mb-3 text-sm text-destructive" role="alert">
-          <p>{t('error')}</p>
-          <ul className="list-disc pl-5">
-            {errors.map((message) => (
-              <li key={message}>{message}</li>
-            ))}
-          </ul>
-        </div>
-      ) : null}
-      <button className={PRIMARY_BUTTON_CLASS} disabled={saving} type="submit">
-        {saving ? t('saving') : label}
-      </button>
-    </div>
-  );
-}
-
-function StepCard({ title, children }: { title: string; children: ReactNode }) {
-  return (
-    <section aria-label={title} className={CARD_CLASS}>
-      <h2 className="mb-4 text-lg font-semibold">{title}</h2>
-      {children}
+    <section className="aurora-dawn appear overflow-hidden rounded-panel px-6 py-12 text-center shadow-rest">
+      <Emoji className="mx-auto" name="success" size={64} />
+      <h2 className="mt-4 text-[22px] font-bold text-ink">{t('title')}</h2>
+      <p className="mx-auto mt-2 max-w-md text-[15px] text-ink-2">{t('body')}</p>
+      <div className="mt-6 flex justify-center">
+        <ButtonLink href={`${issuerDetailRoute(issuerId)}?tab=habilitation`} variant="primary">
+          {t('open')}
+        </ButtonLink>
+      </div>
     </section>
   );
 }
 
-function Field({ id, label, children }: { id: string; label: string; children: ReactNode }) {
+/** A step that is already saved and cannot be redone here (the issuer exists): its data is edited from its page. */
+function AlreadyDone({ title, body, onContinue }: { title: string; body: string; onContinue: () => void }) {
+  const t = useTranslations('onboarding');
+
   return (
-    <div>
-      <label className="mb-1 block text-sm" htmlFor={id}>
-        {label}
-      </label>
+    <StepCard title={title}>
+      <Notice tone="success">{body}</Notice>
+      <Button className="mt-4" onClick={onContinue} variant="primary">
+        {t('next')}
+      </Button>
+    </StepCard>
+  );
+}
+
+function StepCard({ title, subtitle, children }: { title: string; subtitle?: string; children: ReactNode }) {
+  return (
+    <Card aria-label={title} className="appear">
+      <CardHeader subtitle={subtitle} title={title} />
       {children}
-    </div>
+    </Card>
   );
 }

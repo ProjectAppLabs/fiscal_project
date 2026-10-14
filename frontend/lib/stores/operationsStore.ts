@@ -39,6 +39,8 @@ type OperationsState = {
   searchIssuers: (query: string) => Promise<void>;
   goToIssuersPage: (link: string | null) => Promise<void>;
   loadIssuer: (id: number | string) => Promise<void>;
+  /** Reloads the issuer after a change without clearing the page. */
+  refreshIssuer: (id: number | string) => Promise<void>;
   loadAlerts: () => Promise<void>;
   showResolvedAlerts: (includeResolved: boolean) => Promise<void>;
   goToAlertsPage: (link: string | null) => Promise<void>;
@@ -92,6 +94,14 @@ export const useOperationsStore = create<OperationsState>((set, get) => ({
       set({ issuer: await fetchIssuer(id), issuerStatus: 'ready' });
     } catch (error) {
       set({ issuerStatus: isNotFoundError(error) ? 'not-found' : 'error' });
+    }
+  },
+
+  refreshIssuer: async (id) => {
+    try {
+      set({ issuer: await fetchIssuer(id), issuerStatus: 'ready' });
+    } catch {
+      // The page keeps what it already shows; the next full load reports the error.
     }
   },
 

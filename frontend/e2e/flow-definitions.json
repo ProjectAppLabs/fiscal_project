@@ -1,6 +1,6 @@
 {
   "version": "2.0.0",
-  "lastUpdated": "2026-10-05",
+  "lastUpdated": "2026-10-14",
   "flows": {
     "home-redirect": {
       "name": "Home redirects by session",
@@ -355,6 +355,59 @@
       ],
       "priority": "P1",
       "description": "Operator starts the issuer's DIAN test set and asks the DIAN for its result",
+      "expectedSpecs": 1,
+      "outcomes": [
+        "success"
+      ]
+    },
+    "account-change-password": {
+      "name": "Operator changes the password",
+      "module": "account",
+      "roles": [
+        "operator"
+      ],
+      "priority": "P2",
+      "description": "From the account menu, /account changes the password with the current one; mismatched new passwords are refused",
+      "expectedSpecs": 2,
+      "outcomes": [
+        "success",
+        "error"
+      ]
+    },
+    "console-client-system-create": {
+      "name": "New client system outside the wizard",
+      "module": "console",
+      "roles": [
+        "operator"
+      ],
+      "priority": "P2",
+      "description": "Sistemas cliente creates a system in a dialog and shows its secret once",
+      "expectedSpecs": 1,
+      "outcomes": [
+        "success"
+      ]
+    },
+    "console-issuer-range-add": {
+      "name": "Add a numbering range from the issuer page",
+      "module": "console",
+      "roles": [
+        "operator"
+      ],
+      "priority": "P1",
+      "description": "The Numeración tab adds an invoice or contingency (type 03) range in a dialog",
+      "expectedSpecs": 1,
+      "outcomes": [
+        "success"
+      ]
+    },
+    "console-issuer-certificate-replace": {
+      "name": "Replace the issuer certificate",
+      "module": "console",
+      "roles": [
+        "operator"
+      ],
+      "priority": "P1",
+      "description": "The Certificados y software tab uploads a new certificate (.p12 or certificate and key) in a dialog",
       "expectedSpecs": 1,
       "outcomes": [
         "success"

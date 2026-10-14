@@ -2,50 +2,34 @@
 
 import { useTranslations } from 'next-intl';
 
+import { Badge, type BadgeTone } from '@/components/ui/Badge';
+import { ErrorState, SkeletonCard } from '@/components/ui/States';
 import type { DocumentState } from '@/lib/services/console';
 
-const STATE_TONE: Record<DocumentState, string> = {
-  queued: 'bg-muted text-foreground',
-  transmitting: 'bg-info/15 text-foreground',
-  validated: 'bg-success/15 text-foreground',
-  rejected: 'bg-destructive/15 text-foreground',
-  contingency_dian: 'bg-warning/15 text-foreground',
-  contingency_issuer: 'bg-warning/15 text-foreground',
+/** Each document state has a color family and a word; the color never goes alone. */
+export const STATE_TONE: Record<DocumentState, BadgeTone> = {
+  queued: 'pending',
+  transmitting: 'info',
+  validated: 'success',
+  rejected: 'danger',
+  contingency_dian: 'warning',
+  contingency_issuer: 'warning',
 };
 
-export function DocumentStateBadge({ state }: { state: DocumentState }) {
+export function DocumentStateBadge({ state, size = 'sm' }: { state: DocumentState; size?: 'sm' | 'md' | 'lg' }) {
   const t = useTranslations('console.state');
 
   return (
-    <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${STATE_TONE[state]}`}>{t(state)}</span>
+    <Badge size={size} tone={STATE_TONE[state]}>
+      {t(state)}
+    </Badge>
   );
 }
 
-export function ConsoleLoading() {
-  const t = useTranslations('console');
-
-  return (
-    <p className="mt-10 text-sm text-muted-foreground" role="status">
-      {t('loading')}
-    </p>
-  );
+export function ConsoleLoading({ lines = 4 }: { lines?: number }) {
+  return <SkeletonCard className="mt-2" lines={lines} />;
 }
 
 export function ConsoleLoadError({ message, onRetry }: { message: string; onRetry: () => void }) {
-  const t = useTranslations('console');
-
-  return (
-    <div className="mt-10 rounded-2xl border border-destructive/40 bg-card px-6 py-8 text-center">
-      <p className="text-sm text-destructive" role="alert">
-        {message}
-      </p>
-      <button
-        className="mt-4 rounded-full border border-border px-4 py-2 text-sm hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        onClick={onRetry}
-        type="button"
-      >
-        {t('retry')}
-      </button>
-    </div>
-  );
+  return <ErrorState message={message} onRetry={onRetry} />;
 }

@@ -124,4 +124,11 @@ describe('AlertsPage', () => {
 
     expect(await screen.findByRole('table', { name: 'Alertas' })).toBeInTheDocument();
   });
+
+  it('links a certificate alert to where it gets fixed', async () => {
+    mockGet.mockResolvedValue({ data: buildPage([buildAlert()]) });
+    renderSignedIn();
+
+    expect(await screen.findByRole('link', { name: 'Subir certificado' })).toHaveAttribute('href', '/issuers/3?tab=certificates');
+  });
 });

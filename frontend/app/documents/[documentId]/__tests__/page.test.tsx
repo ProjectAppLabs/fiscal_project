@@ -103,7 +103,7 @@ describe('DocumentDetailPage', () => {
   it('shows a DIAN error with its rule', async () => {
     renderSignedIn();
 
-    const section = await screen.findByRole('region', { name: 'Errores de la DIAN' });
+    const section = await screen.findByRole('region', { name: 'Respuesta de la DIAN' });
 
     expect(within(section).getByRole('listitem')).toHaveTextContent('FAD06: El CUFE no corresponde.');
   });
@@ -113,7 +113,7 @@ describe('DocumentDetailPage', () => {
 
     renderSignedIn();
 
-    const section = await screen.findByRole('region', { name: 'Errores de la DIAN' });
+    const section = await screen.findByRole('region', { name: 'Respuesta de la DIAN' });
 
     expect(within(section).getByRole('listitem')).toHaveTextContent('Regla 90: documento procesado anteriormente.');
   });
@@ -177,7 +177,9 @@ describe('DocumentDetailPage', () => {
 
     renderSignedIn();
 
-    expect(await screen.findByText('Notificación: FAJ40: Contenido no válido')).toBeInTheDocument();
+    const section = await screen.findByRole('region', { name: 'Respuesta de la DIAN' });
+
+    expect(section).toHaveTextContent('Notificaciones (no detienen el documento)Notificación: FAJ40: Contenido no válido');
   });
 
   it('reads the event details the backend records as objects', async () => {

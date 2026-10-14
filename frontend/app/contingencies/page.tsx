@@ -4,7 +4,14 @@ import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
 import { useEffect } from 'react';
 
-import { ConsoleLoadError, ConsoleLoading } from '@/components/console/ConsoleStatus';
+import { ConsoleLoadError } from '@/components/console/ConsoleStatus';
+import { Page } from '@/components/layout/Page';
+import { Badge } from '@/components/ui/Badge';
+import { DataTable } from '@/components/ui/DataTable';
+import { Notice } from '@/components/ui/Notice';
+import { PageHeader } from '@/components/ui/PageHeader';
+import { ProgressBar } from '@/components/ui/Progress';
+import { EmptyState, SkeletonTable } from '@/components/ui/States';
 import { documentDetailRoute } from '@/lib/constants';
 import { formatDateTime } from '@/lib/format';
 import { useRequireAuth } from '@/lib/hooks/useRequireAuth';
@@ -13,6 +20,7 @@ import { useOperationsStore } from '@/lib/stores/operationsStore';
 
 // The annex gives 48 hours; the alerts warn at 24 h and 40 h, so under 8 hours left is urgent.
 const URGENT_HOURS = 8;
+const DEADLINE_HOURS = 48;
 
 export default function ContingenciesPage() {
   const t = useTranslations('contingencies');
@@ -27,20 +35,27 @@ export default function ContingenciesPage() {
 
   if (!isAuthenticated) return null;
 
+  const urgent = (contingencies ?? []).filter((item) => item.hours_left < URGENT_HOURS).length;
   return (
-    <main className="mx-auto max-w-6xl px-6 py-10">
-      <h1 className="text-3xl font-semibold tracking-tight">{t('title')}</h1>
-      <p className="mt-2 text-muted-foreground">{t('subtitle')}</p>
+    <Page>
+      <PageHeader emoji="contingencies" subtitle={t('subtitle')} title={t('title')} />
       {status === 'error' ? (
         <ConsoleLoadError message={t('error')} onRetry={() => void loadContingencies()} />
       ) : !contingencies ? (
-        <ConsoleLoading />
+        <SkeletonTable />
       ) : contingencies.length === 0 ? (
-        <p className="mt-10 rounded-2xl border border-dashed border-border bg-card px-6 py-12 text-center text-sm">{t('empty')}</p>
+        <EmptyState body={t('emptyBody')} emoji="success" title={t('empty')} />
       ) : (
-        <ContingencyTable contingencies={contingencies} />
+        <div className="flex flex-col gap-4">
+          {urgent ? (
+            <Notice title={t('urgentNotice', { count: urgent })} tone="danger">
+              {t('urgentNoticeBody')}
+            </Notice>
+          ) : null}
+          <ContingencyTable contingencies={[...contingencies].sort((a, b) => a.hours_left - b.hours_left)} />
+        </div>
       )}
-    </main>
+    </Page>
   );
 }
 
@@ -49,56 +64,66 @@ function ContingencyTable({ contingencies }: { contingencies: Contingency[] }) {
   const locale = useLocale();
 
   return (
-    <div className="mt-8 overflow-x-auto rounded-2xl border border-border bg-card">
-      <table className="w-full text-left text-sm">
-        <caption className="sr-only">{t('tableCaption')}</caption>
-        <thead className="border-b border-border text-xs text-muted-foreground">
-          <tr>
-            <th className="px-4 py-3 font-medium" scope="col">{t('columns.invoice')}</th>
-            <th className="px-4 py-3 font-medium" scope="col">{t('columns.issuer')}</th>
-            <th className="px-4 py-3 font-medium" scope="col">{t('columns.kind')}</th>
-            <th className="px-4 py-3 font-medium" scope="col">{t('columns.started')}</th>
-            <th className="px-4 py-3 font-medium" scope="col">{t('columns.deadline')}</th>
-            <th className="px-4 py-3 font-medium" scope="col">{t('columns.left')}</th>
-            <th className="px-4 py-3 font-medium" scope="col">{t('columns.attempts')}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {contingencies.map((item) => (
-            <tr className="border-b border-border last:border-0" key={item.id}>
-              <td className="px-4 py-3 font-mono">
-                <Link className="hover:underline" href={documentDetailRoute(item.id)}>
-                  {item.full_number}
-                </Link>
-              </td>
-              <td className="px-4 py-3">
-                <span className="block">{item.issuer.legal_name}</span>
-                <span className="block text-xs text-muted-foreground">{item.issuer.nit}</span>
-              </td>
-              <td className="px-4 py-3">{t(`kinds.${item.contingency}`)}</td>
-              <td className="px-4 py-3 whitespace-nowrap">{formatDateTime(item.started_at, locale)}</td>
-              <td className="px-4 py-3 whitespace-nowrap">{formatDateTime(item.deadline_at, locale)}</td>
-              <td className="px-4 py-3">
-                <HoursLeft hours={item.hours_left} />
-              </td>
-              <td className="px-4 py-3 tabular-nums">{item.attempts}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+    <DataTable<Contingency>
+      caption={t('tableCaption')}
+      columns={[
+        {
+          key: 'invoice',
+          header: t('columns.invoice'),
+          mobile: 'title',
+          cell: (item) => (
+            <Link className="font-mono text-[13px] font-medium text-primary-text hover:underline" href={documentDetailRoute(item.id)}>
+              {item.full_number}
+            </Link>
+          ),
+        },
+        {
+          key: 'issuer',
+          header: t('columns.issuer'),
+          mobile: 'body',
+          cell: (item) => (
+            <>
+              <span className="block font-semibold text-ink">{item.issuer.legal_name}</span>
+              <span className="block font-mono text-[12px] text-ink-3">{item.issuer.nit}</span>
+            </>
+          ),
+        },
+        {
+          key: 'kind',
+          header: t('columns.kind'),
+          mobile: 'badge',
+          cell: (item) => (
+            <Badge size="sm" tone="warning">
+              {t(`kinds.${item.contingency}`)}
+            </Badge>
+          ),
+        },
+        { key: 'started', header: t('columns.started'), mobile: 'hidden', className: 'whitespace-nowrap', cell: (item) => formatDateTime(item.started_at, locale) },
+        { key: 'deadline', header: t('columns.deadline'), className: 'whitespace-nowrap', cell: (item) => formatDateTime(item.deadline_at, locale) },
+        { key: 'left', header: t('columns.left'), className: 'min-w-40', cell: (item) => <HoursLeft hours={item.hours_left} /> },
+        { key: 'attempts', header: t('columns.attempts'), align: 'end', mobile: 'hidden', className: 'tabular-nums', cell: (item) => item.attempts },
+      ]}
+      rowKey={(item) => item.id}
+      rows={contingencies}
+    />
   );
 }
 
+/** The 48-hour clock: hours left with a bar that turns amber under 24 h and rose under 8 h or once overdue. */
 export function HoursLeft({ hours }: { hours: number }) {
   const t = useTranslations('contingencies');
   const locale = useLocale();
   const format = (value: number) => new Intl.NumberFormat(locale, { maximumFractionDigits: 1 }).format(value);
+  const tone = hours < URGENT_HOURS ? 'danger' : hours < 24 ? 'warning' : 'aurora';
 
-  if (hours < 0) return <span className="font-semibold text-destructive">{t('overdue', { hours: format(-hours) })}</span>;
   return (
-    <span className={hours < URGENT_HOURS ? 'font-semibold text-destructive' : 'tabular-nums'}>
-      {t('hoursLeft', { hours: format(hours) })}
+    <span className="flex flex-col gap-1.5">
+      {hours < 0 ? (
+        <span className="font-semibold text-danger-fg">{t('overdue', { hours: format(-hours) })}</span>
+      ) : (
+        <span className={hours < URGENT_HOURS ? 'font-semibold text-danger-fg' : 'tabular-nums text-ink'}>{t('hoursLeft', { hours: format(hours) })}</span>
+      )}
+      <ProgressBar className="w-32" tone={tone} value={Math.max(0, DEADLINE_HOURS - hours) / DEADLINE_HOURS} />
     </span>
   );
 }
