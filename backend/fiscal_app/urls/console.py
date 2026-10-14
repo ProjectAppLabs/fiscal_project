@@ -1,9 +1,18 @@
 from django.urls import path
 
-from fiscal_app.views import console, console_client_systems, console_onboarding, console_operations
+from fiscal_app.views import (
+    console,
+    console_client_systems,
+    console_onboarding,
+    console_operations,
+    console_users,
+)
 
 urlpatterns = [
     path('summary/', console.console_summary, name='console-summary'),
+    path('users/', console_users.console_users, name='console-users'),
+    path('users/<int:user_id>/', console_users.console_user, name='console-user'),
+    path('users/<int:user_id>/resend-invitation/', console_users.console_resend_invitation, name='console-resend-invitation'),
     path('documents/', console.console_documents, name='console-documents'),
     path('documents/<int:document_id>/', console.console_document, name='console-document'),
     path('issuers/<int:issuer_id>/contingency-letter/', console.console_contingency_letter, name='console-contingency-letter'),

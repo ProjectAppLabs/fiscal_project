@@ -9,6 +9,7 @@ import { AuthScreen } from '@/components/layout/AuthScreen';
 import { Button } from '@/components/ui/Button';
 import { Field, Input, PasswordInput } from '@/components/ui/Field';
 import { ROUTES } from '@/lib/constants';
+import { useQueryParam } from '@/lib/hooks/useQueryParams';
 import { getApiErrorMessage } from '@/lib/services/errors';
 import { useAuthStore } from '@/lib/stores/authStore';
 
@@ -21,8 +22,13 @@ export default function ForgotPasswordPage() {
   const sendPasswordResetCode = useAuthStore((s) => s.sendPasswordResetCode);
   const resetPassword = useAuthStore((s) => s.resetPassword);
 
-  const [step, setStep] = useState<'email' | 'code'>('email');
-  const [email, setEmail] = useState('');
+  // An invitation link (?invite=1&email=…) opens straight on the code step with the e-mail filled in.
+  const invite = useQueryParam('invite') === '1';
+  const invitedEmail = useQueryParam('email');
+  const [chosenStep, setStep] = useState<'email' | 'code' | null>(null);
+  const [typedEmail, setEmail] = useState<string | null>(null);
+  const step = chosenStep ?? (invite && invitedEmail ? 'code' : 'email');
+  const email = typedEmail ?? invitedEmail;
   const [code, setCode] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -66,7 +72,7 @@ export default function ForgotPasswordPage() {
 
     try {
       await resetPassword({ email, code, new_password: newPassword });
-      setMessage(t('resetSuccess'));
+      setMessage(invite ? t('inviteSuccess') : t('resetSuccess'));
       router.replace(ROUTES.SIGN_IN);
     } catch (err: unknown) {
       setError(getApiErrorMessage(err, t('resetFailed')));
@@ -92,9 +98,13 @@ export default function ForgotPasswordPage() {
 
   return (
     <AuthScreen
-      emoji="mail"
-      subtitle={step === 'email' ? t('emailIntro') : t.rich('codeIntro', { email, strong: (chunks) => <strong className="text-ink">{chunks}</strong> })}
-      title={t('title')}
+      emoji={invite ? 'success' : 'mail'}
+      subtitle={
+        step === 'email'
+          ? t('emailIntro')
+          : t.rich(invite ? 'inviteIntro' : 'codeIntro', { email, strong: (chunks) => <strong className="text-ink">{chunks}</strong> })
+      }
+      title={invite ? t('inviteTitle') : t('title')}
     >
       {step === 'email' ? (
         <form className="flex flex-col gap-4" onSubmit={onSendCode}>

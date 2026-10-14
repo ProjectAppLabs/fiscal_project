@@ -556,3 +556,26 @@ export async function stubTestSet(page: Page) {
     }),
   );
 }
+
+// ── Console (users) ──
+
+export const consoleUsers = [
+  { id: 1, email: testOperator.email, first_name: 'Ana', last_name: 'Operadora', role: 'admin', is_active: true, invited: false, last_login: '2026-10-14T12:00:00Z', date_joined: '2026-10-01T05:00:00Z' },
+  { id: 2, email: 'luis@projectapp.co', first_name: 'Luis', last_name: '', role: 'operator', is_active: true, invited: true, last_login: null, date_joined: '2026-10-10T05:00:00Z' },
+];
+
+/** Sign in as an administrator (users, secrets, deactivations and production are theirs). */
+export async function stubAdminSession(page: Page) {
+  await page.route('**/api/validate_token/', (route) => fulfillJson(route, 200, { user: { ...operatorPayload(), role: 'admin' } }));
+}
+
+/** Stub the console users: the list, an invitation, a role change and resending an invitation. */
+export async function stubUsers(page: Page) {
+  await page.route(/\/api\/console\/users\/$/, (route) =>
+    route.request().method() === 'POST'
+      ? fulfillJson(route, 201, { ...consoleUsers[1], id: 3, ...route.request().postDataJSON(), invited: true, invitation_sent: true })
+      : fulfillJson(route, 200, { count: consoleUsers.length, results: consoleUsers }),
+  );
+  await page.route(/\/api\/console\/users\/2\/$/, (route) => fulfillJson(route, 200, { ...consoleUsers[1], ...route.request().postDataJSON() }));
+  await page.route('**/api/console/users/2/resend-invitation/', (route) => fulfillJson(route, 200, { ...consoleUsers[1], invitation_sent: true }));
+}

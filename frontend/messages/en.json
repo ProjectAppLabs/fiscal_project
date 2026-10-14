@@ -23,7 +23,8 @@
     "changePassword": "Change password",
     "more": "More",
     "closeMore": "Close the menu",
-    "openCount": "{count, plural, one {# open} other {# open}}"
+    "openCount": "{count, plural, one {# open} other {# open}}",
+    "users": "Console users"
   },
   "footer": {
     "tagline": "ProjectApp's internal electronic invoicing console."
@@ -75,7 +76,10 @@
     "resetSuccess": "Password reset. Redirecting…",
     "resetFailed": "The password could not be reset.",
     "backToEmail": "Back to email",
-    "backToSignIn": "Back to sign in"
+    "backToSignIn": "Back to sign in",
+    "inviteTitle": "Activate your account",
+    "inviteIntro": "Type the invitation code sent to <strong>{email}</strong> and choose your password.",
+    "inviteSuccess": "Account activated. You can sign in now."
   },
   "console": {
     "states": {
@@ -727,7 +731,8 @@
       "copy-software": "Production software registered",
       "fetch-ranges": "Numbering brought from the DIAN",
       "promote": "The issuer moved to production"
-    }
+    },
+    "adminOnly": "Only an administrator can move the issuer to production."
   },
   "ui": {
     "breadcrumb": "Breadcrumb",
@@ -879,5 +884,58 @@
     "requeued": "{count, plural, one {# notice back in the queue} other {# notices back in the queue}}",
     "payloadTitle": "Notice content",
     "pageInfo": "Page {page} · {count} notices"
+  },
+  "users": {
+    "title": "Users",
+    "subtitle": "Who enters the console and what they can do.",
+    "adminOnly": "Only an administrator can see and change users.",
+    "error": "We could not load the users.",
+    "empty": "There are no users",
+    "emptyBody": "Invite the people who operate Fiscal.",
+    "invite": "Invite user",
+    "inviteBody": "They get an e-mail with a link and a code to choose their password. The code expires in 72 hours.",
+    "firstName": "First name",
+    "lastName": "Last name (optional)",
+    "email": "E-mail",
+    "emailHint": "The invitation goes there.",
+    "role": "Role",
+    "roles": {
+      "operator": "Operator",
+      "admin": "Administrator"
+    },
+    "roleHints": {
+      "operator": "Runs the console: documents, issuers, enrolments, alerts and client systems.",
+      "admin": "Also manages users, rotates secrets, deactivates issuers and systems, and moves issuers to production."
+    },
+    "sendInvitation": "Send invitation",
+    "invited": "Invitation sent to {email}",
+    "invitedNoMail": "The account for {email} was created, but the e-mail did not go out. Resend the invitation later.",
+    "tableCaption": "Console users",
+    "you": "(you)",
+    "never": "Never",
+    "columns": {
+      "name": "Person",
+      "role": "Role",
+      "state": "State",
+      "lastLogin": "Last sign in",
+      "actions": "Actions"
+    },
+    "states": {
+      "active": "Active",
+      "invited": "Invited",
+      "inactive": "Inactive"
+    },
+    "resend": "Resend invitation",
+    "makeAdmin": "Make administrator",
+    "makeOperator": "Make operator",
+    "activate": "Activate",
+    "deactivate": "Deactivate",
+    "confirmTitle": "Change {name}?",
+    "makeAdminBody": "They will manage users, rotate secrets, deactivate issuers and systems, and move issuers to production.",
+    "makeOperatorBody": "They will no longer manage users, secrets, deactivations nor the move to production.",
+    "deactivateBody": "They will not be able to enter the console again. What they did stays recorded.",
+    "activateBody": "They can enter again with their password.",
+    "saved": "User updated",
+    "failed": "The action could not be completed."
   }
 }

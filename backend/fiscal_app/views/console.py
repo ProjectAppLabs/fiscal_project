@@ -7,6 +7,11 @@ from django.db.models import Count
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.pagination import PageNumberPagination
+from rest_framework.permissions import BasePermission, IsAuthenticated
+from rest_framework.response import Response
+
 from fiscal_app.models import Alert, ClientSystem, Document, DocumentEvent, Issuer, User
 from fiscal_app.models.choices import DocumentState
 from fiscal_app.serializers import (
@@ -15,10 +20,6 @@ from fiscal_app.serializers import (
 )
 from fiscal_app.services.contingency_letter import draft_letter
 from fiscal_app.services.health import report
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.pagination import PageNumberPagination
-from rest_framework.permissions import BasePermission, IsAuthenticated
-from rest_framework.response import Response
 
 
 class IsConsoleOperator(BasePermission):

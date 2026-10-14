@@ -9,6 +9,7 @@ import { Choice } from '@/components/ui/Field';
 import { Notice } from '@/components/ui/Notice';
 import { RequirementList } from '@/components/ui/Steps';
 import { toast } from '@/components/ui/Toast';
+import { useIsAdmin } from '@/lib/hooks/useIsAdmin';
 import { fetchProduction, runProductionAction, stepErrors, type ProductionAction, type ProductionStatus } from '@/lib/services/onboarding';
 import { StepErrors } from './ClientSystemForm';
 
@@ -20,6 +21,7 @@ const READINESS_KEYS = ['test_set_accepted', 'certificate', 'software', 'range',
  */
 export function ProductionPanel({ issuerId, onChange }: { issuerId: number; onChange?: () => void }) {
   const t = useTranslations('production');
+  const isAdmin = useIsAdmin();
   const [status, setStatus] = useState<ProductionStatus | null>(null);
   const [confirmed, setConfirmed] = useState(false);
   const [busy, setBusy] = useState<ProductionAction | null>(null);
@@ -90,20 +92,26 @@ export function ProductionPanel({ issuerId, onChange }: { issuerId: number; onCh
                 ) : undefined,
             }))}
           />
-          <Choice
-            checked={confirmed}
-            className="rounded-lg bg-surface-sunk/70 px-4 py-3"
-            description={t('confirmHint')}
-            label={t('confirm')}
-            onChange={(e) => setConfirmed(e.target.checked)}
-          />
+          {isAdmin ? (
+            <Choice
+              checked={confirmed}
+              className="rounded-lg bg-surface-sunk/70 px-4 py-3"
+              description={t('confirmHint')}
+              label={t('confirm')}
+              onChange={(e) => setConfirmed(e.target.checked)}
+            />
+          ) : null}
           {errors ? <StepErrors errors={errors} /> : null}
-          <div className="flex flex-wrap items-center gap-3">
-            <Button disabled={!ready || !confirmed || busy !== null} loading={busy === 'promote'} onClick={() => void act('promote')} variant="danger">
-              {t('promote')}
-            </Button>
-            {ready ? null : <span className="text-[13px] text-ink-3">{t('promoteHint')}</span>}
-          </div>
+          {isAdmin ? (
+            <div className="flex flex-wrap items-center gap-3">
+              <Button disabled={!ready || !confirmed || busy !== null} loading={busy === 'promote'} onClick={() => void act('promote')} variant="danger">
+                {t('promote')}
+              </Button>
+              {ready ? null : <span className="text-[13px] text-ink-3">{t('promoteHint')}</span>}
+            </div>
+          ) : (
+            <Notice tone="neutral">{t('adminOnly')}</Notice>
+          )}
         </div>
       )}
     </Card>

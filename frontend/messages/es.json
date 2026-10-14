@@ -23,7 +23,8 @@
     "changePassword": "Cambiar contraseña",
     "more": "Más",
     "closeMore": "Cerrar el menú",
-    "openCount": "{count, plural, one {# abierta} other {# abiertas}}"
+    "openCount": "{count, plural, one {# abierta} other {# abiertas}}",
+    "users": "Usuarios de la consola"
   },
   "footer": {
     "tagline": "Consola interna de facturación electrónica de ProjectApp."
@@ -75,7 +76,10 @@
     "resetSuccess": "Contraseña restablecida. Redirigiendo…",
     "resetFailed": "No se pudo restablecer la contraseña.",
     "backToEmail": "Volver al correo",
-    "backToSignIn": "Volver a iniciar sesión"
+    "backToSignIn": "Volver a iniciar sesión",
+    "inviteTitle": "Activa tu cuenta",
+    "inviteIntro": "Escribe el código de la invitación que llegó a <strong>{email}</strong> y elige tu contraseña.",
+    "inviteSuccess": "Cuenta activada. Ya puedes entrar."
   },
   "console": {
     "states": {
@@ -727,7 +731,8 @@
       "copy-software": "Software de producción registrado",
       "fetch-ranges": "Numeración traída de la DIAN",
       "promote": "El emisor pasó a producción"
-    }
+    },
+    "adminOnly": "Solo un administrador puede pasar el emisor a producción."
   },
   "ui": {
     "breadcrumb": "Ruta",
@@ -879,5 +884,58 @@
     "requeued": "{count, plural, one {# aviso vuelve a la cola} other {# avisos vuelven a la cola}}",
     "payloadTitle": "Contenido del aviso",
     "pageInfo": "Página {page} · {count} avisos"
+  },
+  "users": {
+    "title": "Usuarios",
+    "subtitle": "Quién entra a la consola y qué puede hacer.",
+    "adminOnly": "Solo un administrador puede ver y cambiar los usuarios.",
+    "error": "No pudimos cargar los usuarios.",
+    "empty": "No hay usuarios",
+    "emptyBody": "Invita a las personas que operan Fiscal.",
+    "invite": "Invitar usuario",
+    "inviteBody": "Le llega un correo con un enlace y un código para elegir su contraseña. El código vence en 72 horas.",
+    "firstName": "Nombre",
+    "lastName": "Apellido (opcional)",
+    "email": "Correo",
+    "emailHint": "Ahí llega la invitación.",
+    "role": "Rol",
+    "roles": {
+      "operator": "Operador",
+      "admin": "Administrador"
+    },
+    "roleHints": {
+      "operator": "Opera la consola: documentos, emisores, inscripciones, alertas y sistemas cliente.",
+      "admin": "Además maneja usuarios, rota secretos, desactiva emisores y sistemas, y pasa emisores a producción."
+    },
+    "sendInvitation": "Enviar invitación",
+    "invited": "Invitación enviada a {email}",
+    "invitedNoMail": "Se creó la cuenta de {email}, pero el correo no salió. Reenvía la invitación más tarde.",
+    "tableCaption": "Usuarios de la consola",
+    "you": "(tú)",
+    "never": "Nunca",
+    "columns": {
+      "name": "Persona",
+      "role": "Rol",
+      "state": "Estado",
+      "lastLogin": "Último ingreso",
+      "actions": "Acciones"
+    },
+    "states": {
+      "active": "Activo",
+      "invited": "Invitado",
+      "inactive": "Inactivo"
+    },
+    "resend": "Reenviar invitación",
+    "makeAdmin": "Hacer administrador",
+    "makeOperator": "Hacer operador",
+    "activate": "Activar",
+    "deactivate": "Desactivar",
+    "confirmTitle": "¿Cambiar a {name}?",
+    "makeAdminBody": "Podrá manejar usuarios, rotar secretos, desactivar emisores y sistemas, y pasar emisores a producción.",
+    "makeOperatorBody": "Deja de poder manejar usuarios, secretos, desactivaciones y el paso a producción.",
+    "deactivateBody": "No podrá volver a entrar a la consola. Lo que hizo queda registrado.",
+    "activateBody": "Vuelve a poder entrar con su contraseña.",
+    "saved": "Usuario actualizado",
+    "failed": "No se pudo completar la acción."
   }
 }

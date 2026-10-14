@@ -426,6 +426,19 @@
       "outcomes": [
         "success"
       ]
+    },
+    "console-users-manage": {
+      "name": "Administrators manage console users",
+      "module": "console",
+      "roles": [
+        "admin"
+      ],
+      "priority": "P1",
+      "description": "/users invites an operator by e-mail and changes roles after a confirmation",
+      "expectedSpecs": 2,
+      "outcomes": [
+        "success"
+      ]
     }
   }
 }
