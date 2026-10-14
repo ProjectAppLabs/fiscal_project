@@ -198,3 +198,16 @@ def test_problems_are_reported_together():
     bill['lines'][0]['unit_code'] = 'XYZ'
 
     assert {'invalid_payment_means', 'invalid_unit_code'} <= codes_of(bill)
+
+
+@pytest.mark.parametrize('kind,concept,valid', [
+    ('credit_note', '6', True),
+    ('debit_note', '4', True),
+    ('debit_note', '5', False),
+])
+def test_note_concepts_follow_the_annex_tables(kind, concept, valid):
+    """Fails if the note concepts are checked against the genericode lists instead of tables 13.2.4 and 13.2.5."""
+    bill = restaurant_bill()
+    bill['billing_reference'] = {'document_id': 1, 'concept_code': concept}
+
+    assert ('invalid_concept' not in codes_of(bill, kind=kind)) is valid

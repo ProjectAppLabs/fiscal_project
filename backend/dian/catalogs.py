@@ -54,3 +54,27 @@ ALLOWANCE_CHARGE_REASONS = {
     '02': 'Recargo no condicionado',
     '03': 'Recargo condicionado',
 }
+
+
+# Tables 13.2.4 and 13.2.5 of the annex (correction concepts of credit and debit notes). They differ from the
+# genericode ConceptoNotaCredito/ConceptoNotaDebito of the same toolkit (debit 4 is «Otros», not «Otro»; credit 5 and
+# 6 are commercial discounts), and the DIAN validates against the tables: the description must be exactly the
+# concept's (CBF04 rejects a credit note otherwise; DBF04 flagged «Otro» in habilitación, 2026-10-13).
+CREDIT_NOTE_CONCEPTS = {
+    '1': 'Devolución parcial de los bienes y/o no aceptación parcial del servicio',
+    '2': 'Anulación de factura electrónica',
+    '3': 'Rebaja  o descuento parcial o total',
+    '4': 'Ajuste de precio',
+    '5': 'Descuento comercial por pronto pago',
+    '6': 'Descuento comercial por volumen de ventas',
+}
+DEBIT_NOTE_CONCEPTS = {
+    '1': 'Intereses',
+    '2': 'Gastos por cobrar',
+    '3': 'Cambio del valor',
+    '4': 'Otros',
+}
+
+
+def note_concepts(kind: str) -> dict[str, str]:
+    return CREDIT_NOTE_CONCEPTS if kind == 'credit_note' else DEBIT_NOTE_CONCEPTS

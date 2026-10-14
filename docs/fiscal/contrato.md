@@ -243,7 +243,7 @@ restaurante: 2 hamburguesas y 1 limonada con INC 8 %, canje de puntos y propina 
 | `charges` | Cargos globales. La propina va con `"kind": "tip"`, sin impuestos y como máximo el 10 % del consumo (Ley 1935 de 2018) |
 | `totals` | Se comprueban como los compara la DIAN: FAU02 (suma de líneas), FAU04 (suma de bases), FAU06 (bruto + tributos), FAU08 (descuentos), FAU10 (cargos), FAU14 (`payable` = con tributos − descuentos + cargos + `rounding`) |
 | `payment` | `form` de FormasPago (1 contado, 2 crédito; a crédito exige `due_date`, FAN04); `means`: lista de MediosPago (10 efectivo, 48 tarjeta crédito, 49 tarjeta débito…) (FAN03) |
-| `billing_reference` (notas) | `document_id` (id en Fiscal. de la factura que corrige), `concept_code` (ConceptoNotaCredito: 2 = anulación…; ConceptoNotaDebito) y `reason` |
+| `billing_reference` (notas) | `document_id` (id en Fiscal. de la factura que corrige), `concept_code` y `reason` (opcional). Conceptos de las tablas 13.2.4 y 13.2.5 del anexo. **Nota crédito:** 1 devolución parcial, 2 anulación, 3 rebaja o descuento, 4 ajuste de precio, 5 descuento por pronto pago, 6 descuento por volumen. **Nota débito:** 1 intereses, 2 gastos por cobrar, 3 cambio del valor, 4 otros. La DIAN exige como descripción la del concepto, así que `reason` no la reemplaza: va al XML como nota «Motivo: …» |
 | `currency` | `COP` en la etapa 1 |
 
 **Redondeo y tolerancia** (anexo FE 1.9, §5.2.1): redondeo half-to-even (NTC 3711); tolerancia de ±2,00 en los valores
