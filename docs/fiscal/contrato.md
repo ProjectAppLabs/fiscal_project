@@ -7,6 +7,9 @@
 API de máquina para los sistemas que usan Fiscal. (Waiter primero; después otras casas de software). Base:
 `/api/v1/`. Cuerpos JSON en UTF-8.
 
+La versión navegable de esta documentación, con guías, ejemplos en Python, Node.js y curl y un selector Pruebas /
+Producción, está dentro de la consola en **`/api-docs`** (menú de cuenta → «Documentación de la API»; pide sesión).
+
 La especificación OpenAPI 3.1 de esta misma API está en [`openapi.json`](openapi.json) (se abre con Swagger UI,
 Redoc o Postman). Una prueba del backend falla si una ruta de `/api/v1/` no está en este contrato y en esa
 especificación.

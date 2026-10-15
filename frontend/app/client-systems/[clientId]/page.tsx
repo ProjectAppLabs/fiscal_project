@@ -256,7 +256,12 @@ function ConnectionGuide({ client, onEdit, onPinged }: { client: ClientSystemDet
           },
         ]}
       />
-      <p className="mt-4 text-[13px] text-ink-3">{t('docsHint')}</p>
+      <p className="mt-4 text-[13px] text-ink-3">
+        {t('docsHint')}{' '}
+        <Link className="font-semibold text-primary-text hover:underline" href={ROUTES.API_DOCS}>
+          {t('docsLink')}
+        </Link>
+      </p>
       <HandoffCard className="mt-4" guides={['client-system']} />
     </Card>
   );

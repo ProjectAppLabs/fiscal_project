@@ -25,7 +25,8 @@
     "closeMore": "Cerrar el menú",
     "openCount": "{count, plural, one {# abierta} other {# abiertas}}",
     "users": "Usuarios de la consola",
-    "help": "Guías y ayuda"
+    "help": "Guías y ayuda",
+    "apiDocs": "Documentación de la API"
   },
   "footer": {
     "tagline": "Consola interna de facturación electrónica de ProjectApp."
@@ -922,7 +923,7 @@
     "pingAnswered": "Respondió HTTP {status}.",
     "pingError": "Falló: {error}. Revisa la URL y que el sistema acepte el aviso.",
     "lastDelivered": "Último aviso entregado {when}.",
-    "docsHint": "Cómo firmar las llamadas y verificar los avisos: docs/fiscal/contrato.md (con ejemplos en Python y JavaScript).",
+    "docsHint": "Cómo firmar las llamadas, declarar el origen y verificar los avisos:",
     "editWebhook": "Cambiar la URL de avisos",
     "webhookDialogBody": "Fiscal. firma cada aviso con el secreto vigente; el sistema cliente debe verificar la firma antes de creerlo.",
     "webhookUrl": "URL de avisos",
@@ -999,7 +1000,8 @@
       "ipsHint": "Una por línea: 203.0.113.10 o una red como 203.0.113.0/24. Vacío para cualquier IP.",
       "save": "Guardar acceso",
       "saved": "Acceso actualizado"
-    }
+    },
+    "docsLink": "documentación de la API"
   },
   "users": {
     "title": "Usuarios",
@@ -1356,6 +1358,9 @@
     "safetyTitle": "Lo que nunca le das a Claude ni a nadie",
     "safetyBody": "El PIN del software, la clave técnica, la contraseña del certificado, el secreto de un sistema cliente y los tokens de la DIAN. Las guías se lo dicen a Claude; si una pantalla los muestra, cópialos tú.",
     "tipsTitle": "En cada campo, el «?»",
-    "tipsBody": "Junto a los campos que piden datos de la DIAN, del RUT o del certificado hay un «?» que explica qué es el dato y de dónde sale."
+    "tipsBody": "Junto a los campos que piden datos de la DIAN, del RUT o del certificado hay un «?» que explica qué es el dato y de dónde sale.",
+    "apiTitle": "Documentación de la API",
+    "apiSubtitle": "Para el equipo que integra un sistema cliente: firma, origen, guías y cada endpoint, en pruebas y producción.",
+    "apiOpen": "Abrir la documentación"
   }
 }

@@ -637,3 +637,58 @@ export async function stubUsers(page: Page) {
   await page.route(/\/api\/console\/users\/2\/$/, (route) => fulfillJson(route, 200, { ...consoleUsers[1], ...route.request().postDataJSON() }));
   await page.route('**/api/console/users/2/resend-invitation/', (route) => fulfillJson(route, 200, { ...consoleUsers[1], invitation_sent: true }));
 }
+
+// ── Console (API docs) ──
+
+/** A small slice of openapi.json: enough for the reference, the events and the search. */
+export const apiDocsData = {
+  api_base_url: 'https://fiscal.projectapp.test',
+  spec: {
+    info: { title: 'Fiscal. · API para sistemas cliente', version: '1.0.0' },
+    tags: [{ name: 'Emisores' }, { name: 'Documentos' }],
+    paths: {
+      '/api/v1/issuers/{nit}/': {
+        get: {
+          tags: ['Emisores'],
+          summary: 'Consultar un emisor',
+          parameters: [{ name: 'nit', in: 'path', required: true, description: 'NIT del emisor, sin dígito de verificación.' }],
+          responses: { '200': { description: 'El emisor.' }, '404': { description: '`issuer_not_found`' } },
+        },
+      },
+      '/api/v1/documents/create/': {
+        post: {
+          tags: ['Documentos'],
+          summary: 'Emitir un documento',
+          requestBody: {
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  required: ['idempotency_key', 'issuer'],
+                  properties: {
+                    idempotency_key: { type: 'string', description: 'Única por documento.' },
+                    issuer: { type: 'string', description: 'NIT del emisor.' },
+                  },
+                },
+              },
+            },
+          },
+          responses: { '202': { description: 'Recibido y en cola (`queued`).' } },
+        },
+      },
+    },
+    webhooks: {
+      ping: {
+        post: {
+          summary: 'Aviso de prueba',
+          requestBody: { content: { 'application/json': { schema: { type: 'object', properties: { event: { type: 'string', description: 'Siempre ping.' } } } } } },
+        },
+      },
+    },
+  },
+};
+
+/** Stub `console/api-docs/` with the slice of the specification above. */
+export async function stubApiDocs(page: Page) {
+  await page.route('**/api/console/api-docs/', (route) => fulfillJson(route, 200, apiDocsData));
+}

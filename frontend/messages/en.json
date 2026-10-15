@@ -25,7 +25,8 @@
     "closeMore": "Close the menu",
     "openCount": "{count, plural, one {# open} other {# open}}",
     "users": "Console users",
-    "help": "Guides and help"
+    "help": "Guides and help",
+    "apiDocs": "API documentation"
   },
   "footer": {
     "tagline": "ProjectApp's internal electronic invoicing console."
@@ -922,7 +923,7 @@
     "pingAnswered": "It answered HTTP {status}.",
     "pingError": "Failed: {error}. Check the URL and that the system accepts the notice.",
     "lastDelivered": "Last notice delivered {when}.",
-    "docsHint": "How to sign calls and verify notices: docs/fiscal/contrato.md (with examples in Python and JavaScript).",
+    "docsHint": "How to sign calls, declare the origin and verify notices:",
     "editWebhook": "Change the notice URL",
     "webhookDialogBody": "Fiscal. signs each notice with the current secret; the client system must verify the signature before trusting it.",
     "webhookUrl": "Notice URL",
@@ -999,7 +1000,8 @@
       "ipsHint": "One per line: 203.0.113.10 or a network like 203.0.113.0/24. Empty for any IP.",
       "save": "Save access",
       "saved": "Access updated"
-    }
+    },
+    "docsLink": "API documentation"
   },
   "users": {
     "title": "Users",
@@ -1356,6 +1358,9 @@
     "safetyTitle": "What you never give to Claude or anyone",
     "safetyBody": "The software PIN, the technical key, the certificate password, a client system's secret and the DIAN tokens. The guides tell Claude so; if a screen shows them, copy them yourself.",
     "tipsTitle": "On every field, the «?»",
-    "tipsBody": "Next to the fields that ask for DIAN, RUT or certificate data there is a «?» that explains what the data is and where it comes from."
+    "tipsBody": "Next to the fields that ask for DIAN, RUT or certificate data there is a «?» that explains what the data is and where it comes from.",
+    "apiTitle": "API documentation",
+    "apiSubtitle": "For the team integrating a client system: signing, origin, guides and every endpoint, in test and production.",
+    "apiOpen": "Open the documentation"
   }
 }

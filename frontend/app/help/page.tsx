@@ -1,13 +1,15 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { CircleHelp, ShieldAlert } from 'lucide-react';
+import { BookOpen, CircleHelp, ShieldAlert } from 'lucide-react';
 
 import { HandoffRow } from '@/components/console/HandoffCard';
 import { Page } from '@/components/layout/Page';
+import { ButtonLink } from '@/components/ui/Button';
 import { Card, CardHeader } from '@/components/ui/Card';
 import { Notice } from '@/components/ui/Notice';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { ROUTES } from '@/lib/constants';
 import { useRequireAuth } from '@/lib/hooks/useRequireAuth';
 import { HANDOFF_GUIDES } from '@/lib/handoff';
 
@@ -47,6 +49,12 @@ export default function HelpPage() {
           ))}
         </div>
         <div className="flex flex-col gap-4">
+          <Card aria-labelledby="help-api">
+            <CardHeader id="help-api" subtitle={t('apiSubtitle')} title={t('apiTitle')} />
+            <ButtonLink href={ROUTES.API_DOCS} icon={<BookOpen aria-hidden className="size-4" />} variant="primary">
+              {t('apiOpen')}
+            </ButtonLink>
+          </Card>
           <Card aria-labelledby="help-how">
             <CardHeader id="help-how" title={t('howTitle')} />
             <ol className="flex flex-col gap-3">
