@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 @machine_view(['GET'])
 def retrieve_test_set(request, nit):
     """What the issuer has and lacks to run the test set, and its latest run (or null)."""
-    issuer = own_issuer(request.user, nit)
+    issuer = own_issuer(request, nit)
     run = issuer.test_set_runs.first()
     return Response({'readiness': test_set.readiness(issuer), 'run': describe_run(run) if run else None})
 
@@ -29,7 +29,7 @@ def retrieve_test_set(request, nit):
 @machine_view(['POST'])
 def start_test_set(request, nit):
     """Sign and send the set's invoices; the notes follow once the DIAN accepts them (on a later check)."""
-    issuer = own_issuer(request.user, nit)
+    issuer = own_issuer(request, nit)
     serializer = TestSetStartSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
     try:
@@ -43,7 +43,7 @@ def start_test_set(request, nit):
 @machine_view(['POST'])
 def check_test_set(request, nit):
     """Ask the DIAN for the result of the latest run; a finished run is returned as it is."""
-    issuer = own_issuer(request.user, nit)
+    issuer = own_issuer(request, nit)
     run = issuer.test_set_runs.first()
     if run is None:
         raise FiscalError('El emisor no ha iniciado un set de pruebas.', 'test_set_not_found', status.HTTP_404_NOT_FOUND)
@@ -53,14 +53,14 @@ def check_test_set(request, nit):
 @machine_view(['GET'])
 def retrieve_production(request, nit):
     """The issuer's environment and what it still lacks to move to production."""
-    issuer = own_issuer(request.user, nit)
+    issuer = own_issuer(request, nit)
     return Response(_production(issuer))
 
 
 @machine_view(['POST'])
 def copy_production_software(request, nit):
     """Production software with the SoftwareID and PIN of habilitación (the DIAN keeps them)."""
-    issuer = own_issuer(request.user, nit)
+    issuer = own_issuer(request, nit)
     _run_step(production.copy_habilitation_software, issuer)
     return Response(_production(issuer))
 
@@ -68,7 +68,7 @@ def copy_production_software(request, nit):
 @machine_view(['POST'])
 def fetch_production_ranges(request, nit):
     """Bring the issuer's production numbering, with its technical keys, from the DIAN (GetNumberingRange)."""
-    issuer = own_issuer(request.user, nit)
+    issuer = own_issuer(request, nit)
     _run_step(production.fetch_ranges, issuer)
     return Response(_production(issuer))
 
@@ -76,7 +76,7 @@ def fetch_production_ranges(request, nit):
 @machine_view(['POST'])
 def promote_to_production(request, nit):
     """Switch the issuer to production. Needs {"confirm": true}: the business must already be «Habilitado»."""
-    issuer = own_issuer(request.user, nit)
+    issuer = own_issuer(request, nit)
     if request.data.get('confirm') is not True:
         raise FiscalError('Confirma que el comercio ya quedó «Habilitado» en el portal de la DIAN.',
                           'confirmation_required')

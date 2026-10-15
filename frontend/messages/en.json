@@ -25,7 +25,8 @@
     "closeMore": "Close the menu",
     "openCount": "{count, plural, one {# open} other {# open}}",
     "users": "Console users",
-    "help": "Guides and help"
+    "help": "Guides and help",
+    "apiDocs": "API documentation"
   },
   "footer": {
     "tagline": "ProjectApp's internal electronic invoicing console."
@@ -362,7 +363,8 @@
       "address": "Address",
       "email": "Email",
       "legalName": "Legal name",
-      "tradeName": "Trade name"
+      "tradeName": "Trade name",
+      "origin": "Origin"
     },
     "personTypes": {
       "1": "Legal entity",
@@ -496,7 +498,15 @@
       "result": "Documents",
       "error": "Error"
     },
-    "runResult": "{accepted} of {total} accepted{rejected, plural, =0 {} one { · # rejected} other { · # rejected}}"
+    "runResult": "{accepted} of {total} accepted{rejected, plural, =0 {} one { · # rejected} other { · # rejected}}",
+    "origin": {
+      "unbound": "Not bound",
+      "change": "Change origin",
+      "body": "The {domain} host the client system uses this issuer from. Requests from another host are refused.",
+      "hint": "Only the host, for example restaurante.waiter.co. Empty to leave it unbound.",
+      "save": "Save origin",
+      "saved": "Origin updated"
+    }
   },
   "contingencies": {
     "title": "Contingencies",
@@ -627,7 +637,11 @@
       "useClient": "Use this system",
       "namePlaceholder": "For example, Waiter",
       "webhookHint": "Optional. Fiscal.'s signed notices arrive there (https).",
-      "creating": "Creating…"
+      "creating": "Creating…",
+      "domain": "Domain (optional)",
+      "domainHint": "For example waiter.co. With a domain, the API is only accepted from it.",
+      "subdomains": "Accepts subdomains",
+      "subdomainsHint": "Any host ending in .{domain}, for example restaurante.{domain}."
     },
     "issuer": {
       "title": "Issuer data as it appears in the RUT",
@@ -909,7 +923,7 @@
     "pingAnswered": "It answered HTTP {status}.",
     "pingError": "Failed: {error}. Check the URL and that the system accepts the notice.",
     "lastDelivered": "Last notice delivered {when}.",
-    "docsHint": "How to sign calls and verify notices: docs/fiscal/contrato.md (with examples in Python and JavaScript).",
+    "docsHint": "How to sign calls, declare the origin and verify notices:",
     "editWebhook": "Change the notice URL",
     "webhookDialogBody": "Fiscal. signs each notice with the current secret; the client system must verify the signature before trusting it.",
     "webhookUrl": "Notice URL",
@@ -967,7 +981,27 @@
     "requeueFailed": "Queue the failed ones again",
     "requeued": "{count, plural, one {# notice back in the queue} other {# notices back in the queue}}",
     "payloadTitle": "Notice content",
-    "pageInfo": "Page {page} · {count} notices"
+    "pageInfo": "Page {page} · {count} notices",
+    "access": {
+      "title": "Domain and access",
+      "subtitle": "Where this client system may use the API from.",
+      "edit": "Edit access",
+      "withSubdomains": "and its subdomains",
+      "onlyDomain": "domain only",
+      "originRule": "Every request must carry X-Fiscal-Origin with its host (for example {example}), signed with the rest.",
+      "noDomain": "No domain registered: the API is accepted from any origin, with the signature only. Register the domain before production.",
+      "ips": "Allowed IPs",
+      "anyIp": "Any IP.",
+      "dialogBody": "Only an administrator changes who may use the API. With a domain, the notice URL must be in it.",
+      "domain": "Domain",
+      "domainHint": "Only the domain, without https:// or paths. Empty for no restriction.",
+      "subdomains": "Accepts subdomains",
+      "subdomainsHint": "Any host ending in .{domain}, for example restaurante.{domain}.",
+      "ipsHint": "One per line: 203.0.113.10 or a network like 203.0.113.0/24. Empty for any IP.",
+      "save": "Save access",
+      "saved": "Access updated"
+    },
+    "docsLink": "API documentation"
   },
   "users": {
     "title": "Users",
@@ -1090,6 +1124,14 @@
         "grace": {
           "what": "Hours the previous secret keeps working, so the client system can switch without an outage.",
           "where": "24 hours is usually enough. 0 stops it now: use it if the secret was exposed."
+        },
+        "domain": {
+          "what": "The domain the client system uses the API from (waiter.co). With a domain, every request must declare its host in X-Fiscal-Origin, signed, and the notice URL must be in that domain.",
+          "where": "The client system's main domain. If it serves each business on a subdomain (restaurante.waiter.co), tick «Accepts subdomains»."
+        },
+        "ips": {
+          "what": "The IPs or networks (CIDR) the client system's server calls from. It is the only network lock: a call from another IP is refused even with a valid signature.",
+          "where": "The client system's technical team gives them (its server's outgoing IP). Leave empty to accept any IP; if the server changes, update them."
         }
       },
       "issuer": {
@@ -1136,6 +1178,10 @@
         "phone": {
           "what": "A contact phone that goes on the invoices.",
           "where": "RUT, box 44. Optional."
+        },
+        "origin": {
+          "what": "The client system host this issuer belongs to (restaurante.waiter.co). Only requests declaring that host can see or invoice for this issuer.",
+          "where": "It is set from the host of the request that created the issuer. An administrator changes it here if the business moves to another subdomain."
         }
       },
       "certificate": {
@@ -1312,6 +1358,9 @@
     "safetyTitle": "What you never give to Claude or anyone",
     "safetyBody": "The software PIN, the technical key, the certificate password, a client system's secret and the DIAN tokens. The guides tell Claude so; if a screen shows them, copy them yourself.",
     "tipsTitle": "On every field, the «?»",
-    "tipsBody": "Next to the fields that ask for DIAN, RUT or certificate data there is a «?» that explains what the data is and where it comes from."
+    "tipsBody": "Next to the fields that ask for DIAN, RUT or certificate data there is a «?» that explains what the data is and where it comes from.",
+    "apiTitle": "API documentation",
+    "apiSubtitle": "For the team integrating a client system: signing, origin, guides and every endpoint, in test and production.",
+    "apiOpen": "Open the documentation"
   }
 }

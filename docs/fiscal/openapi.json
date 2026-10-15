@@ -3,7 +3,7 @@
   "info": {
     "title": "Fiscal. · API para sistemas cliente",
     "version": "1.0.0",
-    "description": "Facturación electrónica DIAN como servicio para los sistemas de ProjectApp (Waiter primero). Contrato con ejemplos y reglas: docs/fiscal/contrato.md.\n\nToda petición va firmada: `X-Fiscal-Signature` = hex(HMAC-SHA256(secreto, \"<timestamp>\\n<MÉTODO>\\n<ruta?consulta>\\n<sha256 hex del cuerpo>\")), con ventana de 5 minutos."
+    "description": "Facturación electrónica DIAN como servicio para los sistemas de ProjectApp (Waiter primero). Contrato con ejemplos y reglas: docs/fiscal/contrato.md.\n\nToda petición va firmada: `X-Fiscal-Signature` = hex(HMAC-SHA256(secreto, \"<timestamp>\\n<MÉTODO>\\n<ruta?consulta>\\n<sha256 hex del cuerpo>\")), con ventana de 5 minutos. Con dominio registrado, `X-Fiscal-Origin` es obligatoria y su valor es una quinta línea del texto firmado."
   },
   "servers": [
     {
@@ -16,6 +16,12 @@
       "FiscalKey": [],
       "FiscalTimestamp": [],
       "FiscalSignature": []
+    },
+    {
+      "FiscalKey": [],
+      "FiscalTimestamp": [],
+      "FiscalSignature": [],
+      "FiscalOrigin": []
     }
   ],
   "tags": [
@@ -70,6 +76,9 @@
                 }
               }
             }
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
           }
         },
         "parameters": [
@@ -134,6 +143,9 @@
                 }
               }
             }
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
           }
         },
         "parameters": [
@@ -208,6 +220,9 @@
                 }
               }
             }
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
           }
         },
         "description": "Un .p12/.pfx con su contraseña, o el certificado y su llave privada por separado.",
@@ -283,6 +298,9 @@
                 }
               }
             }
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
           }
         },
         "parameters": [
@@ -350,6 +368,9 @@
                 }
               }
             }
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
           }
         },
         "parameters": [
@@ -424,6 +445,9 @@
                 }
               }
             }
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
           }
         },
         "parameters": [
@@ -488,6 +512,9 @@
                 }
               }
             }
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
           }
         },
         "parameters": [
@@ -562,6 +589,9 @@
                 }
               }
             }
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
           }
         },
         "description": "Firma y envía las facturas; las notas se envían en una consulta posterior, cuando la DIAN acepta las facturas.",
@@ -627,6 +657,9 @@
                 }
               }
             }
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
           }
         },
         "parameters": [
@@ -681,6 +714,9 @@
                 }
               }
             }
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
           }
         },
         "parameters": [
@@ -745,6 +781,9 @@
                 }
               }
             }
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
           }
         },
         "parameters": [
@@ -809,6 +848,9 @@
                 }
               }
             }
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
           }
         },
         "description": "GetNumberingRange: los rangos que el comercio asoció al software, con sus claves técnicas.",
@@ -884,6 +926,9 @@
                 }
               }
             }
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
           }
         },
         "description": "Solo cuando el comercio ya quedó «Habilitado» en el portal de la DIAN. Desde ahí sus documentos tienen efecto fiscal.",
@@ -990,6 +1035,9 @@
                 }
               }
             }
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
           }
         },
         "requestBody": {
@@ -1041,6 +1089,9 @@
                 }
               }
             }
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
           }
         },
         "parameters": [
@@ -1107,6 +1158,9 @@
                 }
               }
             }
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
           }
         },
         "parameters": [
@@ -1229,6 +1283,12 @@
         "type": "apiKey",
         "in": "header",
         "name": "X-Fiscal-Signature"
+      },
+      "FiscalOrigin": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-Fiscal-Origin",
+        "description": "Host para el que se hace la petición (restaurante-x.waiter.co), firmado como quinta línea. Obligatorio si el sistema cliente tiene dominio registrado; cada emisor queda atado al host que lo creó."
       }
     },
     "schemas": {
@@ -2390,6 +2450,18 @@
                 "type": "string",
                 "format": "date-time"
               }
+            }
+          }
+        }
+      }
+    },
+    "responses": {
+      "Forbidden": {
+        "description": "El origen o la IP de la petición no están permitidos (origin_required, origin_not_allowed, origin_mismatch, ip_not_allowed).",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
             }
           }
         }

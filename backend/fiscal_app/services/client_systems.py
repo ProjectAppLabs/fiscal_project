@@ -17,9 +17,14 @@ def new_secret() -> str:
 
 
 @transaction.atomic
-def create_client_system(name: str, webhook_url: str = '') -> tuple[ClientSystem, str]:
+def create_client_system(
+    name: str, webhook_url: str = '', domain: str = '', allow_subdomains: bool = False, allowed_ips: list | None = None,
+) -> tuple[ClientSystem, str]:
     """Create a client system and return it with its secret in plain text, which is shown only this once."""
-    client = ClientSystem.objects.create(name=name, key_id='fk_' + secrets.token_hex(12), webhook_url=webhook_url)
+    client = ClientSystem.objects.create(
+        name=name, key_id='fk_' + secrets.token_hex(12), webhook_url=webhook_url, domain=domain,
+        allow_subdomains=allow_subdomains, allowed_ips=allowed_ips or [],
+    )
     secret = new_secret()
     ClientSecret.objects.create(client=client, secret=secret)
     return client, secret

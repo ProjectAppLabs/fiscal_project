@@ -29,6 +29,7 @@ from fiscal_app.services import certificate_assembly, production, test_set
 from fiscal_app.services.certificates import set_certificate
 from fiscal_app.services.client_systems import create_client_system
 from fiscal_app.services.software import register_software
+from fiscal_app.views.console_client_systems import ClientAccessSerializer
 
 from .console import IsConsoleAdmin, IsConsoleOperator
 
@@ -36,9 +37,8 @@ logger = logging.getLogger(__name__)
 MAX_CERTIFICATE_BYTES = 100_000
 
 
-class ClientSystemCreateSerializer(serializers.Serializer):
+class ClientSystemCreateSerializer(ClientAccessSerializer):
     name = serializers.CharField(max_length=80)
-    webhook_url = serializers.URLField(required=False, allow_blank=True, default='')
 
 
 class IssuerOnboardingSerializer(IssuerCreateUpdateSerializer):

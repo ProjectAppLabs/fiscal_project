@@ -1,6 +1,6 @@
 import { test, expect } from '../test-with-coverage';
 import { signInWithCookies, stubClientSystemDetail, stubClientSystems, testOperator, waitForPageLoad } from '../fixtures';
-import { CONSOLE_CLIENT_SYSTEM_CONNECT } from '../helpers/flow-tags';
+import { CONSOLE_CLIENT_ACCESS, CONSOLE_CLIENT_SYSTEM_CONNECT } from '../helpers/flow-tags';
 
 test.describe('Client system page', () => {
   test.beforeEach(async ({ context, page, baseURL }) => {
@@ -38,5 +38,14 @@ test.describe('Client system page', () => {
     await notices.getByRole('button', { name: 'Reenviar' }).click();
 
     await expect(page.getByRole('status').filter({ hasText: 'Aviso entregado' })).toBeVisible();
+  });
+
+  test('registers the IPs allowed for the client system', { tag: [...CONSOLE_CLIENT_ACCESS, '@outcome:success'] }, async ({ page }) => {
+    await page.getByRole('button', { name: 'Editar acceso' }).click();
+    const dialog = page.getByRole('dialog', { name: 'Editar acceso' });
+    await dialog.getByLabel('IPs permitidas', { exact: true }).fill('203.0.113.10');
+    await dialog.getByRole('button', { name: 'Guardar acceso' }).click();
+
+    await expect(page.getByRole('status').filter({ hasText: 'Acceso actualizado' })).toBeVisible();
   });
 });

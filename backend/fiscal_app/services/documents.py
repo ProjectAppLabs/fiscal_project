@@ -14,6 +14,7 @@ from fiscal_app.models import Document, DocumentEvent, Issuer
 from fiscal_app.models.choices import DocumentKind, DocumentState, RangeKind
 from fiscal_app.services.certificates import active_certificate
 from fiscal_app.services.document_validation import validate_document
+from fiscal_app.services.origins import check_issuer_origin
 from fiscal_app.utils.errors import FiscalError
 
 FUTURE_SKEW = timedelta(minutes=5)
@@ -30,16 +31,21 @@ def business_date(moment):
     return moment.astimezone(ZoneInfo(settings.BUSINESS_TIME_ZONE)).date()
 
 
-def submit_document(client, envelope: dict) -> tuple[Document, bool]:
-    """Queue a document. Returns (document, created); resending the same body with the same key returns the same one."""
+def submit_document(client, envelope: dict, origin: str | None = None) -> tuple[Document, bool]:
+    """Queue a document. Returns (document, created); resending the same body with the same key returns the same one.
+
+    `origin` is the verified host of the request: an issuer bound to another host is refused (origin_mismatch).
+    """
     key = envelope['idempotency_key']
     digest = body_hash(envelope)
-    existing = Document.objects.filter(client=client, idempotency_key=key).first()
+    existing = Document.objects.filter(client=client, idempotency_key=key).select_related('issuer__client').first()
     if existing:
+        check_issuer_origin(existing.issuer, origin)
         return _same_or_conflict(existing, digest), False
-    issuer = Issuer.objects.filter(client=client, nit=envelope['issuer']).first()
+    issuer = Issuer.objects.filter(client=client, nit=envelope['issuer']).select_related('client').first()
     if issuer is None:
         raise FiscalError('No hay un emisor con ese NIT.', 'issuer_not_found', status.HTTP_404_NOT_FOUND)
+    check_issuer_origin(issuer, origin)
     _check_ready(issuer)
     kind = envelope['kind']
     issue_datetime = envelope['issue_datetime']

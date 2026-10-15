@@ -60,3 +60,7 @@ export const CONSOLE_DOCUMENTS_SEARCH = ['@flow:console-documents-search', '@mod
 export const CONSOLE_HEALTH_DETAIL = ['@flow:console-health-detail', '@module:console', '@priority:P2'];
 export const CONSOLE_HELP_GUIDES = ['@flow:console-help-guides', '@module:console', '@priority:P2'];
 export const CONSOLE_FIELD_HELP = ['@flow:console-field-help', '@module:console', '@priority:P3'];
+export const CONSOLE_API_DOCS = ['@flow:console-api-docs', '@module:console', '@priority:P2'];
+export const CONSOLE_API_DOCS_SEARCH = ['@flow:console-api-docs-search', '@module:console', '@priority:P3'];
+export const CONSOLE_API_DOCS_PRIVATE = ['@flow:console-api-docs-private', '@module:console', '@priority:P2'];
+export const CONSOLE_CLIENT_ACCESS = ['@flow:console-client-access', '@module:console', '@priority:P1'];

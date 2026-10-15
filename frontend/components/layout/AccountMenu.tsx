@@ -5,7 +5,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { useTheme } from 'next-themes';
 import { useEffect, useRef, useState } from 'react';
-import { ChevronDown, CircleHelp, KeyRound, LogOut, Monitor, Moon, Sun, Users } from 'lucide-react';
+import { BookOpen, ChevronDown, CircleHelp, KeyRound, LogOut, Monitor, Moon, Sun, Users } from 'lucide-react';
 
 import { ROUTES } from '@/lib/constants';
 import { cn } from '@/lib/cn';
@@ -79,6 +79,15 @@ export function AccountMenu({ compact = false }: { compact?: boolean }) {
               {t('users')}
             </Link>
           ) : null}
+          <Link
+            className="mt-1 flex h-11 items-center gap-3 rounded-sm px-3 text-sm font-semibold text-ink hover:bg-surface-sunk"
+            href={ROUTES.API_DOCS}
+            onClick={() => setOpen(false)}
+            role="menuitem"
+          >
+            <BookOpen aria-hidden className="size-4 text-ink-3" />
+            {t('apiDocs')}
+          </Link>
           <Link
             className="mt-1 flex h-11 items-center gap-3 rounded-sm px-3 text-sm font-semibold text-ink hover:bg-surface-sunk"
             href={ROUTES.HELP}

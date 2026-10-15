@@ -29,6 +29,22 @@ def test_create_client_system_refuses_a_repeated_name(client_system):
 
 
 @pytest.mark.django_db
+def test_create_client_system_keeps_the_domain():
+    """Fails if the domain and its subdomains rule given to the command are lost."""
+    call_command('create_client_system', 'Waiter', '--domain', 'Waiter.co', '--allow-subdomains', stdout=StringIO())
+
+    client = ClientSystem.objects.get(name='Waiter')
+    assert (client.domain, client.allow_subdomains) == ('waiter.co', True)
+
+
+@pytest.mark.django_db
+def test_create_client_system_refuses_a_notice_url_outside_the_domain():
+    """Fails if the command creates a client system whose notice URL is outside its domain."""
+    with pytest.raises(CommandError, match='waiter.co'):
+        call_command('create_client_system', 'Waiter', '--domain', 'waiter.co', '--webhook-url', 'https://otro.co/a/', stdout=StringIO())
+
+
+@pytest.mark.django_db
 def test_rotate_client_secret_prints_the_new_secret(client_system):
     """Fails if the rotated secret printed to the operator is not valid."""
     client, _old = client_system

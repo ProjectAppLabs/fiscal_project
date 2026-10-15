@@ -393,6 +393,12 @@ FISCAL_SOFTWARE_NAME = 'Fiscal.'
 FISCAL_RETENTION_YEARS = 10
 # Window in seconds in which a signed client request is accepted (both clocks must run NTP).
 FISCAL_SIGNATURE_MAX_AGE = int(os.getenv('FISCAL_SIGNATURE_MAX_AGE', '300'))
+# Proxies in front of Fiscal. (nginx, a load balancer) whose X-Forwarded-For is trusted to find a client system's IP.
+FISCAL_TRUSTED_PROXIES = [item.strip() for item in os.getenv('FISCAL_TRUSTED_PROXIES', '127.0.0.1,::1').split(',') if item.strip()]
+# Public address of the machine API shown in the console's API docs (the console's own origin when empty).
+FISCAL_API_BASE_URL = os.getenv('FISCAL_API_BASE_URL', '')
+# The machine API's OpenAPI document served to the console's API docs (kept in step with the routes by a test).
+FISCAL_OPENAPI_PATH = Path(os.getenv('FISCAL_OPENAPI_PATH', str(BASE_DIR.parent / 'docs' / 'fiscal' / 'openapi.json')))
 # Artifacts with legal value live outside MEDIA_ROOT and are only served through the signed API.
 FISCAL_ARTIFACTS_DIR = os.getenv('FISCAL_ARTIFACTS_DIR', str(BASE_DIR / 'artifacts'))
 FISCAL_WEBHOOK_TIMEOUT = int(os.getenv('FISCAL_WEBHOOK_TIMEOUT', '10'))

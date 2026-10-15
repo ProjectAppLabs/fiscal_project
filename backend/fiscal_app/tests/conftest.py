@@ -143,14 +143,15 @@ class SignedClient:
         self._json = json
         self.key_id, self.secret, self.http = key_id, secret, APIClient()
 
-    def request(self, method, path, data=None, *, sign=True, headers=None):
+    def request(self, method, path, data=None, *, sign=True, headers=None, origin='', remote_addr=None):
         from fiscal_app.authentication.signing import signed_headers
 
         body = self._json.dumps(data).encode() if data is not None else b''
-        all_headers = signed_headers(self.key_id, self.secret, method, path, body) if sign else {}
+        all_headers = signed_headers(self.key_id, self.secret, method, path, body, origin=origin) if sign else {}
         all_headers.update(headers or {})
         call = getattr(self.http, method.lower())
-        return call(path, data=body, content_type='application/json', headers=all_headers)
+        extra = {'REMOTE_ADDR': remote_addr} if remote_addr else {}
+        return call(path, data=body, content_type='application/json', headers=all_headers, **extra)
 
     def get(self, path, **kwargs):
         return self.request('GET', path, **kwargs)

@@ -12,6 +12,7 @@ export const ROUTES = {
   ACCOUNT: '/account',
   USERS: '/users',
   HELP: '/help',
+  API_DOCS: '/api-docs',
   HEALTH: '/health',
 } as const;
 
@@ -41,6 +42,7 @@ export const API_ENDPOINTS = {
   CONSOLE_CONTINGENCIES: 'console/contingencies/',
   CONSOLE_CLIENT_SYSTEMS: 'console/client-systems/',
   CONSOLE_HEALTH: 'console/health/',
+  CONSOLE_API_DOCS: 'console/api-docs/',
 } as const;
 
 export function consoleDocumentEndpoint(id: number | string): string {

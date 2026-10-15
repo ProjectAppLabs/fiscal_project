@@ -93,6 +93,10 @@ export interface IssuerDetail extends Omit<IssuerListItem, 'documents' | 'open_a
   address: { line: string; municipality_code: string; department_code?: string; postal_code?: string };
   email: string;
   phone?: string;
+  /** Host the issuer is bound to (restaurante-x.waiter.co); empty when it is not bound. */
+  origin_host?: string;
+  client_domain?: string;
+  client_allow_subdomains?: boolean;
   certificates: IssuerCertificate[];
   software: IssuerSoftware[];
   ranges: IssuerRange[];

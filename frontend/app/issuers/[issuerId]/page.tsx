@@ -6,6 +6,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { FormEvent, useCallback, useEffect, useState } from 'react';
 import { FileText, Pencil, Plus, Power, Upload } from 'lucide-react';
 
+import { StepErrors } from '@/components/console/ClientSystemForm';
 import { ConsoleLoadError } from '@/components/console/ConsoleStatus';
 import { CertificateForm, RangeFormFields, SoftwareFormFields } from '@/components/console/EnrolmentForms';
 import { IssuerForm } from '@/components/console/IssuerForm';
@@ -220,7 +221,7 @@ function IssuerView({ issuer }: { issuer: IssuerDetail }) {
         <TabPanel value={tab}>
           {tab === 'summary' ? (
             <div className="grid gap-4 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]">
-              <IssuerData issuer={issuer} />
+              <IssuerData issuer={issuer} onChange={refresh} />
               <IssuerAlerts alerts={issuer.alerts} />
             </div>
           ) : null}
@@ -338,9 +339,11 @@ function TestSetRuns({ issuerId, version }: { issuerId: number; version: number 
   );
 }
 
-function IssuerData({ issuer }: { issuer: IssuerDetail }) {
+function IssuerData({ issuer, onChange }: { issuer: IssuerDetail; onChange: () => void }) {
   const t = useTranslations('issuerDetail');
   const tEnvironments = useTranslations('operations.environments');
+  const isAdmin = useIsAdmin();
+  const [binding, setBinding] = useState(false);
 
   return (
     <Card aria-labelledby="issuer-data">
@@ -355,6 +358,19 @@ function IssuerData({ issuer }: { issuer: IssuerDetail }) {
         </DataItem>
         <DataItem label={t('fields.environment')}>{tEnvironments(issuer.environment)}</DataItem>
         <DataItem label={t('fields.client')}>{issuer.client}</DataItem>
+        {issuer.client_domain ? (
+          <DataItem label={t('fields.origin')}>
+            <span className="inline-flex flex-wrap items-center gap-2">
+              {issuer.origin_host ? <span className="font-mono">{issuer.origin_host}</span> : <span className="text-ink-3">{t('origin.unbound')}</span>}
+              <HelpTip label={t('fields.origin')} topic="issuer.origin" />
+              {isAdmin ? (
+                <Button onClick={() => setBinding(true)} size="sm" variant="ghost">
+                  {t('origin.change')}
+                </Button>
+              ) : null}
+            </span>
+          </DataItem>
+        ) : null}
         <DataItem label={t('fields.personType')}>{t(`personTypes.${issuer.person_type}`)}</DataItem>
         <DataItem label={t('fields.responsibilities')}>{issuer.tax_responsibilities.join(', ') || '—'}</DataItem>
         <DataItem label={t('fields.email')}>{issuer.email}</DataItem>
@@ -362,7 +378,53 @@ function IssuerData({ issuer }: { issuer: IssuerDetail }) {
           {issuer.address.line} · DANE <span className="font-mono">{issuer.address.municipality_code}</span>
         </DataItem>
       </DataList>
+      <Dialog description={t('origin.body', { domain: issuer.client_domain ?? '' })} onClose={() => setBinding(false)} open={binding} title={t('origin.change')}>
+        <OriginForm
+          issuer={issuer}
+          onSaved={() => {
+            setBinding(false);
+            toast(t('origin.saved'));
+            onChange();
+          }}
+        />
+      </Dialog>
     </Card>
+  );
+}
+
+/** Re-bind the issuer to another host of its client system's domain (administrators). */
+function OriginForm({ issuer, onSaved }: { issuer: IssuerDetail; onSaved: () => void }) {
+  const t = useTranslations('issuerDetail');
+  const [host, setHost] = useState(issuer.origin_host ?? '');
+  const [errors, setErrors] = useState<string[] | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  const onSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    setErrors(null);
+    try {
+      await updateIssuer(issuer.id, { origin_host: host.trim() });
+      onSaved();
+    } catch (error) {
+      setErrors(stepErrors(error));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <form className="flex flex-col gap-4" onSubmit={(e) => void onSubmit(e)}>
+      <Field hint={t('origin.hint')} id="issuer-origin" label={t('fields.origin')}>
+        <Input autoCapitalize="none" className="font-mono" id="issuer-origin" onChange={(e) => setHost(e.target.value)} placeholder={`restaurante.${issuer.client_domain ?? 'waiter.co'}`} value={host} />
+      </Field>
+      {errors ? <StepErrors errors={errors} /> : null}
+      <div>
+        <Button loading={saving} type="submit" variant="primary">
+          {t('origin.save')}
+        </Button>
+      </div>
+    </form>
   );
 }
 

@@ -22,6 +22,7 @@ from fiscal_app.serializers import IssuerCreateUpdateSerializer
 from fiscal_app.services.alerts import resolve
 from fiscal_app.services.artifacts import ArtifactIntegrityError, read
 from fiscal_app.services.client_systems import valid_secrets
+from fiscal_app.services.origins import host_in_domain, normalize_host
 
 from .console import ConsolePagination, IsConsoleAdmin, IsConsoleOperator
 
@@ -57,11 +58,16 @@ def console_issuer(request, issuer_id):
     issuer = get_object_or_404(Issuer.objects.select_related('client'), pk=issuer_id)
     if request.method == 'PATCH':
         data = {key: value for key, value in request.data.items() if key not in ('nit', 'environment', 'client_id')}
+        if 'origin_host' in data:
+            denied = _set_origin_host(request, issuer, data.pop('origin_host'))
+            if denied:
+                return denied
         if 'municipality_code' in data and 'department_code' not in data:
             data['department_code'] = str(data['municipality_code'])[:2]
-        serializer = IssuerCreateUpdateSerializer(issuer, data=data, partial=True, context={'nit': issuer.nit})
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
+        if data:
+            serializer = IssuerCreateUpdateSerializer(issuer, data=data, partial=True, context={'nit': issuer.nit})
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
         logger.info('Emisor %s corregido por el operador %s: %s', issuer.pk, request.user.pk, sorted(data))
         issuer.refresh_from_db()
     return Response({
@@ -73,6 +79,9 @@ def console_issuer(request, issuer_id):
         'address': {'line': issuer.address_line, 'municipality_code': issuer.municipality_code,
                     'department_code': issuer.department_code, 'postal_code': issuer.postal_code},
         'email': issuer.email,
+        'origin_host': issuer.origin_host,
+        'client_domain': issuer.client.domain,
+        'client_allow_subdomains': issuer.client.allow_subdomains,
         'phone': issuer.phone,
         'certificates': [
             {'id': cert.pk, 'subject': cert.subject, 'issued_by': cert.issued_by, 'serial': cert.serial,
@@ -146,7 +155,7 @@ def console_client_systems(request):
     ).order_by('name')
     return Response({'count': clients.count(), 'results': [
         {'id': client.pk, 'name': client.name, 'key_id': client.key_id, 'webhook_url': client.webhook_url,
-         'active': client.active, 'valid_secrets': len(valid_secrets(client)), 'issuers': client.issuers_total,
+         'domain': client.domain, 'allow_subdomains': client.allow_subdomains, 'active': client.active, 'valid_secrets': len(valid_secrets(client)), 'issuers': client.issuers_total,
          'pending_notices': client.pending_notices, 'failed_notices': client.failed_notices,
          'last_delivered_at': client.last_delivered_at, 'created_at': client.created_at}
         for client in clients
@@ -171,6 +180,22 @@ def console_document_artifact(request, document_id, kind):
     response['Content-Disposition'] = f'attachment; filename="{document.full_number}-{artifact.storage_path.rsplit("/", 1)[-1]}"'
     response['X-Fiscal-SHA256'] = artifact.sha256
     return response
+
+
+def _set_origin_host(request, issuer, value):
+    """Re-bind an issuer to another host of its client system's domain (administrators). A Response when refused."""
+    if not IsConsoleAdmin().has_permission(request, None):
+        return Response({'detail': IsConsoleAdmin.message}, status=status.HTTP_403_FORBIDDEN)
+    host = normalize_host(str(value or '')) if value else ''
+    if value and not host:
+        return Response({'origin_host': ['Escribe solo el host, por ejemplo restaurante.waiter.co.']}, status=status.HTTP_400_BAD_REQUEST)
+    client = issuer.client
+    if host and client.domain and not host_in_domain(host, client.domain, client.allow_subdomains):
+        return Response({'origin_host': [f'Debe ser {client.domain} o uno de sus subdominios permitidos.']}, status=status.HTTP_400_BAD_REQUEST)
+    issuer.origin_host = host
+    issuer.save(update_fields=['origin_host', 'updated_at'])
+    logger.warning('Emisor %s atado al origen «%s» por el operador %s', issuer.pk, host, request.user.pk)
+    return None
 
 
 def _issuer_row(issuer, with_counts=True):

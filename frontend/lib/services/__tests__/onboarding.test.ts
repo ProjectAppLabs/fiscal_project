@@ -32,9 +32,11 @@ describe('onboarding service', () => {
   });
 
   it('creates a client system', async () => {
-    await createClientSystem({ name: 'ProjectApp', webhook_url: '' });
+    const data = { name: 'Waiter', webhook_url: '', domain: 'waiter.co', allow_subdomains: true };
 
-    expect(mockPost).toHaveBeenCalledWith('console/client-systems/create/', { name: 'ProjectApp', webhook_url: '' });
+    await createClientSystem(data);
+
+    expect(mockPost).toHaveBeenCalledWith('console/client-systems/create/', data);
   });
 
   it('enrols an issuer', async () => {

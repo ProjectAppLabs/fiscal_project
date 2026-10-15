@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-const PROTECTED_PREFIXES = ['/dashboard', '/documents'];
+// The API docs are for ProjectApp only: no session, no docs (the page checks the session again).
+const PROTECTED_PREFIXES = ['/dashboard', '/documents', '/api-docs'];
 
 const AUTH_ROUTES = ['/sign-in', '/forgot-password'];
 

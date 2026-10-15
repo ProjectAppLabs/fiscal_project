@@ -1,6 +1,6 @@
 {
   "version": "2.0.0",
-  "lastUpdated": "2026-10-14",
+  "lastUpdated": "2026-10-15",
   "flows": {
     "home-redirect": {
       "name": "Home redirects by session",
@@ -539,6 +539,58 @@
       ],
       "priority": "P3",
       "description": "The «?» next to a field explains what the data is and where it comes from (RUT, DIAN portal, certificate entity)",
+      "expectedSpecs": 1,
+      "outcomes": [
+        "success"
+      ]
+    },
+    "console-api-docs": {
+      "name": "Read the API docs",
+      "module": "console",
+      "roles": [
+        "operator"
+      ],
+      "priority": "P2",
+      "description": "The account menu opens /api-docs: Vue-like pages with an environment switch (Pruebas / Producción) that changes the examples",
+      "expectedSpecs": 1,
+      "outcomes": [
+        "success"
+      ]
+    },
+    "console-api-docs-search": {
+      "name": "Search the API docs",
+      "module": "console",
+      "roles": [
+        "operator"
+      ],
+      "priority": "P3",
+      "description": "Ctrl+K searches pages and endpoints and lands on the endpoint in the reference",
+      "expectedSpecs": 1,
+      "outcomes": [
+        "success"
+      ]
+    },
+    "console-api-docs-private": {
+      "name": "API docs need a session",
+      "module": "console",
+      "roles": [
+        "operator"
+      ],
+      "priority": "P2",
+      "description": "Without a session /api-docs sends to the sign-in: Fiscal. is not public",
+      "expectedSpecs": 1,
+      "outcomes": [
+        "failure"
+      ]
+    },
+    "console-client-access": {
+      "name": "Domain and access of a client system",
+      "module": "console",
+      "roles": [
+        "admin"
+      ],
+      "priority": "P1",
+      "description": "An administrator registers the client system's domain, subdomains and IPs from its page",
       "expectedSpecs": 1,
       "outcomes": [
         "success"

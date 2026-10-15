@@ -90,7 +90,7 @@ export interface TestSetRun {
   phases: { name: string; zip_key: string; errors: string[]; dian_status: string }[];
 }
 
-export async function createClientSystem(data: { name: string; webhook_url: string }): Promise<CreatedClientSystem> {
+export async function createClientSystem(data: { name: string; webhook_url: string; domain: string; allow_subdomains: boolean }): Promise<CreatedClientSystem> {
   return (await api.post<CreatedClientSystem>(`${API_ENDPOINTS.CONSOLE_CLIENT_SYSTEMS}create/`, data)).data;
 }
 
