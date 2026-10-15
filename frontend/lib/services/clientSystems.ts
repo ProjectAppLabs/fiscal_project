@@ -9,6 +9,11 @@ export interface ClientSystemDetail {
   name: string;
   key_id: string;
   webhook_url: string;
+  /** Domain the client system calls from (waiter.co); empty means any origin. */
+  domain: string;
+  allow_subdomains: boolean;
+  /** IPs or networks it calls from; empty means any. */
+  allowed_ips: string[];
   active: boolean;
   created_at: string;
   secrets: { id: number; created_at: string; expires_at: string | null; current: boolean }[];
@@ -48,7 +53,9 @@ export async function fetchClientSystem(id: number | string): Promise<ClientSyst
   return (await api.get<ClientSystemDetail>(base(id))).data;
 }
 
-export async function updateClientSystem(id: number, changes: { webhook_url?: string; active?: boolean }): Promise<ClientSystemDetail> {
+export type ClientSystemChanges = Partial<Pick<ClientSystemDetail, 'webhook_url' | 'active' | 'domain' | 'allow_subdomains' | 'allowed_ips'>>;
+
+export async function updateClientSystem(id: number, changes: ClientSystemChanges): Promise<ClientSystemDetail> {
   return (await api.patch<ClientSystemDetail>(base(id), changes)).data;
 }
 

@@ -16,6 +16,11 @@ from rest_framework.response import Response
 
 from fiscal_app.models import ClientSystem, WebhookDelivery
 from fiscal_app.services.client_systems import rotate_secret, secrets_overview
+from fiscal_app.services.origins import (
+    check_webhook_domain,
+    normalize_host,
+    parse_networks,
+)
 from fiscal_app.services.webhooks import requeue_failed, retry_now, send_ping
 
 from .console import ConsolePagination, IsConsoleAdmin, IsConsoleOperator
@@ -28,14 +33,51 @@ DELIVERY_STATES = {
 }
 
 
-class ClientSystemUpdateSerializer(serializers.Serializer):
+class ClientAccessSerializer(serializers.Serializer):
+    """Where a client system may call from: its domain (with or without subdomains) and, optionally, its IPs."""
+
     webhook_url = serializers.URLField(required=False, allow_blank=True)
-    active = serializers.BooleanField(required=False)
+    domain = serializers.CharField(required=False, allow_blank=True, max_length=253)
+    allow_subdomains = serializers.BooleanField(required=False)
+    allowed_ips = serializers.ListField(child=serializers.CharField(max_length=64), required=False, max_length=20)
 
     def validate_webhook_url(self, value):
         if value and not value.startswith('https://') and not value.startswith('http://'):
             raise serializers.ValidationError('Usa una dirección http o https.')
         return value
+
+    def validate_domain(self, value):
+        if not value:
+            return ''
+        host = normalize_host(value.removeprefix('https://').removeprefix('http://').split('/')[0])
+        if not host:
+            raise serializers.ValidationError('Escribe solo el dominio, por ejemplo waiter.co.')
+        return host
+
+    def validate_allowed_ips(self, value):
+        try:
+            return [str(network) for network in parse_networks(value)]
+        except ValueError as error:
+            raise serializers.ValidationError(str(error)) from error
+
+    def validate(self, attrs):
+        # The notice URL must live in the domain, with the values this change leaves in place.
+        current = self.context.get('client')
+        final = {key: attrs.get(key, getattr(current, key, default)) for key, default in
+                 (('webhook_url', ''), ('domain', ''), ('allow_subdomains', False))}
+        try:
+            check_webhook_domain(final['webhook_url'], final['domain'], final['allow_subdomains'])
+        except ValueError as error:
+            raise serializers.ValidationError({'webhook_url': [str(error)]}) from error
+        return attrs
+
+
+class ClientSystemUpdateSerializer(ClientAccessSerializer):
+    active = serializers.BooleanField(required=False)
+
+
+# Changing who may call the API is for administrators, like switching the client system off.
+ADMIN_FIELDS = {'active', 'domain', 'allow_subdomains', 'allowed_ips'}
 
 
 class RotateSecretSerializer(serializers.Serializer):
@@ -45,13 +87,13 @@ class RotateSecretSerializer(serializers.Serializer):
 @api_view(['GET', 'PATCH'])
 @permission_classes([IsAuthenticated, IsConsoleOperator])
 def console_client_system(request, client_id):
-    """GET: the integration data. PATCH: the notice URL (any operator) or switching it on/off (administrators)."""
+    """GET: the integration data. PATCH: the notice URL (any operator); on/off, domain and IPs (administrators)."""
     client = get_object_or_404(ClientSystem, pk=client_id)
     if request.method == 'PATCH':
-        serializer = ClientSystemUpdateSerializer(data=request.data, partial=True)
+        serializer = ClientSystemUpdateSerializer(data=request.data, partial=True, context={'client': client})
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
-        if 'active' in data and not IsConsoleAdmin().has_permission(request, None):
+        if ADMIN_FIELDS & set(data) and not IsConsoleAdmin().has_permission(request, None):
             return Response({'detail': IsConsoleAdmin.message}, status=status.HTTP_403_FORBIDDEN)
         for field, value in data.items():
             setattr(client, field, value)
@@ -123,6 +165,7 @@ def _detail(client):
     notices = client.webhook_deliveries
     return {
         'id': client.pk, 'name': client.name, 'key_id': client.key_id, 'webhook_url': client.webhook_url,
+        'domain': client.domain, 'allow_subdomains': client.allow_subdomains, 'allowed_ips': client.allowed_ips,
         'active': client.active, 'created_at': client.created_at, 'secrets': secrets_overview(client),
         'issuers': list(issuers),
         'notices': {name: notices.filter(condition).count() for name, condition in DELIVERY_STATES.items()},

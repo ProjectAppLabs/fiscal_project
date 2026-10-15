@@ -38,7 +38,10 @@ Si ves texto entre llaves dobles sin reemplazar, pídele el dato a la persona an
 2. **Nombre:** como lo reconoce el equipo (por ejemplo, «Waiter»).
 3. **URL de avisos:** pregúntala al equipo técnico del sistema cliente. Debe empezar por `https://`. Es opcional; se
    puede poner después.
-4. Clic en **Crear sistema cliente**.
+4. **Dominio:** el dominio del sistema cliente, sin `https://` (por ejemplo `waiter.co`). Si cada comercio vive en un
+   subdominio (`restaurante.waiter.co`), marca **Acepta subdominios**. Con dominio, la URL de avisos tiene que estar en
+   él y cada llamada del sistema cliente debe traer `X-Fiscal-Origin` con su host, firmado.
+5. Clic en **Crear sistema cliente**.
 
 ## Paso 2 · Guardar las credenciales (lo hace la persona)
 
@@ -58,7 +61,18 @@ En la página del sistema cliente, **Guía de conexión**:
 2. Verde «El sistema cliente recibió el aviso de prueba»: la URL responde y verifica la firma.
 3. Rojo: lee el error (código HTTP, tiempo de espera, firma). Pásaselo tal cual al equipo técnico.
 
-## Paso 4 · Bitácora de avisos
+## Paso 4 · Dominio y acceso (administrador)
+
+En la página del sistema cliente, tarjeta **Dominio y acceso** → **Editar acceso**:
+
+- **Dominio** y **Acepta subdominios**, si no se pusieron al crearlo.
+- **IPs permitidas** (opcional): la IP de salida del servidor del sistema cliente, una por línea. Pídesela a su equipo
+  técnico; no la adivines. Si el servidor cambia y no se actualiza, todas sus llamadas fallan con `ip_not_allowed`.
+
+Cada emisor queda atado al subdominio desde el que se creó. Si un comercio cambia de subdominio, un administrador lo
+cambia en la ficha del emisor → **Origen** → **Cambiar origen**.
+
+## Paso 5 · Bitácora de avisos
 
 La bitácora muestra cada aviso con su estado. **Reintentar** reenvía uno; **Reencolar fallidos** los vuelve a poner en
 cola. Úsalo solo cuando el equipo técnico confirme que el sistema ya responde.
@@ -78,6 +92,8 @@ Proceso: <nombre de esta guía>
 Resultado: completo | a medias | bloqueado
 - Sistema cliente: <nombre · identificador de llave>
 - URL de avisos: <url | sin configurar>
+- Dominio: <dominio · con o sin subdominios | sin dominio>
+- IPs permitidas: <lista | cualquier IP>
 - Aviso de prueba: <recibido | falló: error>
 Pasos en los que la pantalla no coincidió con la guía: <cuáles y qué se veía>
 Pendiente para la persona: <qué falta y quién lo hace>

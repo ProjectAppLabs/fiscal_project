@@ -11,6 +11,12 @@ class ClientSystem(models.Model):
     key_id = ExactCharField(max_length=40, unique=True)
     # Where document state changes are announced (signed webhook, F1 PR 5).
     webhook_url = models.URLField(blank=True, default='')
+    # The client system's domain (waiter.co). When set, every request declares its host in X-Fiscal-Origin (signed),
+    # the host must be this domain or, with allow_subdomains, one of its subdomains, and the notice URL must be in it.
+    domain = models.CharField(max_length=253, blank=True, default='')
+    allow_subdomains = models.BooleanField(default=False)
+    # IPs or networks (CIDR) the client system calls from; empty means any. The only network-level lock.
+    allowed_ips = models.JSONField(default=list, blank=True)
     active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 

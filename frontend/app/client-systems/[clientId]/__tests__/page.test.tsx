@@ -31,6 +31,9 @@ const DETAIL = {
   name: 'Waiter',
   key_id: 'fk_waiter',
   webhook_url: 'https://waiter.test/avisos/',
+  domain: 'waiter.test',
+  allow_subdomains: true,
+  allowed_ips: ['203.0.113.10/32'],
   active: true,
   created_at: '2026-10-01T05:00:00Z',
   secrets: [{ id: 1, created_at: '2026-10-01T05:00:00Z', expires_at: null, current: true }],
@@ -129,5 +132,44 @@ describe('ClientSystemPage', () => {
     renderAs('operator');
 
     expect(await screen.findByRole('heading', { name: 'No encontramos ese sistema cliente' })).toBeInTheDocument();
+  });
+
+  it('shows the domain with its subdomains rule', async () => {
+    renderAs('operator');
+
+    const access = await screen.findByRole('region', { name: 'Dominio y acceso' });
+
+    expect(access).toHaveTextContent('waiter.testy sus subdominios');
+  });
+
+  it('warns when the client system has no domain', async () => {
+    mockGet.mockResolvedValue({ data: { ...DETAIL, domain: '', allow_subdomains: false, allowed_ips: [] } });
+    renderAs('operator');
+
+    expect(await screen.findByText(/Sin dominio registrado/)).toBeInTheDocument();
+  });
+
+  it('keeps the access rules away from operators', async () => {
+    renderAs('operator');
+
+    const access = await screen.findByRole('region', { name: 'Dominio y acceso' });
+
+    expect(within(access).queryByRole('button', { name: 'Editar acceso' })).not.toBeInTheDocument();
+    expect(access).toHaveTextContent('203.0.113.10/32');
+  });
+
+  it('saves the domain, subdomains and IPs as an administrator', async () => {
+    mockPatch.mockResolvedValue({ data: DETAIL });
+    renderAs('admin');
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Editar acceso' }));
+    const dialog = screen.getByRole('dialog');
+    await userEvent.clear(within(dialog).getByLabelText('IPs permitidas'));
+    await userEvent.type(within(dialog).getByLabelText('IPs permitidas'), '203.0.113.10{enter}198.51.100.0/24');
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Guardar acceso' }));
+
+    expect(mockPatch).toHaveBeenCalledWith('console/client-systems/1/', {
+      domain: 'waiter.test', allow_subdomains: true, allowed_ips: ['203.0.113.10', '198.51.100.0/24'],
+    });
   });
 });

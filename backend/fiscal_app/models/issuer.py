@@ -29,6 +29,9 @@ class Issuer(models.Model):
     dian_file_year = models.PositiveSmallIntegerField(default=0)
     dian_file_sequence = models.PositiveIntegerField(default=0)
     active = models.BooleanField(default=True)
+    # The host (restaurante-x.waiter.co) the issuer was created from. When its client system has a domain, only
+    # requests declaring this host may act on the issuer: one tenant of the client system never reaches another's.
+    origin_host = models.CharField(max_length=253, blank=True, default='')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

@@ -10,18 +10,22 @@ from rest_framework.permissions import BasePermission
 
 from fiscal_app.models import ClientSystem
 from fiscal_app.services.client_systems import valid_secrets
+from fiscal_app.services.origins import check_request_origin, client_ip
 
-from .signing import KEY_HEADER, SIGNATURE_HEADER, TIMESTAMP_HEADER, sign
+from .signing import KEY_HEADER, ORIGIN_HEADER, SIGNATURE_HEADER, TIMESTAMP_HEADER, sign
 
 # A secret nobody has: compared when the key id is unknown, so timing does not reveal which key ids exist.
 _DECOY_SECRET = 'fiscal-unknown-client'
 
 
 class ClientSystemAuthentication(BaseAuthentication):
+    """request.user is the client system; request.auth the verified host it declared (None without a domain)."""
+
     def authenticate(self, request):
         key_id = request.headers.get(KEY_HEADER, '')
         timestamp = request.headers.get(TIMESTAMP_HEADER, '')
         signature = request.headers.get(SIGNATURE_HEADER, '')
+        origin = request.headers.get(ORIGIN_HEADER, '')
         if not (key_id and timestamp and signature):
             raise AuthenticationFailed('Falta la firma de la petición.', code='signature_missing')
         if not timestamp.isdigit() or abs(time.time() - int(timestamp)) > settings.FISCAL_SIGNATURE_MAX_AGE:
@@ -31,11 +35,12 @@ class ClientSystemAuthentication(BaseAuthentication):
         body = request._request.body
         path = request._request.get_full_path()
         matches = [
-            hmac.compare_digest(sign(secret, timestamp, request.method, path, body), signature) for secret in secrets
+            hmac.compare_digest(sign(secret, timestamp, request.method, path, body, origin), signature) for secret in secrets
         ]
         if client is None or not any(matches):
             raise AuthenticationFailed('La firma de la petición no es válida.', code='signature_invalid')
-        return client, None
+        # Only a correctly signed request gets this far: the declared origin cannot be swapped in transit.
+        return client, check_request_origin(client, origin, client_ip(request._request))
 
     def authenticate_header(self, request):
         return 'Fiscal-HMAC'

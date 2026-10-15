@@ -362,7 +362,8 @@
       "address": "Dirección",
       "email": "Correo",
       "legalName": "Razón social",
-      "tradeName": "Nombre comercial"
+      "tradeName": "Nombre comercial",
+      "origin": "Origen"
     },
     "personTypes": {
       "1": "Persona jurídica",
@@ -496,7 +497,15 @@
       "result": "Documentos",
       "error": "Error"
     },
-    "runResult": "{accepted} de {total} aceptados{rejected, plural, =0 {} one { · # rechazado} other { · # rechazados}}"
+    "runResult": "{accepted} de {total} aceptados{rejected, plural, =0 {} one { · # rechazado} other { · # rechazados}}",
+    "origin": {
+      "unbound": "Sin atar",
+      "change": "Cambiar origen",
+      "body": "El host de {domain} desde el que el sistema cliente usa este emisor. Las peticiones de otro host se rechazan.",
+      "hint": "Solo el host, por ejemplo restaurante.waiter.co. Vacío para no atarlo.",
+      "save": "Guardar origen",
+      "saved": "Origen actualizado"
+    }
   },
   "contingencies": {
     "title": "Contingencias",
@@ -627,7 +636,11 @@
       "useClient": "Usar este sistema",
       "namePlaceholder": "Por ejemplo, Waiter",
       "webhookHint": "Opcional. Ahí llegan los avisos firmados de Fiscal. (https).",
-      "creating": "Creando…"
+      "creating": "Creando…",
+      "domain": "Dominio (opcional)",
+      "domainHint": "Por ejemplo waiter.co. Con dominio, solo se acepta la API desde ese dominio.",
+      "subdomains": "Acepta subdominios",
+      "subdomainsHint": "Cualquier host que termine en .{domain}, por ejemplo restaurante.{domain}."
     },
     "issuer": {
       "title": "Datos del emisor tal como están en el RUT",
@@ -967,7 +980,26 @@
     "requeueFailed": "Reencolar los fallidos",
     "requeued": "{count, plural, one {# aviso vuelve a la cola} other {# avisos vuelven a la cola}}",
     "payloadTitle": "Contenido del aviso",
-    "pageInfo": "Página {page} · {count} avisos"
+    "pageInfo": "Página {page} · {count} avisos",
+    "access": {
+      "title": "Dominio y acceso",
+      "subtitle": "Desde dónde puede usar la API este sistema cliente.",
+      "edit": "Editar acceso",
+      "withSubdomains": "y sus subdominios",
+      "onlyDomain": "solo el dominio",
+      "originRule": "Cada petición debe traer X-Fiscal-Origin con su host (por ejemplo {example}), firmado con el resto.",
+      "noDomain": "Sin dominio registrado: se acepta la API desde cualquier origen, solo con la firma. Registra el dominio antes de producción.",
+      "ips": "IPs permitidas",
+      "anyIp": "Cualquier IP.",
+      "dialogBody": "Solo un administrador cambia quién puede usar la API. Con dominio, la URL de avisos tiene que estar en él.",
+      "domain": "Dominio",
+      "domainHint": "Solo el dominio, sin https:// ni rutas. Vacío para no restringir.",
+      "subdomains": "Acepta subdominios",
+      "subdomainsHint": "Cualquier host que termine en .{domain}, por ejemplo restaurante.{domain}.",
+      "ipsHint": "Una por línea: 203.0.113.10 o una red como 203.0.113.0/24. Vacío para cualquier IP.",
+      "save": "Guardar acceso",
+      "saved": "Acceso actualizado"
+    }
   },
   "users": {
     "title": "Usuarios",
@@ -1090,6 +1122,14 @@
         "grace": {
           "what": "Horas en que el secreto anterior sigue sirviendo, para cambiarlo en el sistema cliente sin cortar el servicio.",
           "where": "Con 24 horas suele bastar. Con 0 deja de servir ya: úsalo si el secreto se expuso."
+        },
+        "domain": {
+          "what": "El dominio desde el que el sistema cliente usa la API (waiter.co). Con dominio, cada petición debe declarar su host en X-Fiscal-Origin, firmado, y la URL de avisos tiene que estar en ese dominio.",
+          "where": "El dominio principal del sistema cliente. Si atiende a cada comercio en un subdominio (restaurante.waiter.co), marca «Acepta subdominios»."
+        },
+        "ips": {
+          "what": "Las IPs o redes (CIDR) desde las que llama el servidor del sistema cliente. Es el único candado de red: una llamada desde otra IP se rechaza aunque la firma sea correcta.",
+          "where": "Te las da el equipo técnico del sistema cliente (la IP de salida de su servidor). Déjalo vacío para aceptar cualquier IP; si el servidor cambia, actualízalas."
         }
       },
       "issuer": {
@@ -1136,6 +1176,10 @@
         "phone": {
           "what": "Un teléfono de contacto que va en las facturas.",
           "where": "RUT, casilla 44. Es opcional."
+        },
+        "origin": {
+          "what": "El host del sistema cliente al que pertenece este emisor (restaurante.waiter.co). Solo las peticiones que declaran ese host pueden ver o facturar por este emisor.",
+          "where": "Se fija solo con el host de la petición que creó el emisor. Un administrador lo cambia aquí si el comercio se mueve de subdominio."
         }
       },
       "certificate": {

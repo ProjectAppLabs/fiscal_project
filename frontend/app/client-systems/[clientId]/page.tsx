@@ -4,8 +4,9 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { FormEvent, useCallback, useEffect, useState } from 'react';
-import { KeyRound, Pencil, Power, Send } from 'lucide-react';
+import { Globe, KeyRound, Pencil, Power, Send } from 'lucide-react';
 
+import { StepErrors } from '@/components/console/ClientSystemForm';
 import { ConsoleLoadError } from '@/components/console/ConsoleStatus';
 import { Page } from '@/components/layout/Page';
 import { Badge, type BadgeTone } from '@/components/ui/Badge';
@@ -14,7 +15,7 @@ import { Card, CardHeader } from '@/components/ui/Card';
 import { CodeValue } from '@/components/ui/Copy';
 import { DataTable } from '@/components/ui/DataTable';
 import { ConfirmDialog, Dialog } from '@/components/ui/Dialog';
-import { Field, Input, Select } from '@/components/ui/Field';
+import { Choice, Field, Input, Select, Textarea } from '@/components/ui/Field';
 import { JsonViewer } from '@/components/ui/JsonViewer';
 import { Notice } from '@/components/ui/Notice';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -144,6 +145,7 @@ function ClientView({ client, onChange }: { client: ClientSystemDetail; onChange
       <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]">
         <ConnectionGuide client={client} onEdit={() => setEditing(true)} onPinged={() => setDeliveriesVersion((current) => current + 1)} />
         <div className="flex flex-col gap-4">
+          <Access client={client} onChange={onChange} />
           <Secrets client={client} onChange={onChange} />
           <Issuers client={client} />
         </div>
@@ -288,6 +290,117 @@ function WebhookForm({ client, onSaved }: { client: ClientSystemDetail; onSaved:
       <div>
         <Button loading={saving} type="submit" variant="primary">
           {t('saveWebhook')}
+        </Button>
+      </div>
+    </form>
+  );
+}
+
+/**
+ * Where the client system may call from: its domain (and subdomains), each request's signed X-Fiscal-Origin and,
+ * optionally, its IPs. Administrators change it.
+ */
+function Access({ client, onChange }: { client: ClientSystemDetail; onChange: () => void }) {
+  const t = useTranslations('clientSystem.access');
+  const isAdmin = useIsAdmin();
+  const [editing, setEditing] = useState(false);
+
+  return (
+    <Card aria-labelledby="client-access">
+      <CardHeader
+        action={
+          isAdmin ? (
+            <Button icon={<Pencil aria-hidden className="size-4" />} onClick={() => setEditing(true)} size="sm" variant="soft">
+              {t('edit')}
+            </Button>
+          ) : null
+        }
+        help={<HelpTip label={t('title')} topic="client.domain" />}
+        id="client-access"
+        subtitle={t('subtitle')}
+        title={t('title')}
+      />
+      {client.domain ? (
+        <div className="flex flex-col gap-3">
+          <p className="flex flex-wrap items-center gap-2 text-[15px] text-ink">
+            <Globe aria-hidden className="size-4 text-ink-3" />
+            <span className="font-mono font-semibold">{client.domain}</span>
+            <Badge size="sm" tone={client.allow_subdomains ? 'primary' : 'neutral'}>
+              {client.allow_subdomains ? t('withSubdomains') : t('onlyDomain')}
+            </Badge>
+          </p>
+          <p className="text-[13px] text-ink-2">{t('originRule', { example: client.allow_subdomains ? `restaurante.${client.domain}` : client.domain })}</p>
+        </div>
+      ) : (
+        <Notice tone="warning">{t('noDomain')}</Notice>
+      )}
+      <p className="mt-4 text-label">{t('ips')}</p>
+      {client.allowed_ips?.length ? (
+        <ul className="mt-1.5 flex flex-wrap gap-1.5">
+          {client.allowed_ips.map((ip) => (
+            <li className="rounded-full bg-surface-sunk px-3 py-1 font-mono text-[13px] text-ink" key={ip}>
+              {ip}
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="mt-1 text-[13px] text-ink-2">{t('anyIp')}</p>
+      )}
+      <Dialog description={t('dialogBody')} onClose={() => setEditing(false)} open={editing} title={t('edit')}>
+        <AccessForm
+          client={client}
+          onSaved={() => {
+            setEditing(false);
+            toast(t('saved'));
+            onChange();
+          }}
+        />
+      </Dialog>
+    </Card>
+  );
+}
+
+function AccessForm({ client, onSaved }: { client: ClientSystemDetail; onSaved: () => void }) {
+  const t = useTranslations('clientSystem.access');
+  const [domain, setDomain] = useState(client.domain ?? '');
+  const [subdomains, setSubdomains] = useState(Boolean(client.allow_subdomains));
+  const [ips, setIps] = useState((client.allowed_ips ?? []).join('\n'));
+  const [errors, setErrors] = useState<string[] | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  const onSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    setErrors(null);
+    try {
+      await updateClientSystem(client.id, {
+        domain: domain.trim(),
+        allow_subdomains: subdomains && Boolean(domain.trim()),
+        allowed_ips: ips.split(/[\s,]+/).map((ip) => ip.trim()).filter(Boolean),
+      });
+      onSaved();
+    } catch (error) {
+      setErrors(stepErrors(error));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <form className="flex flex-col gap-4" onSubmit={(e) => void onSubmit(e)}>
+      <Field help={<HelpTip label={t('domain')} topic="client.domain" />} hint={t('domainHint')} id="access-domain" label={t('domain')}>
+        <Input autoCapitalize="none" className="font-mono" id="access-domain" onChange={(e) => setDomain(e.target.value)} placeholder="waiter.co" value={domain} />
+      </Field>
+      {domain.trim() ? (
+        <Choice checked={subdomains} description={t('subdomainsHint', { domain: domain.trim() })} label={t('subdomains')} onChange={(e) => setSubdomains(e.target.checked)} />
+      ) : null}
+      <Field help={<HelpTip label={t('ips')} topic="client.ips" />} hint={t('ipsHint')} id="access-ips" label={t('ips')}>
+        <Textarea className="font-mono" id="access-ips" onChange={(e) => setIps(e.target.value)} placeholder="203.0.113.10" rows={3} value={ips} />
+      </Field>
+      {errors ? <StepErrors errors={errors} /> : null}
+      <div>
+        <Button loading={saving} type="submit" variant="primary">
+          {t('save')}
         </Button>
       </div>
     </form>

@@ -10,6 +10,7 @@ from fiscal_app.models import Document
 from fiscal_app.serializers import DocumentCreateSerializer, DocumentDetailSerializer
 from fiscal_app.services.artifacts import ArtifactIntegrityError, read
 from fiscal_app.services.documents import submit_document
+from fiscal_app.services.origins import check_issuer_origin
 from fiscal_app.utils.errors import FiscalError
 from fiscal_app.views.issuers import machine_view
 
@@ -22,27 +23,28 @@ def create_document(request):
     serializer = DocumentCreateSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
     envelope = {**serializer.validated_data, 'document': request.data.get('document')}
-    document, created = submit_document(request.user, envelope)
+    document, created = submit_document(request.user, envelope, origin=request.auth)
     code = status.HTTP_202_ACCEPTED if created else status.HTTP_200_OK
     return Response(DocumentDetailSerializer(document).data, status=code)
 
 
-def own_document(client, document_id):
-    document = Document.objects.filter(client=client, pk=document_id).select_related('issuer').first()
+def own_document(request, document_id):
+    document = Document.objects.filter(client=request.user, pk=document_id).select_related('issuer__client').first()
     if document is None:
         raise FiscalError('No hay un documento con ese identificador.', 'document_not_found', status.HTTP_404_NOT_FOUND)
+    check_issuer_origin(document.issuer, request.auth)
     return document
 
 
 @machine_view(['GET'])
 def retrieve_document(request, document_id):
-    return Response(DocumentDetailSerializer(own_document(request.user, document_id)).data)
+    return Response(DocumentDetailSerializer(own_document(request, document_id)).data)
 
 
 @machine_view(['GET'])
 def retrieve_artifact(request, document_id, kind):
     """Latest artifact of a kind (signed_xml, dian_response…), checked against its SHA-256 before it is served."""
-    artifact = own_document(request.user, document_id).artifacts.filter(kind=kind).order_by('-created_at', '-id').first()
+    artifact = own_document(request, document_id).artifacts.filter(kind=kind).order_by('-created_at', '-id').first()
     if artifact is None:
         raise FiscalError('El documento todavía no tiene ese archivo.', 'artifact_not_found', status.HTTP_404_NOT_FOUND)
     try:

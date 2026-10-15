@@ -5,7 +5,7 @@ import { FormEvent, useState } from 'react';
 
 import { Button } from '@/components/ui/Button';
 import { CodeValue } from '@/components/ui/Copy';
-import { Field, Input } from '@/components/ui/Field';
+import { Choice, Field, Input } from '@/components/ui/Field';
 import { Notice } from '@/components/ui/Notice';
 import { createClientSystem, stepErrors, type CreatedClientSystem } from '@/lib/services/onboarding';
 import { HelpTip } from './HelpTip';
@@ -18,6 +18,8 @@ export function ClientSystemForm({ onDone, submitLabel }: { onDone: (client: Cre
   const t = useTranslations('onboarding.client');
   const [name, setName] = useState('');
   const [webhook, setWebhook] = useState('');
+  const [domain, setDomain] = useState('');
+  const [subdomains, setSubdomains] = useState(false);
   const [created, setCreated] = useState<CreatedClientSystem | null>(null);
   const [errors, setErrors] = useState<string[] | null>(null);
   const [saving, setSaving] = useState(false);
@@ -29,7 +31,7 @@ export function ClientSystemForm({ onDone, submitLabel }: { onDone: (client: Cre
     setSaving(true);
     setErrors(null);
     try {
-      setCreated(await createClientSystem({ name: name.trim(), webhook_url: webhook.trim() }));
+      setCreated(await createClientSystem({ name: name.trim(), webhook_url: webhook.trim(), domain: domain.trim(), allow_subdomains: subdomains && Boolean(domain.trim()) }));
     } catch (error) {
       setErrors(stepErrors(error));
     } finally {
@@ -42,6 +44,12 @@ export function ClientSystemForm({ onDone, submitLabel }: { onDone: (client: Cre
       <Field help={<HelpTip label={t('name')} topic="client.name" />} id="client-name" label={t('name')}>
         <Input id="client-name" onChange={(e) => setName(e.target.value)} placeholder={t('namePlaceholder')} required value={name} />
       </Field>
+      <Field help={<HelpTip label={t('domain')} topic="client.domain" />} hint={t('domainHint')} id="client-domain" label={t('domain')}>
+        <Input autoCapitalize="none" className="font-mono" id="client-domain" onChange={(e) => setDomain(e.target.value)} placeholder="waiter.co" value={domain} />
+      </Field>
+      {domain.trim() ? (
+        <Choice checked={subdomains} description={t('subdomainsHint', { domain: domain.trim() })} label={t('subdomains')} onChange={(e) => setSubdomains(e.target.checked)} />
+      ) : null}
       <Field help={<HelpTip label={t('webhook')} topic="client.webhook" />} hint={t('webhookHint')} id="client-webhook" label={t('webhook')}>
         <Input id="client-webhook" onChange={(e) => setWebhook(e.target.value)} placeholder="https://" type="url" value={webhook} />
       </Field>

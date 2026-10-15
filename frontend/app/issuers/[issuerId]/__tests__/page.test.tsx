@@ -315,4 +315,28 @@ describe('IssuerDetailPage', () => {
 
     expect(runs).toHaveTextContent('50 de 50 aceptados');
   });
+
+  it('shows the host the issuer is bound to', async () => {
+    answer(buildIssuerDetail({ origin_host: 'restaurante-x.waiter.co', client_domain: 'waiter.co', client_allow_subdomains: true }));
+    renderSignedIn();
+    await openTab('Resumen');
+
+    expect(screen.getByRole('group', { name: 'Origen' })).toHaveTextContent('restaurante-x.waiter.co');
+  });
+
+  it('rebinds the issuer to another host as an administrator', async () => {
+    signInAs('admin');
+    answer(buildIssuerDetail({ origin_host: 'restaurante-x.waiter.co', client_domain: 'waiter.co', client_allow_subdomains: true }));
+    mockPatch.mockResolvedValue({ data: buildIssuerDetail() });
+    renderSignedIn();
+    await openTab('Resumen');
+
+    await userEvent.click(screen.getByRole('button', { name: 'Cambiar origen' }));
+    const dialog = screen.getByRole('dialog');
+    await userEvent.clear(within(dialog).getByLabelText('Origen'));
+    await userEvent.type(within(dialog).getByLabelText('Origen'), 'restaurante-y.waiter.co');
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Guardar origen' }));
+
+    expect(mockPatch).toHaveBeenCalledWith('console/issuers/3/', { origin_host: 'restaurante-y.waiter.co' });
+  });
 });

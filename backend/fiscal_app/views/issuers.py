@@ -25,6 +25,7 @@ from fiscal_app.serializers import (
 )
 from fiscal_app.services import certificate_assembly
 from fiscal_app.services.certificates import set_certificate
+from fiscal_app.services.origins import check_issuer_origin
 from fiscal_app.services.software import register_software
 from fiscal_app.utils.errors import FiscalError
 
@@ -42,26 +43,31 @@ def machine_view(methods):
     return decorate
 
 
-def own_issuer(client, nit):
-    """The issuer of this client system; another client's NIT answers exactly like a missing one."""
-    issuer = Issuer.objects.filter(client=client, nit=nit).first()
+def own_issuer(request, nit):
+    """The issuer of this client system, from the origin it is bound to; another client's NIT answers like a missing one."""
+    issuer = Issuer.objects.filter(client=request.user, nit=nit).select_related('client').first()
     if issuer is None:
         raise FiscalError('No hay un emisor con ese NIT.', 'issuer_not_found', status.HTTP_404_NOT_FOUND)
+    check_issuer_origin(issuer, request.auth)
     return issuer
 
 
 @machine_view(['GET'])
 def retrieve_issuer(request, nit):
-    return Response(IssuerDetailSerializer(own_issuer(request.user, nit)).data)
+    return Response(IssuerDetailSerializer(own_issuer(request, nit)).data)
 
 
 @machine_view(['PUT'])
 def update_issuer(request, nit):
     """Create or update a business. 201 when created, 200 when updated."""
-    instance = Issuer.objects.filter(client=request.user, nit=nit).first()
+    instance = Issuer.objects.filter(client=request.user, nit=nit).select_related('client').first()
+    if instance:
+        check_issuer_origin(instance, request.auth)
     serializer = IssuerCreateUpdateSerializer(instance, data=request.data, context={'nit': nit})
     serializer.is_valid(raise_exception=True)
-    issuer = serializer.save(client=request.user, nit=nit)
+    # A new issuer stays bound to the host that created it (only meaningful when the client system has a domain).
+    bound = {} if instance or not request.user.domain else {'origin_host': request.auth or ''}
+    issuer = serializer.save(client=request.user, nit=nit, **bound)
     code = status.HTTP_200_OK if instance else status.HTTP_201_CREATED
     return Response(IssuerDetailSerializer(issuer).data, status=code)
 
@@ -70,7 +76,7 @@ def update_issuer(request, nit):
 def update_certificate(request, nit):
     """A .p12 with its password, or the certificate and its private key; `chain_complete` is False when Fiscal. could
     not download an intermediate or the root of the chain."""
-    issuer = own_issuer(request.user, nit)
+    issuer = own_issuer(request, nit)
     serializer = CertificateCreateUpdateSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
     data = serializer.validated_data
@@ -87,7 +93,7 @@ def update_certificate(request, nit):
 @machine_view(['PUT'])
 def update_software(request, nit):
     """Register the software data of one environment; it becomes the only active one there."""
-    issuer = own_issuer(request.user, nit)
+    issuer = own_issuer(request, nit)
     serializer = SoftwareRegistrationCreateUpdateSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
     registration = register_software(issuer, serializer.validated_data)
@@ -96,13 +102,13 @@ def update_software(request, nit):
 
 @machine_view(['GET'])
 def list_ranges(request, nit):
-    issuer = own_issuer(request.user, nit)
+    issuer = own_issuer(request, nit)
     return Response(NumberingRangeListSerializer(issuer.numbering_ranges.all(), many=True).data)
 
 
 @machine_view(['POST'])
 def create_range(request, nit):
-    issuer = own_issuer(request.user, nit)
+    issuer = own_issuer(request, nit)
     serializer = NumberingRangeCreateUpdateSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
     if issuer.numbering_ranges.filter(

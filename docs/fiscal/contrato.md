@@ -40,30 +40,36 @@ Lo hace un operador de ProjectApp desde la consola: **Sistemas cliente → Nuevo
 van al `.env` del sistema cliente. En la página del sistema cliente quedan la guía de conexión, el botón «Enviar
 aviso de prueba» (envía el evento `ping` a la URL de avisos) y la bitácora de avisos con reintento.
 
+- **Dominio y acceso** (solo administradores, en la página del sistema cliente o al crearlo): el **dominio** del
+  sistema cliente (`waiter.co`), si acepta **subdominios** (`*.waiter.co`) y, opcional, las **IPs o redes** desde las
+  que llama. Con dominio registrado, la URL de avisos tiene que estar en ese dominio. Ver «Origen de cada petición».
 - **Rotación:** «Rotar secreto» en la página del sistema cliente (solo administradores) emite un secreto nuevo. El
   anterior sigue sirviendo durante el periodo de gracia que se elija, para cambiarlo sin cortar el servicio; los más
   viejos dejan de servir de inmediato. Nunca hay más de dos secretos vigentes.
 - **Sin consola** (recuperación): los mismos pasos existen como comandos del servidor,
-  `python manage.py create_client_system "Waiter" --webhook-url https://<waiter>/internal/fiscal/events` y
+  `python manage.py create_client_system "Waiter" --domain waiter.co --allow-subdomains --webhook-url https://api.waiter.co/internal/fiscal/events` y
   `python manage.py rotate_client_secret <key_id> --grace-hours 24`.
 
 ## Firma de cada petición
 
-Toda petición lleva tres cabeceras:
+Toda petición lleva estas cabeceras:
 
 | Cabecera | Valor |
 |---|---|
 | `X-Fiscal-Key` | `FISCAL_KEY_ID` |
 | `X-Fiscal-Timestamp` | Segundos Unix del momento de la firma |
 | `X-Fiscal-Signature` | `hex(HMAC-SHA256(FISCAL_SECRET, texto_canónico))` |
+| `X-Fiscal-Origin` | Host para el que se hace la petición (`restaurante-x.waiter.co`). **Obligatoria** si el sistema cliente tiene dominio registrado |
 
-El texto canónico son cuatro líneas unidas con `\n`, sin salto final:
+El texto canónico son cuatro líneas unidas con `\n`, sin salto final; si se envía `X-Fiscal-Origin`, su valor exacto
+es una quinta línea (así el origen va firmado y no se puede cambiar en el camino):
 
 ```
 <timestamp>
 <MÉTODO en mayúsculas>
 <ruta con su consulta, p. ej. /api/v1/issuers/900373115/>
 <sha256 en hex del cuerpo exacto enviado; de b"" si no hay cuerpo>
+<X-Fiscal-Origin, solo si se envía>
 ```
 
 Implementación de referencia (Python), la misma de `fiscal_app/authentication/signing.py`:
@@ -71,11 +77,16 @@ Implementación de referencia (Python), la misma de `fiscal_app/authentication/s
 ```python
 import hashlib, hmac, time
 
-def signed_headers(key_id, secret, method, path, body=b''):
+def signed_headers(key_id, secret, method, path, body=b'', origin=''):
     ts = str(int(time.time()))
-    canonical = '\n'.join([ts, method.upper(), path, hashlib.sha256(body).hexdigest()]).encode()
-    signature = hmac.new(secret.encode(), canonical, hashlib.sha256).hexdigest()
-    return {'X-Fiscal-Key': key_id, 'X-Fiscal-Timestamp': ts, 'X-Fiscal-Signature': signature}
+    lines = [ts, method.upper(), path, hashlib.sha256(body).hexdigest()]
+    if origin:
+        lines.append(origin)
+    signature = hmac.new(secret.encode(), '\n'.join(lines).encode(), hashlib.sha256).hexdigest()
+    headers = {'X-Fiscal-Key': key_id, 'X-Fiscal-Timestamp': ts, 'X-Fiscal-Signature': signature}
+    if origin:
+        headers['X-Fiscal-Origin'] = origin
+    return headers
 ```
 
 Implementación de referencia en JavaScript (Node 18+), para un sistema cliente en Node:
@@ -83,12 +94,15 @@ Implementación de referencia en JavaScript (Node 18+), para un sistema cliente 
 ```javascript
 import { createHash, createHmac } from 'node:crypto'
 
-export function signedHeaders(keyId, secret, method, path, body = '') {
+export function signedHeaders(keyId, secret, method, path, body = '', origin = '') {
   const ts = String(Math.floor(Date.now() / 1000))
   const bodyHash = createHash('sha256').update(body).digest('hex')
-  const canonical = [ts, method.toUpperCase(), path, bodyHash].join('\n')
-  const signature = createHmac('sha256', secret).update(canonical).digest('hex')
-  return { 'X-Fiscal-Key': keyId, 'X-Fiscal-Timestamp': ts, 'X-Fiscal-Signature': signature }
+  const lines = [ts, method.toUpperCase(), path, bodyHash]
+  if (origin) lines.push(origin)
+  const signature = createHmac('sha256', secret).update(lines.join('\n')).digest('hex')
+  const headers = { 'X-Fiscal-Key': keyId, 'X-Fiscal-Timestamp': ts, 'X-Fiscal-Signature': signature }
+  if (origin) headers['X-Fiscal-Origin'] = origin
+  return headers
 }
 
 // La firma cubre los bytes exactos del cuerpo: serializa una vez y envía ese mismo texto.
@@ -104,6 +118,24 @@ await fetch(`${process.env.FISCAL_URL}${path}`, {
 - Una firma con más de **5 minutos** de diferencia con la hora del servidor se rechaza, así que los dos equipos deben
   tener NTP.
 - **Un JWT de operador no abre esta API:** es solo para sistemas cliente.
+
+## Origen de cada petición
+
+Una llamada de servidor a servidor no trae un dominio que se pueda comprobar, así que el sistema cliente **declara**
+el host para el que hace la petición y lo **firma** con el resto. Cuando el sistema cliente tiene dominio registrado:
+
+1. **`X-Fiscal-Origin` es obligatoria** y debe ser el dominio (`waiter.co`) o, si se aceptan subdominios, uno de
+   ellos (`restaurante-x.waiter.co`). `evilwaiter.co` o `waiter.co.otro.com` no pasan. Sin ella: `origin_required`;
+   fuera del dominio: `origin_not_allowed`.
+2. **Cada emisor queda atado a su host.** El emisor que se crea con `PUT /issuers/{nit}/update/` queda atado al
+   `X-Fiscal-Origin` de esa petición; desde entonces, toda petición sobre ese emisor (o sus documentos) debe declarar
+   ese mismo host. Así un restaurante de Waiter nunca alcanza los datos de otro aunque Waiter tenga un error:
+   `origin_mismatch`. Un administrador puede cambiar el host de un emisor desde su ficha en la consola.
+3. **IPs (opcional).** Si el sistema cliente tiene IPs o redes registradas, la petición debe venir de una de ellas
+   (`ip_not_allowed`). Detrás de un proxy de confianza (`FISCAL_TRUSTED_PROXIES`), Fiscal. toma la IP de
+   `X-Forwarded-For`. Es el único candado de red: si el sistema cliente cambia de servidor, hay que actualizarlas.
+
+Sin dominio registrado, `X-Fiscal-Origin` es opcional y no se valida (si se envía, igual entra en la firma).
 
 ## Errores
 
@@ -121,6 +153,10 @@ por campo.
 | `signature_missing` | 401 | Falta alguna de las tres cabeceras |
 | `signature_expired` | 401 | La hora de la firma está fuera de la ventana de 5 minutos |
 | `signature_invalid` | 401 | La firma no coincide, el `key_id` no existe o el cliente está inactivo |
+| `origin_required` | 403 | El sistema cliente tiene dominio y la petición no trae `X-Fiscal-Origin` |
+| `origin_not_allowed` | 403 | `X-Fiscal-Origin` no es el dominio ni uno de sus subdominios permitidos |
+| `origin_mismatch` | 403 | El emisor (o el documento) pertenece a otro host del sistema cliente |
+| `ip_not_allowed` | 403 | La petición no viene de una IP registrada del sistema cliente |
 | `issuer_not_found` | 404 | El NIT no existe en **este** sistema cliente (uno de otro cliente responde igual) |
 | `invalid_data` | 400 | Validación de campos; ver `fields` |
 | `invalid_nit`, `invalid_dv` | 400 | NIT mal formado o dígito de verificación que no le corresponde |
